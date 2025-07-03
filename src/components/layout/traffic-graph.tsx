@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
-import { useTheme } from "@mui/material";
+import { useThemeMode } from "@/services/states";
 
 const maxPoint = 30;
 
@@ -32,7 +32,7 @@ export const TrafficGraph = forwardRef<TrafficRef>((props, ref) => {
 
   const cacheRef = useRef<TrafficData | null>(null);
 
-  const { palette } = useTheme();
+  const mode = useThemeMode();
 
   useImperativeHandle(ref, () => ({
     appendData: (data: TrafficData) => {
@@ -76,10 +76,14 @@ export const TrafficGraph = forwardRef<TrafficRef>((props, ref) => {
 
     if (!context) return;
 
-    const { primary, secondary, divider } = palette;
-    const refLineColor = divider || "rgba(0, 0, 0, 0.12)";
-    const upLineColor = secondary.main || "#9c27b0";
-    const downLineColor = primary.main || "#5b5c9d";
+    const computedStyle = getComputedStyle(document.documentElement);
+    const refLineColor =
+      `hsl(${computedStyle.getPropertyValue("--border")})` ||
+      "rgba(0, 0, 0, 0.12)";
+    const upLineColor =
+      `hsl(${computedStyle.getPropertyValue("--secondary")})` || "#9c27b0";
+    const downLineColor =
+      `hsl(${computedStyle.getPropertyValue("--primary")})` || "#5b5c9d";
 
     const width = canvas.width;
     const height = canvas.height;
@@ -193,7 +197,7 @@ export const TrafficGraph = forwardRef<TrafficRef>((props, ref) => {
     return () => {
       cancelAnimationFrame(raf);
     };
-  }, [palette]);
+  }, [mode]);
 
   return <canvas ref={canvasRef} style={{ width: "100%", height: "100%" }} />;
 });

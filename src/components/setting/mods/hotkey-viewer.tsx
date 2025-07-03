@@ -1,18 +1,24 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLockFn } from "ahooks";
-import { styled, Typography, Switch } from "@mui/material";
 import { useVerge } from "@/hooks/use-verge";
-import { BaseDialog, DialogRef } from "@/components/base";
-import { HotkeyInput } from "./hotkey-input";
 import { showNotice } from "@/services/noticeService";
 
-const ItemWrapper = styled("div")`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-`;
+// Новые импорты
+import { DialogRef } from "@/components/base";
+import { HotkeyInput } from "./hotkey-input"; // Наш обновленный компонент
+import { Switch } from "@/components/ui/switch"; // Стандартный Switch
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
 const HOTKEY_FUNC = [
   "open_or_close_dashboard",
@@ -31,27 +37,18 @@ export const HotkeyViewer = forwardRef<DialogRef>((props, ref) => {
   const { verge, patchVerge } = useVerge();
 
   const [hotkeyMap, setHotkeyMap] = useState<Record<string, string[]>>({});
-  const [enableGlobalHotkey, setEnableHotkey] = useState(
-    verge?.enable_global_hotkey ?? true,
-  );
+  const [enableGlobalHotkey, setEnableHotkey] = useState(true);
 
   useImperativeHandle(ref, () => ({
     open: () => {
       setOpen(true);
-
+      setEnableHotkey(verge?.enable_global_hotkey ?? true);
       const map = {} as typeof hotkeyMap;
-
       verge?.hotkeys?.forEach((text) => {
         const [func, key] = text.split(",").map((e) => e.trim());
-
         if (!func || !key) return;
-
-        map[func] = key
-          .split("+")
-          .map((e) => e.trim())
-          .map((k) => (k === "PLUS" ? "+" : k));
+        map[func] = key.split("+").map((e) => e.trim()).map((k) => (k === "PLUS" ? "+" : k));
       });
-
       setHotkeyMap(map);
     },
     close: () => setOpen(false),
@@ -61,13 +58,7 @@ export const HotkeyViewer = forwardRef<DialogRef>((props, ref) => {
     const hotkeys = Object.entries(hotkeyMap)
       .map(([func, keys]) => {
         if (!func || !keys?.length) return "";
-
-        const key = keys
-          .map((k) => k.trim())
-          .filter(Boolean)
-          .map((k) => (k === "+" ? "PLUS" : k))
-          .join("+");
-
+        const key = keys.map((k) => k.trim()).filter(Boolean).map((k) => (k === "+" ? "PLUS" : k)).join("+");
         if (!key) return "";
         return `${func},${key}`;
       })
@@ -79,40 +70,51 @@ export const HotkeyViewer = forwardRef<DialogRef>((props, ref) => {
         enable_global_hotkey: enableGlobalHotkey,
       });
       setOpen(false);
+      showNotice("success", t("Saved Successfully"));
     } catch (err: any) {
       showNotice("error", err.toString());
     }
   });
 
   return (
-    <BaseDialog
-      open={open}
-      title={t("Hotkey Setting")}
-      contentSx={{ width: 450, maxHeight: 380 }}
-      okBtn={t("Save")}
-      cancelBtn={t("Cancel")}
-      onClose={() => setOpen(false)}
-      onCancel={() => setOpen(false)}
-      onOk={onSave}
-    >
-      <ItemWrapper style={{ marginBottom: 16 }}>
-        <Typography>{t("Enable Global Hotkey")}</Typography>
-        <Switch
-          edge="end"
-          checked={enableGlobalHotkey}
-          onChange={(e) => setEnableHotkey(e.target.checked)}
-        />
-      </ItemWrapper>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t("Hotkey Setting")}</DialogTitle>
+        </DialogHeader>
 
-      {HOTKEY_FUNC.map((func) => (
-        <ItemWrapper key={func}>
-          <Typography>{t(func)}</Typography>
-          <HotkeyInput
-            value={hotkeyMap[func] ?? []}
-            onChange={(v) => setHotkeyMap((m) => ({ ...m, [func]: v }))}
-          />
-        </ItemWrapper>
-      ))}
-    </BaseDialog>
+        <div className="space-y-4 py-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="enable-global-hotkey" className="font-medium">
+              {t("Enable Global Hotkey")}
+            </Label>
+            <Switch
+              id="enable-global-hotkey"
+              checked={enableGlobalHotkey}
+              onCheckedChange={setEnableHotkey}
+            />
+          </div>
+
+          <Separator />
+
+          {HOTKEY_FUNC.map((func) => (
+            <div key={func} className="flex items-center justify-between">
+              <Label className="text-muted-foreground">{t(func)}</Label>
+              <HotkeyInput
+                value={hotkeyMap[func] ?? []}
+                onChange={(v) => setHotkeyMap((m) => ({ ...m, [func]: v }))}
+              />
+            </div>
+          ))}
+        </div>
+
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">{t("Cancel")}</Button>
+          </DialogClose>
+          <Button type="button" onClick={onSave}>{t("Save")}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 });

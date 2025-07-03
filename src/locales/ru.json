@@ -582,5 +582,11 @@
   "No (IP Banned By Disney+)": "Нет (IP забанен Disney+)",
   "Unsupported Country/Region": "Страна/регион не поддерживается",
   "Failed (Network Connection)": "Ошибка подключения",
-  "Invalid Profile URL": "Недопустимая ссылка на профиль, введите адрес, начинающийся с http:// или https://"
+  "Connected": "Подключено",
+  "Disconnected": "Отключено",
+  "Attention Required": "Требуется внимание",
+  "TUN requires Service Mode or Admin Mode": "TUN режим требует Режима Службы или прав Администратора",
+  "Menu": "Меню",
+  "Proxy enabled": "Прокси включено",
+  "Proxy disabled": "Прокси выключено"
 }

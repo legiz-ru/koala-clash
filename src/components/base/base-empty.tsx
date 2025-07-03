@@ -1,10 +1,10 @@
-import { alpha, Box, Typography } from "@mui/material";
-import { InboxRounded } from "@mui/icons-material";
+import { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { Inbox } from "lucide-react"; // 1. Импортируем иконку из lucide-react
 
 interface Props {
-  text?: React.ReactNode;
-  extra?: React.ReactNode;
+  text?: ReactNode;
+  extra?: ReactNode;
 }
 
 export const BaseEmpty = (props: Props) => {
@@ -12,20 +12,15 @@ export const BaseEmpty = (props: Props) => {
   const { t } = useTranslation();
 
   return (
-    <Box
-      sx={({ palette }) => ({
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        color: alpha(palette.text.secondary, 0.75),
-      })}
-    >
-      <InboxRounded sx={{ fontSize: "4em" }} />
-      <Typography sx={{ fontSize: "1.25em" }}>{t(`${text}`)}</Typography>
+    // 2. Заменяем Box на div и переводим sx в классы Tailwind
+    <div className="flex h-full w-full flex-col items-center justify-center space-y-4 text-muted-foreground/75">
+      {/* 3. Заменяем иконку MUI на lucide-react и задаем размер классами */}
+      <Inbox className="h-20 w-20" />
+
+      {/* 4. Заменяем Typography на p */}
+      <p className="text-xl">{t(`${text}`)}</p>
+
       {extra}
-    </Box>
+    </div>
   );
 };

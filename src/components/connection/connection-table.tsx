@@ -1,139 +1,73 @@
 import dayjs from "dayjs";
-import { useMemo, useState, useEffect } from "react";
-import { DataGrid, GridColDef, GridColumnResizeParams } from "@mui/x-data-grid";
-import { useThemeMode } from "@/services/states";
+import relativeTime from "dayjs/plugin/relativeTime";
+import React, { useMemo, useState, useEffect, RefObject } from "react";
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  Row,
+  ColumnSizingState,
+} from "@tanstack/react-table";
+import { TableVirtuoso, TableComponents } from "react-virtuoso";
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
 import { truncateStr } from "@/utils/truncate-str";
 import parseTraffic from "@/utils/parse-traffic";
 import { t } from "i18next";
+import { cn } from "@root/lib/utils";
 
+dayjs.extend(relativeTime);
+
+// Интерфейс для строки данных, которую использует react-table
+interface ConnectionRow {
+  id: string;
+  host: string;
+  download: number;
+  upload: number;
+  dlSpeed: number;
+  ulSpeed: number;
+  chains: string;
+  rule: string;
+  process: string;
+  time: string;
+  source: string;
+  remoteDestination: string;
+  type: string;
+  connectionData: IConnectionsItem;
+}
+
+// Интерфейс для пропсов, которые компонент получает от родителя
 interface Props {
   connections: IConnectionsItem[];
   onShowDetail: (data: IConnectionsItem) => void;
+  scrollerRef: (element: HTMLElement | Window | null) => void;
 }
 
+
 export const ConnectionTable = (props: Props) => {
-  const { connections, onShowDetail } = props;
-  const mode = useThemeMode();
-  const isDark = mode === "light" ? false : true;
-  const backgroundColor = isDark ? "#282A36" : "#ffffff";
+  const { connections, onShowDetail, scrollerRef } = props;
 
-  const [columnVisible, setColumnVisible] = useState<
-    Partial<Record<keyof IConnectionsItem, boolean>>
-  >({});
-
-  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(
-    () => {
+  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>(() => {
+    try {
       const saved = localStorage.getItem("connection-table-widths");
       return saved ? JSON.parse(saved) : {};
-    },
-  );
-
-  const [columns] = useState<GridColDef[]>([
-    {
-      field: "host",
-      headerName: t("Host"),
-      width: columnWidths["host"] || 220,
-      minWidth: 180,
-    },
-    {
-      field: "download",
-      headerName: t("Downloaded"),
-      width: columnWidths["download"] || 88,
-      align: "right",
-      headerAlign: "right",
-      valueFormatter: (value: number) => parseTraffic(value).join(" "),
-    },
-    {
-      field: "upload",
-      headerName: t("Uploaded"),
-      width: columnWidths["upload"] || 88,
-      align: "right",
-      headerAlign: "right",
-      valueFormatter: (value: number) => parseTraffic(value).join(" "),
-    },
-    {
-      field: "dlSpeed",
-      headerName: t("DL Speed"),
-      width: columnWidths["dlSpeed"] || 88,
-      align: "right",
-      headerAlign: "right",
-      valueFormatter: (value: number) => parseTraffic(value).join(" ") + "/s",
-    },
-    {
-      field: "ulSpeed",
-      headerName: t("UL Speed"),
-      width: columnWidths["ulSpeed"] || 88,
-      align: "right",
-      headerAlign: "right",
-      valueFormatter: (value: number) => parseTraffic(value).join(" ") + "/s",
-    },
-    {
-      field: "chains",
-      headerName: t("Chains"),
-      width: columnWidths["chains"] || 340,
-      minWidth: 180,
-    },
-    {
-      field: "rule",
-      headerName: t("Rule"),
-      width: columnWidths["rule"] || 280,
-      minWidth: 180,
-    },
-    {
-      field: "process",
-      headerName: t("Process"),
-      width: columnWidths["process"] || 220,
-      minWidth: 180,
-    },
-    {
-      field: "time",
-      headerName: t("Time"),
-      width: columnWidths["time"] || 120,
-      minWidth: 100,
-      align: "right",
-      headerAlign: "right",
-      sortComparator: (v1: string, v2: string) =>
-        new Date(v2).getTime() - new Date(v1).getTime(),
-      valueFormatter: (value: number) => dayjs(value).fromNow(),
-    },
-    {
-      field: "source",
-      headerName: t("Source"),
-      width: columnWidths["source"] || 200,
-      minWidth: 130,
-    },
-    {
-      field: "remoteDestination",
-      headerName: t("Destination"),
-      width: columnWidths["remoteDestination"] || 200,
-      minWidth: 130,
-    },
-    {
-      field: "type",
-      headerName: t("Type"),
-      width: columnWidths["type"] || 160,
-      minWidth: 100,
-    },
-  ]);
+    } catch { return {}; }
+  });
 
   useEffect(() => {
-    console.log("Saving column widths:", columnWidths);
-    localStorage.setItem(
-      "connection-table-widths",
-      JSON.stringify(columnWidths),
-    );
-  }, [columnWidths]);
+    localStorage.setItem("connection-table-widths", JSON.stringify(columnSizing));
+  }, [columnSizing]);
 
-  const handleColumnResize = (params: GridColumnResizeParams) => {
-    const { colDef, width } = params;
-    console.log("Column resize:", colDef.field, width);
-    setColumnWidths((prev) => ({
-      ...prev,
-      [colDef.field]: width,
-    }));
-  };
-
-  const connRows = useMemo(() => {
+  const connRows = useMemo((): ConnectionRow[] => {
     return connections.map((each) => {
       const { metadata, rulePayload } = each;
       const chains = [...each.chains].reverse().join(" / ");
@@ -148,11 +82,11 @@ export const ConnectionTable = (props: Props) => {
           : `${metadata.remoteDestination}:${metadata.destinationPort}`,
         download: each.download,
         upload: each.upload,
-        dlSpeed: each.curDownload,
-        ulSpeed: each.curUpload,
+        dlSpeed: each.curDownload ?? 0,
+        ulSpeed: each.curUpload ?? 0,
         chains,
         rule,
-        process: truncateStr(metadata.process || metadata.processPath),
+        process: truncateStr(metadata.process || metadata.processPath) ?? '',
         time: each.start,
         source: `${metadata.sourceIP}:${metadata.sourcePort}`,
         remoteDestination: Destination,
@@ -162,24 +96,97 @@ export const ConnectionTable = (props: Props) => {
     });
   }, [connections]);
 
+  const columns = useMemo<ColumnDef<ConnectionRow>[]>(() => [
+    { accessorKey: "host", header: () => t("Host"), size: columnSizing?.host || 220, minSize: 180 },
+    { accessorKey: "download", header: () => t("Downloaded"), size: columnSizing?.download || 88, cell: ({ getValue }) => <div className="text-right">{parseTraffic(getValue<number>()).join(" ")}</div> },
+    { accessorKey: "upload", header: () => t("Uploaded"), size: columnSizing?.upload || 88, cell: ({ getValue }) => <div className="text-right">{parseTraffic(getValue<number>()).join(" ")}</div> },
+    { accessorKey: "dlSpeed", header: () => t("DL Speed"), size: columnSizing?.dlSpeed || 88, cell: ({ getValue }) => <div className="text-right">{parseTraffic(getValue<number>()).join(" ")}/s</div> },
+    { accessorKey: "ulSpeed", header: () => t("UL Speed"), size: columnSizing?.ulSpeed || 88, cell: ({ getValue }) => <div className="text-right">{parseTraffic(getValue<number>()).join(" ")}/s</div> },
+    { accessorKey: "chains", header: () => t("Chains"), size: columnSizing?.chains || 340, minSize: 180 },
+    { accessorKey: "rule", header: () => t("Rule"), size: columnSizing?.rule || 280, minSize: 180 },
+    { accessorKey: "process", header: () => t("Process"), size: columnSizing?.process || 220, minSize: 180 },
+    { accessorKey: "time", header: () => t("Time"), size: columnSizing?.time || 120, minSize: 100, cell: ({ getValue }) => <div className="text-right">{dayjs(getValue<string>()).fromNow()}</div> },
+    { accessorKey: "source", header: () => t("Source"), size: columnSizing?.source || 200, minSize: 130 },
+    { accessorKey: "remoteDestination", header: () => t("Destination"), size: columnSizing?.remoteDestination || 200, minSize: 130 },
+    { accessorKey: "type", header: () => t("Type"), size: columnSizing?.type || 160, minSize: 100 },
+  ], [columnSizing]);
+
+  const table = useReactTable({
+    data: connRows,
+    columns,
+    state: { columnSizing },
+    onColumnSizingChange: setColumnSizing,
+    getCoreRowModel: getCoreRowModel(),
+    columnResizeMode: 'onChange',
+  });
+
+  const VirtuosoTableComponents = useMemo<TableComponents<Row<ConnectionRow>>>(() => ({
+    // Явно типизируем `ref` для каждого компонента
+    Scroller: React.forwardRef<HTMLDivElement>((props, ref) => (
+        <div className="h-full" {...props} ref={ref} />
+    )),
+    Table: (props) => (
+      <Table {...props} className="w-full border-collapse" />
+    ),
+    TableHead: React.forwardRef<HTMLTableSectionElement>((props, ref) => (
+      <TableHeader {...props} ref={ref} />
+    )),
+    // Явно типизируем пропсы и `ref` для TableRow
+    TableRow: React.forwardRef<HTMLTableRowElement, { item: Row<ConnectionRow> } & React.HTMLAttributes<HTMLTableRowElement>>(
+      ({ item: row, ...props }, ref) => {
+      // `Virtuoso` передает нам готовую строку `row` в пропсе `item`.
+      // Больше не нужно искать ее по индексу!
+      return (
+        <TableRow
+          {...props}
+          ref={ref}
+          data-state={row.getIsSelected() && "selected"}
+          className="cursor-pointer hover:bg-muted/50"
+          onClick={() => onShowDetail(row.original.connectionData)}
+        />
+      );
+    }),
+    TableBody: React.forwardRef<HTMLTableSectionElement>((props, ref) => <TableBody {...props} ref={ref} />)
+  }), []);
+
   return (
-    <DataGrid
-      hideFooter
-      rows={connRows}
-      columns={columns}
-      onRowClick={(e) => onShowDetail(e.row.connectionData)}
-      density="compact"
-      sx={{
-        border: "none",
-        "div:focus": { outline: "none !important" },
-        "& .MuiDataGrid-columnHeader": {
-          userSelect: "none",
-        },
-      }}
-      columnVisibilityModel={columnVisible}
-      onColumnVisibilityModelChange={(e) => setColumnVisible(e)}
-      onColumnResize={handleColumnResize}
-      disableColumnMenu={false}
-    />
+    <div className="h-full rounded-md border overflow-hidden">
+      {connRows.length > 0 ? (
+        <TableVirtuoso
+          scrollerRef={scrollerRef}
+          data={table.getRowModel().rows}
+          components={VirtuosoTableComponents}
+          fixedHeaderContent={() => (
+            table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id} className="hover:bg-transparent bg-background/95 backdrop-blur">
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id} style={{ width: header.getSize() }} className="p-2">
+                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))
+          )}
+          itemContent={(index, row) => (
+            <>
+              {row.getVisibleCells().map((cell) => (
+                <TableCell
+                  key={cell.id}
+                  style={{ width: cell.column.getSize() }}
+                  className="p-2 whitespace-nowrap"
+                  onClick={() => onShowDetail(row.original.connectionData)}
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </TableCell>
+              ))}
+            </>
+          )}
+        />
+      ) : (
+        <div className="flex h-full items-center justify-center">
+          <p>No results.</p>
+        </div>
+      )}
+    </div>
   );
 };

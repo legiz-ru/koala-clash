@@ -1,15 +1,18 @@
 import { ReactNode } from "react";
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  type SxProps,
-  type Theme,
-} from "@mui/material";
-import { LoadingButton } from "@mui/lab";
+import { useTranslation } from "react-i18next";
 
+// --- Новые импорты ---
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react"; // Иконка для спиннера
+
+// --- Интерфейсы ---
 interface Props {
   title: ReactNode;
   open: boolean;
@@ -18,12 +21,12 @@ interface Props {
   disableOk?: boolean;
   disableCancel?: boolean;
   disableFooter?: boolean;
-  contentSx?: SxProps<Theme>;
+  className?: string; // Замена для contentSx, чтобы передавать классы Tailwind
   children?: ReactNode;
   loading?: boolean;
   onOk?: () => void;
   onCancel?: () => void;
-  onClose?: () => void;
+  onClose?: () => void; // onOpenChange в shadcn/ui делает то же самое
 }
 
 export interface DialogRef {
@@ -38,37 +41,44 @@ export const BaseDialog: React.FC<Props> = (props) => {
     children,
     okBtn,
     cancelBtn,
-    contentSx,
+    className,
     disableCancel,
     disableOk,
     disableFooter,
     loading,
+    onClose,
+    onCancel,
+    onOk,
   } = props;
 
+  const { t } = useTranslation();
+
   return (
-    <Dialog open={open} onClose={props.onClose}>
-      <DialogTitle>{title}</DialogTitle>
+    // Управляем состоянием через onOpenChange, которое вызывает onClose
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose?.()}>
+      <DialogContent className={className}>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
 
-      <DialogContent sx={contentSx}>{children}</DialogContent>
+        {children}
 
-      {!disableFooter && (
-        <DialogActions>
-          {!disableCancel && (
-            <Button variant="outlined" onClick={props.onCancel}>
-              {cancelBtn}
-            </Button>
-          )}
-          {!disableOk && (
-            <LoadingButton
-              loading={loading}
-              variant="contained"
-              onClick={props.onOk}
-            >
-              {okBtn}
-            </LoadingButton>
-          )}
-        </DialogActions>
-      )}
+        {!disableFooter && (
+          <DialogFooter>
+            {!disableCancel && (
+              <Button variant="outline" onClick={onCancel} disabled={loading}>
+                {cancelBtn || t("Cancel")}
+              </Button>
+            )}
+            {!disableOk && (
+              <Button disabled={loading || disableOk} onClick={onOk}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {okBtn || t("Confirm")}
+              </Button>
+            )}
+          </DialogFooter>
+        )}
+      </DialogContent>
     </Dialog>
   );
 };

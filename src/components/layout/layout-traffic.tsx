@@ -1,10 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Box, Typography } from "@mui/material";
-import {
-  ArrowDownwardRounded,
-  ArrowUpwardRounded,
-  MemoryRounded,
-} from "@mui/icons-material";
+import { ArrowDown, ArrowUp, Database } from "lucide-react";
 import { useClashInfo } from "@/hooks/use-clash";
 import { useVerge } from "@/hooks/use-verge";
 import { TrafficGraph, type TrafficRef } from "./traffic-graph";
@@ -14,6 +9,7 @@ import useSWRSubscription from "swr/subscription";
 import { createAuthSockette } from "@/utils/websocket";
 import { useTranslation } from "react-i18next";
 import { isDebugEnabled, gc } from "@/services/api";
+import { cn } from "@root/lib/utils";
 
 interface MemoryUsage {
   inuse: number;
@@ -149,77 +145,77 @@ export const LayoutTraffic = () => {
   const [down, downUnit] = parseTraffic(traffic.down);
   const [inuse, inuseUnit] = parseTraffic(memory.inuse);
 
-  const boxStyle: any = {
-    display: "flex",
-    alignItems: "center",
-    whiteSpace: "nowrap",
-  };
-  const iconStyle: any = {
-    sx: { mr: "8px", fontSize: 16 },
-  };
-  const valStyle: any = {
-    component: "span",
-    textAlign: "center",
-    sx: { flex: "1 1 56px", userSelect: "none" },
-  };
-  const unitStyle: any = {
-    component: "span",
-    color: "grey.500",
-    fontSize: "12px",
-    textAlign: "right",
-    sx: { flex: "0 1 27px", userSelect: "none" },
-  };
-
   return (
-    <Box position="relative">
+    <div className="relative">
       {trafficGraph && pageVisible && (
         <div
-          style={{ width: "100%", height: 60, marginBottom: 6 }}
+          className="mb-1.5 h-[60px] w-full"
           onClick={trafficRef.current?.toggleStyle}
         >
           <TrafficGraph ref={trafficRef} />
         </div>
       )}
 
-      <Box display="flex" flexDirection="column" gap={0.75}>
-        <Box title={t("Upload Speed")} {...boxStyle}>
-          <ArrowUpwardRounded
-            {...iconStyle}
-            color={+up > 0 ? "secondary" : "disabled"}
+      <div className="flex flex-col gap-0.5">
+        <div
+          title={t("Upload Speed")}
+          className="flex items-center whitespace-nowrap"
+        >
+          <ArrowUp
+            className={cn(
+              "mr-2 h-4 w-4",
+              +up > 0 ? "text-secondary" : "text-muted-foreground",
+            )}
           />
-          <Typography {...valStyle} color="secondary">
+          <span className="w-[56px] flex-1 select-none text-center text-secondary">
             {up}
-          </Typography>
-          <Typography {...unitStyle}>{upUnit}/s</Typography>
-        </Box>
+          </span>
+          <span className="w-[27px] flex-none select-none text-right text-xs text-muted-foreground">
+            {upUnit}/s
+          </span>
+        </div>
 
-        <Box title={t("Download Speed")} {...boxStyle}>
-          <ArrowDownwardRounded
-            {...iconStyle}
-            color={+down > 0 ? "primary" : "disabled"}
+        <div
+          title={t("Download Speed")}
+          className="flex items-center whitespace-nowrap"
+        >
+          <ArrowDown
+            className={cn(
+              "mr-2 h-4 w-4",
+              +down > 0 ? "text-primary" : "text-muted-foreground",
+            )}
           />
-          <Typography {...valStyle} color="primary">
+          <span className="w-[56px] flex-1 select-none text-center text-primary">
             {down}
-          </Typography>
-          <Typography {...unitStyle}>{downUnit}/s</Typography>
-        </Box>
+          </span>
+          <span className="w-[27px] flex-none select-none text-right text-xs text-muted-foreground">
+            {downUnit}/s
+          </span>
+        </div>
 
         {displayMemory && (
-          <Box
+          <div
             title={t(isDebug ? "Memory Cleanup" : "Memory Usage")}
-            {...boxStyle}
-            sx={{ cursor: isDebug ? "pointer" : "auto" }}
-            color={isDebug ? "success.main" : "disabled"}
+            className={cn(
+              "flex items-center whitespace-nowrap",
+              isDebug
+                ? "cursor-pointer text-green-500"
+                : "text-muted-foreground",
+            )}
             onClick={async () => {
               isDebug && (await gc());
             }}
           >
-            <MemoryRounded {...iconStyle} />
-            <Typography {...valStyle}>{inuse}</Typography>
-            <Typography {...unitStyle}>{inuseUnit}</Typography>
-          </Box>
+            <Database className="mr-2 h-4 w-4" />
+            <span className="w-[56px] flex-1 select-none text-center">
+              {inuse}
+            </span>
+            <span className="w-[27px] flex-none select-none text-right text-xs">
+              {inuseUnit}
+            </span>
+          </div>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };

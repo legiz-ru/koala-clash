@@ -1,44 +1,41 @@
-import { alpha, Box, styled } from "@mui/material";
+import * as React from "react";
+import { cn } from "@root/lib/utils"; // Утилита для объединения классов
 
-export const TestBox = styled(Box)(({ theme, "aria-selected": selected }) => {
-  const { mode, primary, text } = theme.palette;
-  const key = `${mode}-${!!selected}`;
+// Определяем пропсы для нашего компонента.
+// Он принимает все стандартные атрибуты для div, а также `selected`.
+export interface TestBoxProps extends React.HTMLAttributes<HTMLDivElement> {
+  selected?: boolean;
+}
 
-  const backgroundColor =
-    mode === "light" ? alpha(primary.main, 0.05) : alpha(primary.main, 0.08);
+export const TestBox = React.forwardRef<HTMLDivElement, TestBoxProps>(
+  ({ className, selected, children, ...props }, ref) => {
+    return (
+      <div
+        ref={ref}
+        // Устанавливаем data-атрибут в зависимости от пропса `selected`
+        data-selected={selected}
+        // Объединяем классы для создания сложной стилизации
+        className={cn(
+          // --- Базовые стили ---
+          "relative w-full cursor-pointer rounded-lg p-4 shadow-sm transition-all duration-200",
 
-  const color = {
-    "light-true": text.secondary,
-    "light-false": text.secondary,
-    "dark-true": alpha(text.secondary, 0.65),
-    "dark-false": alpha(text.secondary, 0.65),
-  }[key]!;
+          // --- Стили по умолчанию (не выбран) ---
+          "bg-primary/5 text-muted-foreground",
+          "hover:bg-primary/10 hover:shadow-md",
 
-  const h2color = {
-    "light-true": primary.main,
-    "light-false": text.primary,
-    "dark-true": primary.main,
-    "dark-false": text.primary,
-  }[key]!;
+          // --- Стили для ВЫБРАННОГО состояния ---
+          // Используем data-атрибут для стилизации
+          "data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary data-[selected=true]:shadow-lg",
 
-  return {
-    position: "relative",
-    width: "100%",
-    display: "block",
-    cursor: "pointer",
-    textAlign: "left",
-    borderRadius: 8,
-    boxShadow: theme.shadows[1],
-    padding: "8px 16px",
-    boxSizing: "border-box",
-    backgroundColor,
-    color,
-    "& h2": { color: h2color },
-    transition: "background-color 0.3s, box-shadow 0.3s",
-    "&:hover": {
-      backgroundColor:
-        mode === "light" ? alpha(primary.main, 0.1) : alpha(primary.main, 0.15),
-      boxShadow: theme.shadows[2],
-    },
-  };
-});
+          // --- Дополнительные классы от пользователя ---
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </div>
+    );
+  }
+);
+
+TestBox.displayName = "TestBox";

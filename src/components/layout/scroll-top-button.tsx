@@ -1,37 +1,26 @@
-import { IconButton, Fade, SxProps, Theme } from "@mui/material";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import { ArrowUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@root/lib/utils";
 
 interface Props {
   onClick: () => void;
   show: boolean;
-  sx?: SxProps<Theme>;
+  className?: string;
 }
 
-export const ScrollTopButton = ({ onClick, show, sx }: Props) => {
+export const ScrollTopButton = ({ onClick, show, className }: Props) => {
   return (
-    <Fade in={show}>
-      <IconButton
-        onClick={onClick}
-        sx={{
-          position: "absolute",
-          bottom: "20px",
-          right: "20px",
-          backgroundColor: (theme) =>
-            theme.palette.mode === "dark"
-              ? "rgba(255,255,255,0.1)"
-              : "rgba(0,0,0,0.1)",
-          "&:hover": {
-            backgroundColor: (theme) =>
-              theme.palette.mode === "dark"
-                ? "rgba(255,255,255,0.2)"
-                : "rgba(0,0,0,0.2)",
-          },
-          visibility: show ? "visible" : "hidden",
-          ...sx,
-        }}
-      >
-        <KeyboardArrowUpIcon />
-      </IconButton>
-    </Fade>
+    <Button
+      variant="outline"
+      size="icon"
+      onClick={onClick}
+      className={cn(
+        "absolute bottom-5 right-5 h-10 w-10 rounded-full bg-background/50 backdrop-blur-sm transition-opacity hover:bg-background/75",
+        show ? "opacity-100" : "opacity-0 pointer-events-none",
+        className,
+      )}
+    >
+      <ArrowUp className="h-5 w-5" />
+    </Button>
   );
 };

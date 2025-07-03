@@ -1,36 +1,37 @@
-import { Button, ButtonGroup } from "@mui/material";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
+
+// Определяем возможные значения для TypeScript
+type StackMode = "system" | "gvisor" | "mixed";
 
 interface Props {
   value?: string;
-  onChange?: (value: string) => void;
+  onChange?: (value: StackMode) => void;
 }
 
 export const StackModeSwitch = (props: Props) => {
   const { value, onChange } = props;
+  const { t } = useTranslation();
+
+  // Массив с опциями для удобного рендеринга
+  const modes: StackMode[] = ["system", "gvisor", "mixed"];
 
   return (
-    <ButtonGroup size="small" sx={{ my: "4px" }}>
-      <Button
-        variant={value?.toLowerCase() === "system" ? "contained" : "outlined"}
-        onClick={() => onChange?.("system")}
-        sx={{ textTransform: "capitalize" }}
-      >
-        System
-      </Button>
-      <Button
-        variant={value?.toLowerCase() === "gvisor" ? "contained" : "outlined"}
-        onClick={() => onChange?.("gvisor")}
-        sx={{ textTransform: "capitalize" }}
-      >
-        gVisor
-      </Button>
-      <Button
-        variant={value?.toLowerCase() === "mixed" ? "contained" : "outlined"}
-        onClick={() => onChange?.("mixed")}
-        sx={{ textTransform: "capitalize" }}
-      >
-        Mixed
-      </Button>
-    </ButtonGroup>
+    // Используем наш стандартный контейнер для создания группы кнопок
+    <div className="flex items-center rounded-md border bg-muted p-0.5">
+      {modes.map((mode) => (
+        <Button
+          key={mode}
+          // Активная кнопка получает основной цвет темы
+          variant={value?.toLowerCase() === mode ? "default" : "ghost"}
+          onClick={() => onChange?.(mode)}
+          size="sm"
+          className="capitalize px-3 text-xs"
+        >
+          {/* Используем t() для возможной локализации в будущем */}
+          {t(mode)}
+        </Button>
+      ))}
+    </div>
   );
 };

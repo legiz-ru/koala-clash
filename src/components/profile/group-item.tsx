@@ -1,26 +1,34 @@
-import {
-  Box,
-  IconButton,
-  ListItem,
-  ListItemText,
-  alpha,
-  styled,
-} from "@mui/material";
-import { DeleteForeverRounded, UndoRounded } from "@mui/icons-material";
+import { useEffect, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { downloadIconCache } from "@/services/cmds";
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { useEffect, useState } from "react";
+import { cn } from "@root/lib/utils";
+
+// Новые импорты
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { GripVertical, Trash2, Undo2 } from "lucide-react";
+
 interface Props {
   type: "prepend" | "original" | "delete" | "append";
   group: IProxyGroupConfig;
   onDelete: () => void;
 }
 
+// Определяем стили для каждого типа элемента
+const typeStyles = {
+  original: "bg-secondary/50",
+  delete: "bg-destructive/20 text-muted-foreground line-through",
+  prepend: "bg-green-500/20",
+  append: "bg-green-500/20",
+};
+
 export const GroupItem = (props: Props) => {
-  let { type, group, onDelete } = props;
-  const sortable = type === "prepend" || type === "append";
+  const { type, group, onDelete } = props;
+
+  // Drag-and-drop будет работать только для 'prepend' и 'append' типов
+  const isSortable = type === "prepend" || type === "append";
 
   const {
     attributes,
@@ -29,145 +37,73 @@ export const GroupItem = (props: Props) => {
     transform,
     transition,
     isDragging,
-  } = sortable
-    ? useSortable({ id: group.name })
-    : {
-        attributes: {},
-        listeners: {},
-        setNodeRef: null,
-        transform: null,
-        transition: null,
-        isDragging: false,
-      };
+  } = useSortable({ id: group.name, disabled: !isSortable });
 
   const [iconCachePath, setIconCachePath] = useState("");
 
-  useEffect(() => {
-    initIconCachePath();
-  }, [group]);
+  const getFileName = (url: string) => url.substring(url.lastIndexOf("/") + 1);
 
   async function initIconCachePath() {
     if (group.icon && group.icon.trim().startsWith("http")) {
-      const fileName =
-        group.name.replaceAll(" ", "") + "-" + getFileName(group.icon);
+      const fileName = group.name.replaceAll(" ", "") + "-" + getFileName(group.icon);
       const iconPath = await downloadIconCache(group.icon, fileName);
       setIconCachePath(convertFileSrc(iconPath));
     }
   }
 
-  function getFileName(url: string) {
-    return url.substring(url.lastIndexOf("/") + 1);
-  }
+  useEffect(() => { initIconCachePath(); }, [group.icon, group.name]);
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 100 : undefined,
+  };
 
   return (
-    <ListItem
-      dense
-      sx={({ palette }) => ({
-        position: "relative",
-        background:
-          type === "original"
-            ? palette.mode === "dark"
-              ? alpha(palette.background.paper, 0.3)
-              : alpha(palette.grey[400], 0.3)
-            : type === "delete"
-              ? alpha(palette.error.main, 0.3)
-              : alpha(palette.success.main, 0.3),
-        height: "100%",
-        margin: "8px 0",
-        borderRadius: "8px",
-        transform: CSS.Transform.toString(transform),
-        transition,
-        zIndex: isDragging ? "calc(infinity)" : undefined,
-      })}
+    <div
+      ref={setNodeRef}
+      style={style}
+      // Применяем стили в зависимости от типа
+      className={cn(
+        "flex items-center p-2 mb-1 rounded-lg transition-shadow",
+        typeStyles[type],
+        isDragging && "shadow-lg"
+      )}
     >
-      {group.icon && group.icon?.trim().startsWith("http") && (
-        <img
-          src={iconCachePath === "" ? group.icon : iconCachePath}
-          width="32px"
-          style={{
-            marginRight: "12px",
-            borderRadius: "6px",
-          }}
-        />
-      )}
-      {group.icon && group.icon?.trim().startsWith("data") && (
-        <img
-          src={group.icon}
-          width="32px"
-          style={{
-            marginRight: "12px",
-            borderRadius: "6px",
-          }}
-        />
-      )}
-      {group.icon && group.icon?.trim().startsWith("<svg") && (
-        <img
-          src={`data:image/svg+xml;base64,${btoa(group.icon ?? "")}`}
-          width="32px"
-        />
-      )}
-      <ListItemText
+      {/* Ручка для перетаскивания */}
+      <div
         {...attributes}
         {...listeners}
-        ref={setNodeRef}
-        sx={{ cursor: sortable ? "move" : "" }}
-        primary={
-          <StyledPrimary
-            sx={{ textDecoration: type === "delete" ? "line-through" : "" }}
-          >
-            {group.name}
-          </StyledPrimary>
-        }
-        secondary={
-          <ListItemTextChild
-            sx={{
-              overflow: "hidden",
-              display: "flex",
-              alignItems: "center",
-              pt: "2px",
-            }}
-          >
-            <Box sx={{ marginTop: "2px" }}>
-              <StyledTypeBox>{group.type}</StyledTypeBox>
-            </Box>
-          </ListItemTextChild>
-        }
-        secondaryTypographyProps={{
-          sx: {
-            display: "flex",
-            alignItems: "center",
-            color: "#ccc",
-          },
-        }}
-      />
-      <IconButton onClick={onDelete}>
-        {type === "delete" ? <UndoRounded /> : <DeleteForeverRounded />}
-      </IconButton>
-    </ListItem>
+        className={cn("p-1 text-muted-foreground rounded-sm", isSortable ? "cursor-move hover:bg-accent" : "cursor-default")}
+      >
+        <GripVertical className="h-5 w-5" />
+      </div>
+
+      {/* Иконка группы */}
+      {group.icon && (
+        <img
+          src={group.icon.startsWith('data') ? group.icon : group.icon.startsWith('<svg') ? `data:image/svg+xml;base64,${btoa(group.icon ?? "")}` : (iconCachePath || group.icon)}
+          className="w-8 h-8 mx-2 rounded-md"
+          alt={group.name}
+        />
+      )}
+
+      {/* Название и тип группы */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold truncate">{group.name}</p>
+        <div className="flex items-center text-xs text-muted-foreground mt-1">
+          <Badge variant="outline">{group.type}</Badge>
+        </div>
+      </div>
+
+      {/* Кнопка действия */}
+      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onDelete}>
+        {type === "delete" ? (
+          <Undo2 className="h-4 w-4" />
+        ) : (
+          <Trash2 className="h-4 w-4 text-destructive" />
+        )}
+      </Button>
+    </div>
   );
 };
-
-const StyledPrimary = styled("div")`
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.5;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-const ListItemTextChild = styled("span")`
-  display: block;
-`;
-
-const StyledTypeBox = styled(ListItemTextChild)(({ theme }) => ({
-  display: "inline-block",
-  border: "1px solid #ccc",
-  borderColor: alpha(theme.palette.primary.main, 0.5),
-  color: alpha(theme.palette.primary.main, 0.8),
-  borderRadius: 4,
-  fontSize: 10,
-  padding: "0 4px",
-  lineHeight: 1.5,
-  marginRight: "8px",
-}));

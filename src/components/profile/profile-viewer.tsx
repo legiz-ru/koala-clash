@@ -1,29 +1,42 @@
-import {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useLockFn } from "ahooks";
 import { useTranslation } from "react-i18next";
-import { useForm, Controller } from "react-hook-form";
-import {
-  Box,
-  FormControl,
-  InputAdornment,
-  InputLabel,
-  MenuItem,
-  Select,
-  styled,
-  TextField,
-} from "@mui/material";
+import { useForm } from "react-hook-form";
 import { createProfile, patchProfile } from "@/services/cmds";
-import { BaseDialog, Switch } from "@/components/base";
-import { version } from "@root/package.json";
-import { FileInput } from "./file-input";
 import { useProfiles } from "@/hooks/use-profiles";
 import { showNotice } from "@/services/noticeService";
+import { version } from "@root/package.json";
+
+// --- Новые импорты ---
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2 } from "lucide-react";
+
 
 interface Props {
   onChange: (isActivating?: boolean) => void;
@@ -34,361 +47,253 @@ export interface ProfileViewerRef {
   edit: (item: IProfileItem) => void;
 }
 
-// create or edit the profile
-// remote / local
-export const ProfileViewer = forwardRef<ProfileViewerRef, Props>(
-  (props, ref) => {
-    const { t } = useTranslation();
-    const [open, setOpen] = useState(false);
-    const [openType, setOpenType] = useState<"new" | "edit">("new");
-    const [loading, setLoading] = useState(false);
-    const { profiles } = useProfiles();
+export const ProfileViewer = forwardRef<ProfileViewerRef, Props>((props, ref) => {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [openType, setOpenType] = useState<"new" | "edit">("new");
+  const [loading, setLoading] = useState(false);
+  const { profiles } = useProfiles();
+  const fileDataRef = useRef<string | null>(null);
 
-    // file input
-    const fileDataRef = useRef<string | null>(null);
-
-    const { control, watch, register, ...formIns } = useForm<IProfileItem>({
-      defaultValues: {
-        type: "remote",
-        name: "",
-        desc: "",
-        url: "",
-        option: {
-          with_proxy: false,
-          self_proxy: false,
-        },
+  const form = useForm<IProfileItem>({
+    defaultValues: {
+      type: "remote",
+      name: "",
+      desc: "",
+      url: "",
+      option: {
+        with_proxy: false,
+        self_proxy: false,
+        danger_accept_invalid_certs: false,
       },
-    });
+    },
+  });
 
-    useImperativeHandle(ref, () => ({
-      create: () => {
-        setOpenType("new");
-        setOpen(true);
-      },
-      edit: (item) => {
-        if (item) {
-          Object.entries(item).forEach(([key, value]) => {
-            formIns.setValue(key as any, value);
-          });
+  const { control, watch, handleSubmit, reset, setValue } = form;
+
+  useImperativeHandle(ref, () => ({
+    create: () => {
+      reset({ type: "remote", name: "", desc: "", url: "", option: { with_proxy: false, self_proxy: false, danger_accept_invalid_certs: false } });
+      fileDataRef.current = null;
+      setOpenType("new");
+      setOpen(true);
+    },
+    edit: (item) => {
+      reset(item);
+      fileDataRef.current = null;
+      setOpenType("edit");
+      setOpen(true);
+    },
+  }));
+
+  const selfProxy = watch("option.self_proxy");
+  const withProxy = watch("option.with_proxy");
+
+  useEffect(() => {
+    if (selfProxy) setValue("option.with_proxy", false);
+  }, [selfProxy, setValue]);
+
+  useEffect(() => {
+    if (withProxy) setValue("option.self_proxy", false);
+  }, [withProxy, setValue]);
+
+  const handleOk = useLockFn(
+    handleSubmit(async (form) => {
+      if (form.option?.timeout_seconds) {
+        form.option.timeout_seconds = +form.option.timeout_seconds;
+      }
+
+      setLoading(true);
+      try {
+        if (!form.type) throw new Error("`Type` should not be null");
+        if (form.type === "remote" && !form.url) {
+          throw new Error("The URL should not be null");
         }
-        setOpenType("edit");
-        setOpen(true);
-      },
-    }));
 
-    const selfProxy = watch("option.self_proxy");
-    const withProxy = watch("option.with_proxy");
-
-    useEffect(() => {
-      if (selfProxy) formIns.setValue("option.with_proxy", false);
-    }, [selfProxy]);
-
-    useEffect(() => {
-      if (withProxy) formIns.setValue("option.self_proxy", false);
-    }, [withProxy]);
-
-    const handleOk = useLockFn(
-      formIns.handleSubmit(async (form) => {
-        if (form.option?.timeout_seconds) {
-          form.option.timeout_seconds = +form.option.timeout_seconds;
+        if (form.option?.update_interval) {
+          form.option.update_interval = +form.option.update_interval;
+        } else {
+          delete form.option?.update_interval;
+        }
+        if (form.option?.user_agent === "") {
+          delete form.option.user_agent;
         }
 
-        setLoading(true);
-        try {
-          // 基本验证
-          if (!form.type) throw new Error("`Type` should not be null");
-          if (form.type === "remote" && !form.url) {
-            throw new Error("The URL should not be null");
-          }
+        const name = form.name || `${form.type} file`;
+        const item = { ...form, name };
+        const isRemote = form.type === "remote";
+        const isUpdate = openType === "edit";
+        const isActivating = isUpdate && form.uid === (profiles?.current ?? "");
+        const originalOptions = { with_proxy: form.option?.with_proxy, self_proxy: form.option?.self_proxy };
 
-          // 处理表单数据
-          if (form.option?.update_interval) {
-            form.option.update_interval = +form.option.update_interval;
+        if (!isRemote) {
+          if (openType === "new") {
+            await createProfile(item, fileDataRef.current);
           } else {
-            delete form.option?.update_interval;
+            if (!form.uid) throw new Error("UID not found");
+            await patchProfile(form.uid, item);
           }
-          if (form.option?.user_agent === "") {
-            delete form.option.user_agent;
-          }
-
-          const name = form.name || `${form.type} file`;
-          const item = { ...form, name };
-          const isRemote = form.type === "remote";
-          const isUpdate = openType === "edit";
-
-          // 判断是否是当前激活的配置
-          const isActivating =
-            isUpdate && form.uid === (profiles?.current ?? "");
-
-          // 保存原始代理设置以便回退成功后恢复
-          const originalOptions = {
-            with_proxy: form.option?.with_proxy,
-            self_proxy: form.option?.self_proxy,
-          };
-
-          // 执行创建或更新操作，本地配置不需要回退机制
-          if (!isRemote) {
+        } else {
+          try {
             if (openType === "new") {
               await createProfile(item, fileDataRef.current);
             } else {
               if (!form.uid) throw new Error("UID not found");
               await patchProfile(form.uid, item);
             }
-          } else {
-            // 远程配置使用回退机制
-            try {
-              // 尝试正常操作
-              if (openType === "new") {
-                await createProfile(item, fileDataRef.current);
-              } else {
-                if (!form.uid) throw new Error("UID not found");
-                await patchProfile(form.uid, item);
-              }
-            } catch (err) {
-              // 首次创建/更新失败，尝试使用自身代理
-              showNotice(
-                "info",
-                t("Profile creation failed, retrying with Clash proxy..."),
-              );
-
-              // 使用自身代理的配置
-              const retryItem = {
-                ...item,
-                option: {
-                  ...item.option,
-                  with_proxy: false,
-                  self_proxy: true,
-                },
-              };
-
-              // 使用自身代理再次尝试
-              if (openType === "new") {
-                await createProfile(retryItem, fileDataRef.current);
-              } else {
-                if (!form.uid) throw new Error("UID not found");
-                await patchProfile(form.uid, retryItem);
-
-                // 编辑模式下恢复原始代理设置
-                await patchProfile(form.uid, { option: originalOptions });
-              }
-
-              showNotice(
-                "success",
-                t("Profile creation succeeded with Clash proxy"),
-              );
+          } catch (err) {
+            showNotice("info", t("Profile creation failed, retrying with Clash proxy..."));
+            const retryItem = { ...item, option: { ...item.option, with_proxy: false, self_proxy: true } };
+            if (openType === "new") {
+              await createProfile(retryItem, fileDataRef.current);
+            } else {
+              if (!form.uid) throw new Error("UID not found");
+              await patchProfile(form.uid, retryItem);
+              await patchProfile(form.uid, { option: originalOptions });
             }
+            showNotice("success", t("Profile creation succeeded with Clash proxy"));
           }
-
-          // 成功后的操作
-          setOpen(false);
-          setTimeout(() => formIns.reset(), 500);
-          fileDataRef.current = null;
-
-          // 优化：UI先关闭，异步通知父组件
-          setTimeout(() => {
-            props.onChange(isActivating);
-          }, 0);
-        } catch (err: any) {
-          showNotice("error", err.message || err.toString());
-        } finally {
-          setLoading(false);
         }
-      }),
-    );
 
-    const handleClose = () => {
-      try {
         setOpen(false);
-        fileDataRef.current = null;
-        setTimeout(() => formIns.reset(), 500);
-      } catch {}
-    };
+        props.onChange(isActivating);
+      } catch (err: any) {
+        showNotice("error", err.message || err.toString());
+      } finally {
+        setLoading(false);
+      }
+    }),
+  );
 
-    const text = {
-      fullWidth: true,
-      size: "small",
-      margin: "normal",
-      variant: "outlined",
-      autoComplete: "off",
-      autoCorrect: "off",
-    } as const;
+  const formType = watch("type");
+  const isRemote = formType === "remote";
+  const isLocal = formType === "local";
 
-    const formType = watch("type");
-    const isRemote = formType === "remote";
-    const isLocal = formType === "local";
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>{openType === "new" ? t("Create Profile") : t("Edit Profile")}</DialogTitle>
+        </DialogHeader>
 
-    return (
-      <BaseDialog
-        open={open}
-        title={openType === "new" ? t("Create Profile") : t("Edit Profile")}
-        contentSx={{ width: 375, pb: 0, maxHeight: "80%" }}
-        okBtn={t("Save")}
-        cancelBtn={t("Cancel")}
-        onClose={handleClose}
-        onCancel={handleClose}
-        onOk={handleOk}
-        loading={loading}
-      >
-        <Controller
-          name="type"
-          control={control}
-          render={({ field }) => (
-            <FormControl size="small" fullWidth sx={{ mt: 1, mb: 1 }}>
-              <InputLabel>{t("Type")}</InputLabel>
-              <Select {...field} autoFocus label={t("Type")}>
-                <MenuItem value="remote">Remote</MenuItem>
-                <MenuItem value="local">Local</MenuItem>
-              </Select>
-            </FormControl>
-          )}
-        />
+        <Form {...form}>
+          <form onSubmit={e => { e.preventDefault(); handleOk(); }} className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
+            <FormField control={control} name="type" render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("Type")}</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl><SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger></FormControl>
+                  <SelectContent>
+                    <SelectItem value="remote">Remote</SelectItem>
+                    <SelectItem value="local">Local</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}/>
 
-        <Controller
-          name="name"
-          control={control}
-          render={({ field }) => (
-            <TextField {...text} {...field} label={t("Name")} />
-          )}
-        />
+            <FormField control={control} name="name" render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("Name")}</FormLabel>
+                <FormControl><Input placeholder={t("Profile Name")} {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )}/>
 
-        <Controller
-          name="desc"
-          control={control}
-          render={({ field }) => (
-            <TextField {...text} {...field} label={t("Descriptions")} />
-          )}
-        />
+            <FormField control={control} name="desc" render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("Descriptions")}</FormLabel>
+                <FormControl><Input placeholder={t("Profile Description")} {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )}/>
 
-        {isRemote && (
-          <>
-            <Controller
-              name="url"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...text}
-                  {...field}
-                  multiline
-                  label={t("Subscription URL")}
-                />
-              )}
-            />
-
-            <Controller
-              name="option.user_agent"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...text}
-                  {...field}
-                  placeholder={`clash-verge/v${version}`}
-                  label="User Agent"
-                />
-              )}
-            />
-
-            <Controller
-              name="option.timeout_seconds"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...text}
-                  {...field}
-                  type="number"
-                  placeholder="60"
-                  label={t("HTTP Request Timeout")}
-                  slotProps={{
-                    input: {
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          {t("seconds")}
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                />
-              )}
-            />
-          </>
-        )}
-
-        {(isRemote || isLocal) && (
-          <Controller
-            name="option.update_interval"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...text}
-                {...field}
-                type="number"
-                label={t("Update Interval")}
-                slotProps={{
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        {t("mins")}
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
+            {isRemote && (
+              <>
+                <FormField control={control} name="url" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("Subscription URL")}</FormLabel>
+                    <FormControl><Textarea placeholder="https://example.com/profile.yaml" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}/>
+                <FormField control={control} name="option.user_agent" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>User Agent</FormLabel>
+                    <FormControl><Input placeholder={`clash-verge/v${version}`} {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}/>
+                <FormField control={control} name="option.update_interval" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("Update Interval")}</FormLabel>
+                    <FormControl>
+                      <div className="flex items-center gap-2">
+                        <Input type="number" placeholder="1440" {...field} onChange={event => field.onChange(parseInt(event.target.value, 10) || 0)} />
+                        <span className="text-sm text-muted-foreground">{t("mins")}</span>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}/>
+              </>
             )}
-          />
-        )}
 
-        {isLocal && openType === "new" && (
-          <FileInput
-            onChange={(file, val) => {
-              formIns.setValue("name", formIns.getValues("name") || file.name);
-              fileDataRef.current = val;
-            }}
-          />
-        )}
+            {isLocal && openType === "new" && (
+                <FormItem>
+                    <FormLabel>{t("File")}</FormLabel>
+                    <FormControl>
+                        <Input type="file" accept=".yml,.yaml" onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                                setValue("name", form.getValues("name") || file.name);
+                                const reader = new FileReader();
+                                reader.onload = (event) => {
+                                    fileDataRef.current = event.target?.result as string;
+                                };
+                                reader.readAsText(file);
+                            }
+                        }} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+            )}
 
-        {isRemote && (
-          <>
-            <Controller
-              name="option.with_proxy"
-              control={control}
-              render={({ field }) => (
-                <StyledBox>
-                  <InputLabel>{t("Use System Proxy")}</InputLabel>
-                  <Switch checked={field.value} {...field} color="primary" />
-                </StyledBox>
-              )}
-            />
+            {isRemote && (
+              <div className="space-y-4 rounded-md border p-4">
+                  <FormField control={control} name="option.with_proxy" render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between">
+                          <FormLabel>{t("Use System Proxy")}</FormLabel>
+                          <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                      </FormItem>
+                  )}/>
+                  <FormField control={control} name="option.self_proxy" render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between">
+                          <FormLabel>{t("Use Clash Proxy")}</FormLabel>
+                          <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                      </FormItem>
+                  )}/>
+                  <FormField control={control} name="option.danger_accept_invalid_certs" render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between">
+                          <FormLabel className="text-destructive">{t("Accept Invalid Certs (Danger)")}</FormLabel>
+                          <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                      </FormItem>
+                  )}/>
+              </div>
+            )}
 
-            <Controller
-              name="option.self_proxy"
-              control={control}
-              render={({ field }) => (
-                <StyledBox>
-                  <InputLabel>{t("Use Clash Proxy")}</InputLabel>
-                  <Switch checked={field.value} {...field} color="primary" />
-                </StyledBox>
-              )}
-            />
+            <button type="submit" className="hidden" />
+          </form>
+        </Form>
 
-            <Controller
-              name="option.danger_accept_invalid_certs"
-              control={control}
-              render={({ field }) => (
-                <StyledBox>
-                  <InputLabel>{t("Accept Invalid Certs (Danger)")}</InputLabel>
-                  <Switch checked={field.value} {...field} color="primary" />
-                </StyledBox>
-              )}
-            />
-          </>
-        )}
-      </BaseDialog>
-    );
-  },
-);
-
-const StyledBox = styled(Box)(() => ({
-  margin: "8px 0 8px 8px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-}));
+        <DialogFooter>
+            <DialogClose asChild><Button type="button" variant="outline">{t("Cancel")}</Button></DialogClose>
+            <Button type="button" onClick={handleOk} disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t("Save")}
+            </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+});

@@ -1,12 +1,32 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { useLockFn } from "ahooks";
 import { useTranslation } from "react-i18next";
-import { useForm, Controller } from "react-hook-form";
-import { TextField } from "@mui/material";
+import { useForm } from "react-hook-form";
 import { useVerge } from "@/hooks/use-verge";
-import { BaseDialog } from "@/components/base";
 import { nanoid } from "nanoid";
 import { showNotice } from "@/services/noticeService";
+
+// Новые импорты из shadcn/ui и lucide-react
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2 } from "lucide-react";
 
 interface Props {
   onChange: (uid: string, patch?: Partial<IVergeTestItem>) => void;
@@ -17,7 +37,6 @@ export interface TestViewerRef {
   edit: (item: IVergeTestItem) => void;
 }
 
-// create or edit the test item
 export const TestViewer = forwardRef<TestViewerRef, Props>((props, ref) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -25,146 +44,126 @@ export const TestViewer = forwardRef<TestViewerRef, Props>((props, ref) => {
   const [loading, setLoading] = useState(false);
   const { verge, patchVerge } = useVerge();
   const testList = verge?.test_list ?? [];
-  const { control, watch, register, ...formIns } = useForm<IVergeTestItem>({
-    defaultValues: {
-      name: "",
-      icon: "",
-      url: "",
-    },
+
+  const form = useForm<IVergeTestItem>({
+    defaultValues: { name: "", icon: "", url: "" },
   });
+  const { control, handleSubmit, reset, setValue } = form;
 
   const patchTestList = async (uid: string, patch: Partial<IVergeTestItem>) => {
-    const newList = testList.map((x) => {
-      if (x.uid === uid) {
-        return { ...x, ...patch };
-      }
-      return x;
-    });
+    const newList = testList.map((x) => (x.uid === uid ? { ...x, ...patch } : x));
     await patchVerge({ test_list: newList });
   };
 
   useImperativeHandle(ref, () => ({
     create: () => {
+      reset({ name: "", icon: "", url: "" });
       setOpenType("new");
       setOpen(true);
     },
     edit: (item) => {
-      if (item) {
-        Object.entries(item).forEach(([key, value]) => {
-          formIns.setValue(key as any, value);
-        });
-      }
+      reset(item);
       setOpenType("edit");
       setOpen(true);
     },
   }));
 
   const handleOk = useLockFn(
-    formIns.handleSubmit(async (form) => {
+    handleSubmit(async (formData) => {
       setLoading(true);
       try {
-        if (!form.name) throw new Error("`Name` should not be null");
-        if (!form.url) throw new Error("`Url` should not be null");
+        if (!formData.name) throw new Error("`Name` should not be null");
+        if (!formData.url) throw new Error("`Url` should not be null");
 
-        let newList;
-        let uid;
+        if (formData.icon && formData.icon.startsWith("<svg")) {
+          // --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
+          // Удаляем комментарии из SVG, используя правильное регулярное выражение
+          formData.icon = formData.icon.replace(/<!--[\s\S]*?-->/g, "");
+          // --- КОНЕЦ ИСПРАВЛЕНИЯ ---
 
-        if (form.icon && form.icon.startsWith("<svg")) {
-          // 移除 icon 中的注释
-          if (form.icon) {
-            form.icon = form.icon.replace(/<!--[\s\S]*?-->/g, "");
-          }
-          const doc = new DOMParser().parseFromString(
-            form.icon,
-            "image/svg+xml",
-          );
+          const doc = new DOMParser().parseFromString(formData.icon, "image/svg+xml");
           if (doc.querySelector("parsererror")) {
             throw new Error("`Icon`svg format error");
           }
         }
 
         if (openType === "new") {
-          uid = nanoid();
-          const item = { ...form, uid };
-          newList = [...testList, item];
+          const uid = nanoid();
+          const item = { ...formData, uid };
+          const newList = [...testList, item];
           await patchVerge({ test_list: newList });
           props.onChange(uid);
         } else {
-          if (!form.uid) throw new Error("UID not found");
-          uid = form.uid;
-
-          await patchTestList(uid, form);
-          props.onChange(uid, form);
+          if (!formData.uid) throw new Error("UID not found");
+          await patchTestList(formData.uid, formData);
+          props.onChange(formData.uid, formData);
         }
+
         setOpen(false);
-        setLoading(false);
-        setTimeout(() => formIns.reset(), 500);
       } catch (err: any) {
         showNotice("error", err.message || err.toString());
+      } finally {
         setLoading(false);
       }
     }),
   );
 
-  const handleClose = () => {
-    setOpen(false);
-    setTimeout(() => formIns.reset(), 500);
-  };
-
-  const text = {
-    fullWidth: true,
-    size: "small",
-    margin: "normal",
-    variant: "outlined",
-    autoComplete: "off",
-    autoCorrect: "off",
-  } as const;
-
   return (
-    <BaseDialog
-      open={open}
-      title={openType === "new" ? t("Create Test") : t("Edit Test")}
-      contentSx={{ width: 375, pb: 0, maxHeight: "80%" }}
-      okBtn={t("Save")}
-      cancelBtn={t("Cancel")}
-      onClose={handleClose}
-      onCancel={handleClose}
-      onOk={handleOk}
-      loading={loading}
-    >
-      <Controller
-        name="name"
-        control={control}
-        render={({ field }) => (
-          <TextField {...text} {...field} label={t("Name")} />
-        )}
-      />
-      <Controller
-        name="icon"
-        control={control}
-        render={({ field }) => (
-          <TextField
-            {...text}
-            {...field}
-            multiline
-            maxRows={5}
-            label={t("Icon")}
-          />
-        )}
-      />
-      <Controller
-        name="url"
-        control={control}
-        render={({ field }) => (
-          <TextField
-            {...text}
-            {...field}
-            multiline
-            maxRows={3}
-            label={t("Test URL")}
-          />
-        )}
-      />
-    </BaseDialog>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{openType === "new" ? t("Create Test") : t("Edit Test")}</DialogTitle>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={handleOk} className="space-y-4">
+            <FormField
+              control={control}
+              name="name"
+              rules={{ required: true }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("Name")}</FormLabel>
+                  <FormControl><Input {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={control}
+              name="icon"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("Icon")}</FormLabel>
+                  <FormControl><Textarea {...field} rows={4} placeholder="<svg>...</svg> or http(s)://..." /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={control}
+              name="url"
+              rules={{ required: true }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("Test URL")}</FormLabel>
+                  <FormControl><Textarea {...field} rows={3} placeholder="https://www.google.com" /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <button type="submit" className="hidden" />
+          </form>
+        </Form>
+
+        <DialogFooter>
+            <DialogClose asChild><Button type="button" variant="outline">{t("Cancel")}</Button></DialogClose>
+            <Button type="button" onClick={handleOk} disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t("Save")}
+            </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 });

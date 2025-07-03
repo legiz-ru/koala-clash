@@ -1,24 +1,52 @@
+import * as React from "react";
+import { cn } from "@root/lib/utils";
+
+// 1. Убираем импорт несуществующего типа ButtonProps
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
-  IconButton,
-  IconButtonProps,
-  SvgIconProps,
-} from "@mui/material";
-import { InfoRounded } from "@mui/icons-material";
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 
-interface Props extends IconButtonProps {
-  title?: string;
-  icon?: React.ElementType<SvgIconProps>;
+// 2. Определяем наши пропсы, расширяя стандартный тип для кнопок из React
+export interface TooltipIconProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  tooltip: React.ReactNode;
+  icon?: React.ReactNode;
 }
 
-export const TooltipIcon: React.FC<Props> = (props: Props) => {
-  const { title = "", icon: Icon = InfoRounded, ...restProps } = props;
+export const TooltipIcon = React.forwardRef<
+  HTMLButtonElement,
+  TooltipIconProps
+>(({ tooltip, icon, className, ...props }, ref) => {
+  const displayIcon = icon || <Info className="h-4 w-4" />;
 
   return (
-    <Tooltip title={title} placement="top">
-      <IconButton color="inherit" size="small" {...restProps}>
-        <Icon fontSize="inherit" style={{ cursor: "pointer", opacity: 0.75 }} />
-      </IconButton>
-    </Tooltip>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            ref={ref}
+            variant="ghost"
+            size="icon"
+            className={cn("h-7 w-7 text-muted-foreground", className)}
+            {...props}
+          >
+            {displayIcon}
+            <span className="sr-only">
+              {typeof tooltip === "string" ? tooltip : "Icon button"}
+            </span>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          {typeof tooltip === "string" ? <p>{tooltip}</p> : tooltip}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
-};
+});
+
+TooltipIcon.displayName = "TooltipIcon";

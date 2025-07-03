@@ -1,20 +1,6 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { useLockFn } from "ahooks";
 import { useTranslation } from "react-i18next";
-import {
-  Button,
-  ButtonGroup,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-} from "@mui/material";
-import {
-  FormatPaintRounded,
-  OpenInFullRounded,
-  CloseFullscreenRounded,
-} from "@mui/icons-material";
 import { useThemeMode } from "@/services/states";
 import { nanoid } from "nanoid";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
@@ -22,6 +8,7 @@ import { showNotice } from "@/services/noticeService";
 import getSystem from "@/utils/get-system";
 import debounce from "@/utils/debounce";
 
+// --- Новые импорты ---
 import * as monaco from "monaco-editor";
 import MonacoEditor from "react-monaco-editor";
 import { configureMonacoYaml } from "monaco-yaml";
@@ -29,8 +16,26 @@ import { type JSONSchema7 } from "json-schema";
 import metaSchema from "meta-json-schema/schemas/meta-json-schema.json";
 import mergeSchema from "meta-json-schema/schemas/clash-verge-merge-json-schema.json";
 import pac from "types-pac/pac.d.ts?raw";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Wand2, Maximize, Minimize } from "lucide-react";
+
 const appWindow = getCurrentWebviewWindow();
 
+// --- Типы и интерфейсы (без изменений) ---
 type Language = "yaml" | "javascript" | "css";
 type Schema<T extends Language> = LanguageSchemaMap[T];
 interface LanguageSchemaMap {
@@ -51,11 +56,11 @@ interface Props<T extends Language> {
   onClose: () => void;
 }
 
+// --- Логика инициализации Monaco (без изменений) ---
 let initialized = false;
 const monacoInitialization = () => {
   if (initialized) return;
 
-  // configure yaml worker
   configureMonacoYaml(monaco, {
     validate: true,
     enableSchemaRequest: true,
@@ -74,7 +79,6 @@ const monacoInitialization = () => {
       },
     ],
   });
-  // configure PAC definition
   monaco.languages.typescript.javascriptDefaults.addExtraLib(pac, "pac.d.ts");
 
   initialized = true;
@@ -170,85 +174,97 @@ export const EditorViewer = <T extends Language>(props: Props<T>) => {
   }, []);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xl" fullWidth>
-      <DialogTitle>{title}</DialogTitle>
-
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
-        sx={{
-          width: "auto",
-          height: "calc(100vh - 185px)",
-          overflow: "hidden",
-        }}
+        className="h-[95vh] flex flex-col p-0"
+        style={{ width: "95vw", maxWidth: "95vw" }}
       >
-        <MonacoEditor
-          language={language}
-          theme={themeMode === "light" ? "vs" : "vs-dark"}
-          options={{
-            tabSize: ["yaml", "javascript", "css"].includes(language) ? 2 : 4, // 根据语言类型设置缩进大小
-            minimap: {
-              enabled: document.documentElement.clientWidth >= 1500, // 超过一定宽度显示minimap滚动条
-            },
-            mouseWheelZoom: true, // 按住Ctrl滚轮调节缩放比例
-            readOnly: readOnly, // 只读模式
-            readOnlyMessage: { value: t("ReadOnlyMessage") }, // 只读模式尝试编辑时的提示信息
-            renderValidationDecorations: "on", // 只读模式下显示校验信息
-            quickSuggestions: {
-              strings: true, // 字符串类型的建议
-              comments: true, // 注释类型的建议
-              other: true, // 其他类型的建议
-            },
-            padding: {
-              top: 33, // 顶部padding防止遮挡snippets
-            },
-            fontFamily: `Fira Code, JetBrains Mono, Roboto Mono, "Source Code Pro", Consolas, Menlo, Monaco, monospace, "Courier New", "Apple Color Emoji"${
-              getSystem() === "windows" ? ", twemoji mozilla" : ""
-            }`,
-            fontLigatures: false, // 连字符
-            smoothScrolling: true, // 平滑滚动
-          }}
-          editorWillMount={editorWillMount}
-          editorDidMount={editorDidMount}
-          onChange={handleChange}
-        />
+        <DialogHeader className="p-6 pb-2">
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
 
-        <ButtonGroup
-          variant="contained"
-          sx={{ position: "absolute", left: "14px", bottom: "8px" }}
-        >
-          <IconButton
-            size="medium"
-            color="inherit"
-            sx={{ display: readOnly ? "none" : "" }}
-            title={t("Format document")}
-            onClick={() =>
-              editorRef.current
-                ?.getAction("editor.action.formatDocument")
-                ?.run()
-            }
-          >
-            <FormatPaintRounded fontSize="inherit" />
-          </IconButton>
-          <IconButton
-            size="medium"
-            color="inherit"
-            title={t(isMaximized ? "Minimize" : "Maximize")}
-            onClick={() => appWindow.toggleMaximize().then(editorResize)}
-          >
-            {isMaximized ? <CloseFullscreenRounded /> : <OpenInFullRounded />}
-          </IconButton>
-        </ButtonGroup>
+        <div className="flex-1 min-h-0 relative px-6">
+          <MonacoEditor
+            height="100%"
+            language={language}
+            theme={themeMode === "light" ? "vs" : "vs-dark"}
+            options={{
+              tabSize: 2,
+              minimap: {
+                enabled: document.documentElement.clientWidth >= 1500,
+              },
+              mouseWheelZoom: true,
+              readOnly: readOnly,
+              quickSuggestions: { strings: true, comments: true, other: true },
+              padding: { top: 16 },
+              fontFamily: `Fira Code, JetBrains Mono, Roboto Mono, "Source Code Pro", Consolas, Menlo, Monaco, monospace, "Courier New", "Apple Color Emoji"${
+                getSystem() === "windows" ? ", twemoji mozilla" : ""
+              }`,
+              fontLigatures: false,
+              smoothScrolling: true,
+            }}
+            editorWillMount={editorWillMount}
+            editorDidMount={editorDidMount}
+            onChange={handleChange}
+          />
+          <div className="absolute bottom-4 left-8 z-10 flex gap-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    disabled={readOnly}
+                    onClick={() =>
+                      editorRef.current
+                        ?.getAction("editor.action.formatDocument")
+                        ?.run()
+                    }
+                  >
+                    <Wand2 className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t("Format document")}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    onClick={() =>
+                      appWindow.toggleMaximize().then(editorResize)
+                    }
+                  >
+                    {isMaximized ? (
+                      <Minimize className="h-5 w-5" />
+                    ) : (
+                      <Maximize className="h-5 w-5" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t(isMaximized ? "Minimize" : "Maximize")}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+
+        <DialogFooter className="p-6 pt-4">
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              {t(readOnly ? "Close" : "Cancel")}
+            </Button>
+          </DialogClose>
+          {!readOnly && (
+            <Button type="button" onClick={handleSave}>
+              {t("Save")}
+            </Button>
+          )}
+        </DialogFooter>
       </DialogContent>
-
-      <DialogActions>
-        <Button onClick={handleClose} variant="outlined">
-          {t(readOnly ? "Close" : "Cancel")}
-        </Button>
-        {!readOnly && (
-          <Button onClick={handleSave} variant="contained">
-            {t("Save")}
-          </Button>
-        )}
-      </DialogActions>
     </Dialog>
   );
 };

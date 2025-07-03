@@ -1,48 +1,14 @@
-import { styled } from "@mui/material";
+import { Loader2 } from "lucide-react"; // 1. Импортируем стандартную иконку загрузки
+import { cn } from "@root/lib/utils"; // Утилита для объединения классов
 
-const Loading = styled("div")`
-  position: relative;
-  display: flex;
-  height: 100%;
-  min-height: 18px;
-  box-sizing: border-box;
-  align-items: center;
+interface Props {
+  className?: string;
+}
 
-  & > div {
-    box-sizing: border-box;
-    width: 6px;
-    height: 6px;
-    margin: 2px;
-    border-radius: 100%;
-    animation: loading 0.7s -0.15s infinite linear;
-  }
-
-  & > div:nth-child(2n-1) {
-    animation-delay: -0.5s;
-  }
-
-  @keyframes loading {
-    50% {
-      opacity: 0.2;
-      transform: scale(0.75);
-    }
-    100% {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-`;
-
-const LoadingItem = styled("div")(({ theme }) => ({
-  background: theme.palette.text.secondary,
-}));
-
-export const BaseLoading = () => {
+export const BaseLoading: React.FC<Props> = ({ className }) => {
   return (
-    <Loading>
-      <LoadingItem />
-      <LoadingItem />
-      <LoadingItem />
-    </Loading>
+    // 2. Используем иконку с анимацией вращения от Tailwind
+    // Мы можем легко менять ее размер и цвет через className
+    <Loader2 className={cn("h-5 w-5 animate-spin", className)} />
   );
 };

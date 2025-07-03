@@ -1,38 +1,30 @@
 import React from "react";
-import { Box, styled } from "@mui/material";
+import { cn } from "@root/lib/utils"; // Импортируем утилиту для объединения классов
 
 type Props = {
   label: string;
-  fontSize?: string;
-  width?: string;
-  padding?: string;
   children?: React.ReactNode;
+  className?: string; // Пропс для дополнительной стилизации
 };
 
-export const BaseFieldset: React.FC<Props> = (props: Props) => {
-  const Fieldset = styled(Box)<{ component?: string }>(() => ({
-    position: "relative",
-    border: "1px solid #bbb",
-    borderRadius: "5px",
-    width: props.width ?? "auto",
-    padding: props.padding ?? "15px",
-  }));
-
-  const Label = styled("legend")(({ theme }) => ({
-    position: "absolute",
-    top: "-10px",
-    left: props.padding ?? "15px",
-    backgroundColor: theme.palette.background.paper,
-    backgroundImage:
-      "linear-gradient(rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.16))",
-    color: theme.palette.text.primary,
-    fontSize: props.fontSize ?? "1em",
-  }));
+export const BaseFieldset: React.FC<Props> = (props) => {
+  const { label, children, className } = props;
 
   return (
-    <Fieldset component="fieldset">
-      <Label>{props.label}</Label>
-      {props.children}
-    </Fieldset>
+    // 1. Используем тег fieldset для семантики. Он позиционирован как relative.
+    <fieldset
+      className={cn(
+        "relative rounded-md border border-border p-4", // Базовые стили
+        className // Дополнительные классы от пользователя
+      )}
+    >
+      {/* 2. Используем legend. Он абсолютно спозиционирован относительно fieldset. */}
+      <legend className="absolute -top-2.5 left-3 bg-background px-1 text-sm text-muted-foreground">
+        {label}
+      </legend>
+
+      {/* 3. Здесь будет содержимое филдсета */}
+      {children}
+    </fieldset>
   );
 };

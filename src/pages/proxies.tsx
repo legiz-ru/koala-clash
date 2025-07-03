@@ -1,17 +1,29 @@
+// ProxyPage.tsx
+
 import useSWR from "swr";
 import { useEffect } from "react";
 import { useLockFn } from "ahooks";
 import { useTranslation } from "react-i18next";
-import { Box, Button, ButtonGroup } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { closeAllConnections, getClashConfig } from "@/services/api";
 import { patchClashMode } from "@/services/cmds";
 import { useVerge } from "@/hooks/use-verge";
-import { BasePage } from "@/components/base";
 import { ProxyGroups } from "@/components/proxy/proxy-groups";
 import { ProviderButton } from "@/components/proxy/provider-button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Menu } from "lucide-react";
 
 const ProxyPage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const { data: clashConfig, mutate: mutateClash } = useSWR(
     "getClashConfig",
@@ -19,19 +31,14 @@ const ProxyPage = () => {
     {
       revalidateOnFocus: false,
       revalidateIfStale: true,
-      dedupingInterval: 1000,
-      errorRetryInterval: 5000,
     },
   );
 
   const { verge } = useVerge();
-
   const modeList = ["rule", "global", "direct"];
-
   const curMode = clashConfig?.mode?.toLowerCase();
 
   const onChangeMode = useLockFn(async (mode: string) => {
-    // 断开连接
     if (mode !== curMode && verge?.auto_close_connection) {
       closeAllConnections();
     }
@@ -45,32 +52,66 @@ const ProxyPage = () => {
     }
   }, [curMode]);
 
-  return (
-    <BasePage
-      full
-      contentStyle={{ height: "101.5%" }}
-      title={t("Proxy Groups")}
-      header={
-        <Box display="flex" alignItems="center" gap={1}>
-          <ProviderButton />
+  const menuItems = [
+    { label: t("Home"), path: "/home" },
+    { label: t("Profiles"), path: "/profile" },
+    { label: t("Settings"), path: "/settings" },
+    { label: t("Logs"), path: "/logs" },
+    { label: t("Connections"), path: "/connections" },
+    { label: t("Rules"), path: "/rules" },
+  ];
 
-          <ButtonGroup size="small">
+  return (
+    // Используем наш знакомый паттерн для создания макета с прокручиваемым контентом
+    <div className="h-full flex flex-col">
+      {/* Шапка страницы */}
+      <div className="p-4 pb-2 flex justify-between items-center">
+        <h2 className="text-2xl font-semibold tracking-tight">
+          {t("Proxies")}
+        </h2>
+        <div className="flex items-center space-x-2">
+          <ProviderButton />
+          <div className="flex items-center rounded-md border bg-muted p-0.5">
             {modeList.map((mode) => (
               <Button
                 key={mode}
-                variant={mode === curMode ? "contained" : "outlined"}
+                variant={mode === curMode ? "default" : "ghost"}
+                size="sm"
                 onClick={() => onChangeMode(mode)}
-                sx={{ textTransform: "capitalize" }}
+                className="capitalize px-3 py-1 h-auto"
               >
                 {t(mode)}
               </Button>
             ))}
-          </ButtonGroup>
-        </Box>
-      }
-    >
-      <ProxyGroups mode={curMode!} />
-    </BasePage>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" title={t("Menu")}>
+                <Menu className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>{t("Menu")}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {menuItems.map((item) => (
+                <DropdownMenuItem
+                  key={item.path}
+                  onSelect={() => navigate(item.path)}
+                  disabled={location.pathname === item.path}
+                >
+                  {item.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {/* Основной контент, который будет скроллиться */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <ProxyGroups mode={curMode!} />
+      </div>
+    </div>
   );
 };
 

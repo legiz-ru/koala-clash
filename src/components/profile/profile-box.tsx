@@ -1,58 +1,41 @@
-import { alpha, Box, styled } from "@mui/material";
+import * as React from "react";
+import { cn } from "@root/lib/utils";
 
-export const ProfileBox = styled(Box)(({
-  theme,
-  "aria-selected": selected,
-}) => {
-  const { mode, primary, text } = theme.palette;
-  const key = `${mode}-${!!selected}`;
+// Определяем пропсы: принимает все атрибуты для div и булевый пропс `selected`
+export interface ProfileBoxProps extends React.HTMLAttributes<HTMLDivElement> {
+  selected?: boolean;
+}
 
-  const backgroundColor = mode === "light" ? "#ffffff" : "#282A36";
+export const ProfileBox = React.forwardRef<HTMLDivElement, ProfileBoxProps>(
+  ({ className, selected, children, ...props }, ref) => {
+    return (
+      <div
+        ref={ref}
+        // Устанавливаем data-атрибут для стилизации выбранного состояния
+        data-selected={selected}
+        className={cn(
+          // --- Базовые стили ---
+          "relative block w-full cursor-pointer rounded-lg bg-card p-4 text-left text-muted-foreground transition-all duration-200",
 
-  const color = {
-    "light-true": text.secondary,
-    "light-false": text.secondary,
-    "dark-true": alpha(text.secondary, 0.65),
-    "dark-false": alpha(text.secondary, 0.65),
-  }[key]!;
+          // --- Эффект рамки ---
+          // По умолчанию рамка есть, но она прозрачная, чтобы резервировать место
+          "border-l-4 border-transparent",
+          // При выборе (`data-selected=true`) рамка окрашивается в основной цвет
+          "data-[selected=true]:border-primary",
 
-  const h2color = {
-    "light-true": primary.main,
-    "light-false": text.primary,
-    "dark-true": primary.main,
-    "dark-false": text.primary,
-  }[key]!;
+          // --- Эффект смены цвета текста ---
+          // При выборе весь текст внутри становится более контрастным
+          "data-[selected=true]:text-card-foreground",
 
-  const borderSelect = {
-    "light-true": {
-      borderLeft: `3px solid ${primary.main}`,
-      width: `calc(100% + 3px)`,
-      marginLeft: `-3px`,
-    },
-    "light-false": {
-      width: "100%",
-    },
-    "dark-true": {
-      borderLeft: `3px solid ${primary.main}`,
-      width: `calc(100% + 3px)`,
-      marginLeft: `-3px`,
-    },
-    "dark-false": {
-      width: "100%",
-    },
-  }[key];
+          // --- Дополнительные классы от пользователя ---
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </div>
+    );
+  }
+);
 
-  return {
-    position: "relative",
-    display: "block",
-    cursor: "pointer",
-    textAlign: "left",
-    padding: "8px 16px",
-    boxSizing: "border-box",
-    backgroundColor,
-    ...borderSelect,
-    borderRadius: "8px",
-    color,
-    "& h2": { color: h2color },
-  };
-});
+ProfileBox.displayName = "ProfileBox";

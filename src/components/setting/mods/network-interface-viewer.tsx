@@ -1,140 +1,117 @@
-import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { BaseDialog, DialogRef } from "@/components/base";
-import { getNetworkInterfacesInfo } from "@/services/cmds";
-import { alpha, Box, Button, IconButton } from "@mui/material";
-import { ContentCopyRounded } from "@mui/icons-material";
+import { useLockFn } from "ahooks";
+import useSWR from "swr";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+
+// Новые импорты
+import { getNetworkInterfacesInfo } from "@/services/cmds";
 import { showNotice } from "@/services/noticeService";
+import { DialogRef } from "@/components/base";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Copy } from "lucide-react";
+
+
+// Дочерний компонент AddressDisplay (без изменений)
+const AddressDisplay = (props: { label: string; content: string }) => {
+  const { t } = useTranslation();
+  const handleCopy = useLockFn(async () => {
+    if (!props.content) return;
+    await writeText(props.content);
+    showNotice("success", t("Copy Success"));
+  });
+
+  return (
+    <div className="flex justify-between items-center text-sm my-2">
+      <p className="text-muted-foreground">{props.label}</p>
+      <div className="flex items-center gap-2 rounded-md bg-muted px-2 py-1">
+        <span className="font-mono">{props.content}</span>
+        <TooltipProvider delayDuration={100}>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopy}>
+                        <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>{t("Copy to clipboard")}</p></TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+      </div>
+    </div>
+  );
+};
+
 
 export const NetworkInterfaceViewer = forwardRef<DialogRef>((props, ref) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const [networkInterfaces, setNetworkInterfaces] = useState<
-    INetworkInterface[]
-  >([]);
   const [isV4, setIsV4] = useState(true);
 
   useImperativeHandle(ref, () => ({
-    open: () => {
-      setOpen(true);
-    },
+    open: () => setOpen(true),
     close: () => setOpen(false),
   }));
 
-  useEffect(() => {
-    if (!open) return;
-    getNetworkInterfacesInfo().then((res) => {
-      setNetworkInterfaces(res);
-    });
-  }, [open]);
+  const { data: networkInterfaces } = useSWR(
+    open ? "clash-verge-rev-internal://network-interfaces" : null,
+    getNetworkInterfacesInfo,
+    { fallbackData: [] }
+  );
 
   return (
-    <BaseDialog
-      open={open}
-      title={
-        <Box display="flex" justifyContent="space-between">
-          {t("Network Interface")}
-          <Box>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={() => {
-                setIsV4((prev) => !prev);
-              }}
-            >
-              {isV4 ? "Ipv6" : "Ipv4"}
-            </Button>
-          </Box>
-        </Box>
-      }
-      contentSx={{ width: 450 }}
-      disableOk
-      cancelBtn={t("Close")}
-      onCancel={() => setOpen(false)}
-    >
-      {networkInterfaces.map((item) => (
-        <Box key={item.name}>
-          <h4>{item.name}</h4>
-          <Box>
-            {isV4 && (
-              <>
-                {item.addr.map(
-                  (address) =>
-                    address.V4 && (
-                      <AddressDisplay
-                        key={address.V4.ip}
-                        label={t("Ip Address")}
-                        content={address.V4.ip}
-                      />
-                    ),
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <div className="flex justify-between items-center pr-12">
+            <DialogTitle>{t("Network Interface")}</DialogTitle>
+            <div className="flex items-center rounded-md border bg-muted p-0.5">
+                {/* --- НАЧАЛО ИЗМЕНЕНИЙ --- */}
+                {/* Меняем `secondary` на `default` для активной кнопки */}
+                <Button variant={isV4 ? "default" : "ghost"} size="sm" className="px-3 text-xs" onClick={() => setIsV4(true)}>IPv4</Button>
+                <Button variant={!isV4 ? "default" : "ghost"} size="sm" className="px-3 text-xs" onClick={() => setIsV4(false)}>IPv6</Button>
+                {/* --- КОНЕЦ ИЗМЕНЕНИЙ --- */}
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="max-h-[60vh] overflow-y-auto -mx-6 px-6">
+          {networkInterfaces?.map((item, index) => (
+            <div key={item.name} className="py-2">
+              <h4 className="font-semibold text-base mb-1">{item.name}</h4>
+              <div>
+                {isV4 ? (
+                  <>
+                    {item.addr.map((address) => address.V4 && <AddressDisplay key={address.V4.ip} label={t("Ip Address")} content={address.V4.ip} />)}
+                    <AddressDisplay label={t("Mac Address")} content={item.mac_addr ?? ""} />
+                  </>
+                ) : (
+                  <>
+                    {item.addr.map((address) => address.V6 && <AddressDisplay key={address.V6.ip} label={t("Ip Address")} content={address.V6.ip} />)}
+                     <AddressDisplay label={t("Mac Address")} content={item.mac_addr ?? ""} />
+                  </>
                 )}
-                <AddressDisplay
-                  label={t("Mac Address")}
-                  content={item.mac_addr ?? ""}
-                />
-              </>
-            )}
-            {!isV4 && (
-              <>
-                {item.addr.map(
-                  (address) =>
-                    address.V6 && (
-                      <AddressDisplay
-                        key={address.V6.ip}
-                        label={t("Ip Address")}
-                        content={address.V6.ip}
-                      />
-                    ),
-                )}
-                <AddressDisplay
-                  label={t("Mac Address")}
-                  content={item.mac_addr ?? ""}
-                />
-              </>
-            )}
-          </Box>
-        </Box>
-      ))}
-    </BaseDialog>
+              </div>
+              {index < networkInterfaces.length - 1 && <Separator className="mt-2"/>}
+            </div>
+          ))}
+        </div>
+
+        <DialogFooter>
+            <DialogClose asChild>
+                <Button type="button" variant="outline">{t("Close")}</Button>
+            </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 });
-
-const AddressDisplay = (props: { label: string; content: string }) => {
-  const { t } = useTranslation();
-
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        margin: "8px 0",
-      }}
-    >
-      <Box>{props.label}</Box>
-      <Box
-        sx={({ palette }) => ({
-          borderRadius: "8px",
-          padding: "2px 2px 2px 8px",
-          background:
-            palette.mode === "dark"
-              ? alpha(palette.background.paper, 0.3)
-              : alpha(palette.grey[400], 0.3),
-        })}
-      >
-        <Box sx={{ display: "inline", userSelect: "text" }}>
-          {props.content}
-        </Box>
-        <IconButton
-          size="small"
-          onClick={async () => {
-            await writeText(props.content);
-            showNotice("success", t("Copy Success"));
-          }}
-        >
-          <ContentCopyRounded sx={{ fontSize: "18px" }} />
-        </IconButton>
-      </Box>
-    </Box>
-  );
-};

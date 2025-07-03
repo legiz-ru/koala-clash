@@ -1,21 +1,24 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLockFn } from "ahooks";
-import {
-  Box,
-  Badge,
-  Chip,
-  Typography,
-  MenuItem,
-  Menu,
-  IconButton,
-} from "@mui/material";
-import { FeaturedPlayListRounded } from "@mui/icons-material";
+import { UnlistenFn } from "@tauri-apps/api/event";
 import { viewProfile, readProfileFile, saveProfileFile } from "@/services/cmds";
-import { EditorViewer } from "@/components/profile/editor-viewer";
-import { ProfileBox } from "./profile-box";
-import { LogViewer } from "./log-viewer";
 import { showNotice } from "@/services/noticeService";
+import { EditorViewer } from "@/components/profile/editor-viewer";
+import { ProfileBox } from "./profile-box"; // Наш рефакторенный компонент
+import { LogViewer } from "./log-viewer";   // Наш рефакторенный компонент
+
+// Новые импорты
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { ScrollText, FileText, FolderOpen } from "lucide-react";
 
 interface Props {
   logInfo?: [string, string][];
@@ -23,23 +26,18 @@ interface Props {
   onSave?: (prev?: string, curr?: string) => void;
 }
 
-// profile enhanced item
 export const ProfileMore = (props: Props) => {
   const { id, logInfo = [], onSave } = props;
-
   const { t } = useTranslation();
-  const [anchorEl, setAnchorEl] = useState<any>(null);
-  const [position, setPosition] = useState({ left: 0, top: 0 });
+
   const [fileOpen, setFileOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
 
   const onEditFile = () => {
-    setAnchorEl(null);
     setFileOpen(true);
   };
 
   const onOpenFile = useLockFn(async () => {
-    setAnchorEl(null);
     try {
       await viewProfile(id);
     } catch (err: any) {
@@ -47,126 +45,72 @@ export const ProfileMore = (props: Props) => {
     }
   });
 
-  const fnWrapper = (fn: () => void) => () => {
-    setAnchorEl(null);
-    return fn();
-  };
-
   const hasError = !!logInfo.find((e) => e[0] === "exception");
 
-  const itemMenu = [
-    { label: "Edit File", handler: onEditFile },
-    { label: "Open File", handler: onOpenFile },
+  const menuItems = [
+    { label: "Edit File", handler: onEditFile, icon: FileText },
+    { label: "Open File", handler: onOpenFile, icon: FolderOpen },
   ];
-
-  const boxStyle = {
-    height: 26,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    lineHeight: 1,
-  };
 
   return (
     <>
-      <ProfileBox
-        onDoubleClick={onEditFile}
-        onContextMenu={(event) => {
-          const { clientX, clientY } = event;
-          setPosition({ top: clientY, left: clientX });
-          setAnchorEl(event.currentTarget);
-          event.preventDefault();
-        }}
-      >
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={0.5}
-        >
-          <Typography
-            width="calc(100% - 52px)"
-            variant="h6"
-            component="h2"
-            noWrap
-            title={t(`Global ${id}`)}
-          >
-            {t(`Global ${id}`)}
-          </Typography>
+      <ContextMenu>
+        <ContextMenuTrigger>
+          {/* Используем наш готовый ProfileBox */}
+          <ProfileBox onDoubleClick={onEditFile}>
+            {/* Верхняя строка: Название и Бейдж */}
+            <div className="flex justify-between items-center mb-2">
+              <p className="font-semibold text-base truncate">{t(`Global ${id}`)}</p>
+              <Badge variant="secondary">{id}</Badge>
+            </div>
 
-          <Chip
-            label={id}
-            color="primary"
-            size="small"
-            variant="outlined"
-            sx={{ height: 20, textTransform: "capitalize" }}
-          />
-        </Box>
+            {/* Нижняя строка: Кнопка логов или заглушка для сохранения высоты */}
+            <div className="h-7 flex items-center">
+              {id === "Script" && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      {/* Контейнер для позиционирования точки-индикатора */}
+                      <div className="relative">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => setLogOpen(true)}
+                        >
+                          <ScrollText className="h-4 w-4" />
+                        </Button>
+                        {/* Точка-индикатор ошибки с анимацией */}
+                        {hasError && (
+                          <span className="absolute top-0 right-0 flex h-2.5 w-2.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
+                          </span>
+                        )}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t("Script Console")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+          </ProfileBox>
+        </ContextMenuTrigger>
 
-        <Box sx={boxStyle}>
-          {id === "Script" &&
-            (hasError ? (
-              <Badge color="error" variant="dot" overlap="circular">
-                <IconButton
-                  size="small"
-                  edge="start"
-                  color="error"
-                  title={t("Script Console")}
-                  onClick={() => setLogOpen(true)}
-                >
-                  <FeaturedPlayListRounded fontSize="inherit" />
-                </IconButton>
-              </Badge>
-            ) : (
-              <IconButton
-                size="small"
-                edge="start"
-                color="inherit"
-                title={t("Script Console")}
-                onClick={() => setLogOpen(true)}
-              >
-                <FeaturedPlayListRounded fontSize="inherit" />
-              </IconButton>
-            ))}
-        </Box>
-      </ProfileBox>
-
-      <Menu
-        open={!!anchorEl}
-        anchorEl={anchorEl}
-        onClose={() => setAnchorEl(null)}
-        anchorPosition={position}
-        anchorReference="anchorPosition"
-        transitionDuration={225}
-        MenuListProps={{ sx: { py: 0.5 } }}
-        onContextMenu={(e) => {
-          setAnchorEl(null);
-          e.preventDefault();
-        }}
-      >
-        {itemMenu
-          .filter((item: any) => item.show !== false)
-          .map((item) => (
-            <MenuItem
-              key={item.label}
-              onClick={item.handler}
-              sx={[
-                { minWidth: 120 },
-                (theme) => {
-                  return {
-                    color:
-                      item.label === "Delete"
-                        ? theme.palette.error.main
-                        : undefined,
-                  };
-                },
-              ]}
-              dense
-            >
-              {t(item.label)}
-            </MenuItem>
+        {/* Содержимое контекстного меню */}
+        <ContextMenuContent>
+          {menuItems.map((item) => (
+            <ContextMenuItem key={item.label} onSelect={item.handler}>
+              <item.icon className="mr-2 h-4 w-4" />
+              <span>{t(item.label)}</span>
+            </ContextMenuItem>
           ))}
-      </Menu>
+        </ContextMenuContent>
+      </ContextMenu>
+
+      {/* Модальные окна, которые мы уже переделали */}
       {fileOpen && (
         <EditorViewer
           open={true}
@@ -176,7 +120,7 @@ export const ProfileMore = (props: Props) => {
           schema={id === "Merge" ? "clash" : undefined}
           onSave={async (prev, curr) => {
             await saveProfileFile(id, curr ?? "");
-            onSave && onSave(prev, curr);
+            onSave?.(prev, curr);
           }}
           onClose={() => setFileOpen(false)}
         />

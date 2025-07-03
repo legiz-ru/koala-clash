@@ -1,24 +1,32 @@
-import { TextField, type TextFieldProps, styled } from "@mui/material";
+import * as React from "react"; // 1. Убедимся, что React импортирован
 import { useTranslation } from "react-i18next";
+import { cn } from "@root/lib/utils";
+import { Input } from "@/components/ui/input"; // 2. Убираем импорт несуществующего типа InputProps
 
-export const BaseStyledTextField = styled((props: TextFieldProps) => {
+// 3. Определяем наши пропсы, расширяя стандартный тип для input-элементов из React
+export interface BaseStyledTextFieldProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {}
+
+export const BaseStyledTextField = React.forwardRef<
+  HTMLInputElement,
+  BaseStyledTextFieldProps // Используем наш правильный тип
+>((props, ref) => {
   const { t } = useTranslation();
+  const { className, ...restProps } = props;
 
   return (
-    <TextField
-      autoComplete="new-password"
-      hiddenLabel
-      fullWidth
-      size="small"
-      variant="outlined"
+    <Input
+      ref={ref}
+      className={cn(
+        "h-9", // Задаем стандартную компактную высоту
+        className
+      )}
+      placeholder={props.placeholder ?? t("Filter conditions")}
+      autoComplete="off"
       spellCheck="false"
-      placeholder={t("Filter conditions")}
-      sx={{ input: { py: 0.65, px: 1.25 } }}
-      {...props}
+      {...restProps}
     />
   );
-})(({ theme }) => ({
-  "& .MuiInputBase-root": {
-    background: theme.palette.mode === "light" ? "#fff" : undefined,
-  },
-}));
+});
+
+BaseStyledTextField.displayName = "BaseStyledTextField";

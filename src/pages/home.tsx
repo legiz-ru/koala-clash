@@ -1,397 +1,189 @@
-import { useTranslation } from "react-i18next";
+import React, { useRef, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useLockFn } from 'ahooks';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
+
+// Импорты
+import { useProfiles } from '@/hooks/use-profiles';
+import { ProfileViewer, ProfileViewerRef } from '@/components/profile/profile-viewer';
 import {
-  Box,
-  Button,
-  IconButton,
-  useTheme,
-  keyframes,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormGroup,
-  FormControlLabel,
-  Checkbox,
-  Tooltip,
-  Grid,
-} from "@mui/material";
-import { useVerge } from "@/hooks/use-verge";
-import { useProfiles } from "@/hooks/use-profiles";
-import {
-  RouterOutlined,
-  SettingsOutlined,
-  DnsOutlined,
-  SpeedOutlined,
-  HelpOutlineRounded,
-  HistoryEduOutlined,
-} from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
-import { ProxyTunCard } from "@/components/home/proxy-tun-card";
-import { ClashModeCard } from "@/components/home/clash-mode-card";
-import { EnhancedTrafficStats } from "@/components/home/enhanced-traffic-stats";
-import { useState } from "react";
-import { HomeProfileCard } from "@/components/home/home-profile-card";
-import { EnhancedCard } from "@/components/home/enhanced-card";
-import { CurrentProxyCard } from "@/components/home/current-proxy-card";
-import { BasePage } from "@/components/base";
-import { ClashInfoCard } from "@/components/home/clash-info-card";
-import { SystemInfoCard } from "@/components/home/system-info-card";
-import { useLockFn } from "ahooks";
-import { entry_lightweight_mode, openWebUrl } from "@/services/cmds";
-import { TestCard } from "@/components/home/test-card";
-import { IpInfoCard } from "@/components/home/ip-info-card";
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { ChevronsUpDown, Check, PlusCircle, Menu, Wrench, AlertTriangle } from 'lucide-react';
+import { useVerge } from '@/hooks/use-verge';
+import { useSystemState } from '@/hooks/use-system-state';
+import { useServiceInstaller } from '@/hooks/useServiceInstaller';
+import { Switch } from "@/components/ui/switch";
+import { ProxySelectors } from '@/components/home/proxy-selectors';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { closeAllConnections } from '@/services/api';
 
-// 定义旋转动画
-const round = keyframes`
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-`;
 
-// 辅助函数解析URL和过期时间
-function parseUrl(url?: string) {
-  if (!url) return "-";
-  if (url.startsWith("http")) return new URL(url).host;
-  return "local";
-}
-
-// 定义首页卡片设置接口
-interface HomeCardsSettings {
-  profile: boolean;
-  proxy: boolean;
-  network: boolean;
-  mode: boolean;
-  traffic: boolean;
-  info: boolean;
-  clashinfo: boolean;
-  systeminfo: boolean;
-  test: boolean;
-  ip: boolean;
-  [key: string]: boolean;
-}
-
-// 首页设置对话框组件接口
-interface HomeSettingsDialogProps {
-  open: boolean;
-  onClose: () => void;
-  homeCards: HomeCardsSettings;
-  onSave: (cards: HomeCardsSettings) => void;
-}
-
-// 首页设置对话框组件
-const HomeSettingsDialog = ({
-  open,
-  onClose,
-  homeCards,
-  onSave,
-}: HomeSettingsDialogProps) => {
+const MinimalHomePage: React.FC = () => {
   const { t } = useTranslation();
-  const [cards, setCards] = useState<HomeCardsSettings>(homeCards);
-  const { patchVerge } = useVerge();
-
-  const handleToggle = (key: string) => {
-    setCards((prev: HomeCardsSettings) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
-
-  const handleSave = async () => {
-    await patchVerge({ home_cards: cards });
-    onSave(cards);
-    onClose();
-  };
-
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>{t("Home Settings")}</DialogTitle>
-      <DialogContent>
-        <FormGroup>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={cards.profile || false}
-                onChange={() => handleToggle("profile")}
-              />
-            }
-            label={t("Profile Card")}
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={cards.proxy || false}
-                onChange={() => handleToggle("proxy")}
-              />
-            }
-            label={t("Current Proxy Card")}
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={cards.network || false}
-                onChange={() => handleToggle("network")}
-              />
-            }
-            label={t("Network Settings Card")}
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={cards.mode || false}
-                onChange={() => handleToggle("mode")}
-              />
-            }
-            label={t("Proxy Mode Card")}
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={cards.traffic || false}
-                onChange={() => handleToggle("traffic")}
-              />
-            }
-            label={t("Traffic Stats Card")}
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={cards.test || false}
-                onChange={() => handleToggle("test")}
-              />
-            }
-            label={t("Website Tests Card")}
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={cards.ip || false}
-                onChange={() => handleToggle("ip")}
-              />
-            }
-            label={t("IP Information Card")}
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={cards.clashinfo || false}
-                onChange={() => handleToggle("clashinfo")}
-              />
-            }
-            label={t("Clash Info Cards")}
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={cards.systeminfo || false}
-                onChange={() => handleToggle("systeminfo")}
-              />
-            }
-            label={t("System Info Cards")}
-          />
-        </FormGroup>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>{t("Cancel")}</Button>
-        <Button onClick={handleSave} color="primary">
-          {t("Save")}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
-
-export const HomePage = () => {
-  const { t } = useTranslation();
-  const { verge } = useVerge();
-  const { current, mutateProfiles } = useProfiles();
   const navigate = useNavigate();
-  const theme = useTheme();
 
-  // 设置弹窗的状态
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  // 卡片显示状态
-  const [homeCards, setHomeCards] = useState<HomeCardsSettings>(
-    (verge?.home_cards as HomeCardsSettings) || {
-      profile: true,
-      proxy: true,
-      network: true,
-      mode: true,
-      traffic: true,
-      clashinfo: true,
-      systeminfo: true,
-      test: true,
-      ip: true,
-    },
-  );
+  // --- НАЧАЛО ИЗМЕНЕНИЙ 1: Правильно используем хук ---
+  const { profiles, patchProfiles, activateSelected, mutateProfiles } = useProfiles();
+  const viewerRef = useRef<ProfileViewerRef>(null);
 
-  // 导航到订阅页面
-  const goToProfiles = () => {
-    navigate("/profile");
-  };
+  // Воссоздаем логику фильтрации профилей здесь
+  const profileItems = useMemo(() => {
+    const items = profiles && Array.isArray(profiles.items) ? profiles.items : [];
+    const allowedTypes = ["local", "remote"];
+    // Добавляем явное указание типа, чтобы избежать ошибок
+    return items.filter((i: any) => i && allowedTypes.includes(i.type!));
+  }, [profiles]);
 
-  // 导航到代理页面
-  const goToProxies = () => {
-    navigate("/");
-  };
+  const currentProfileName = useMemo(() => {
+    // Находим в списке профилей тот, чей uid совпадает с активным
+    return profileItems.find(p => p.uid === profiles?.current)?.name || profiles?.current;
+  }, [profileItems, profiles?.current]);
+  // Воссоздаем логику активации профиля здесь
+  const activateProfile = useCallback(async (uid: string, notifySuccess: boolean) => {
+    try {
+      await patchProfiles({ current: uid });
+      await closeAllConnections();
+      await activateSelected();
+      if (notifySuccess) {
+        toast.success(t("Profile Switched"));
+      }
+    } catch (err: any) {
+      toast.error(err.message || err.toString());
+      mutateProfiles(); // Откатываем в случае ошибки
+    }
+  }, [patchProfiles, activateSelected, mutateProfiles, t]);
 
-  // 导航到设置页面
-  const goToSettings = () => {
-    navigate("/settings");
-  };
+  const handleProfileChange = useLockFn(async (uid: string) => {
+    if (profiles?.current === uid) return;
+    await activateProfile(uid, true);
+  });
+  // --- КОНЕЦ ИЗМЕНЕНИЙ 1 ---
 
-  // 文档链接函数
-  const toGithubDoc = useLockFn(() => {
-    return openWebUrl("https://clash-verge-rev.github.io/index.html");
+  const { verge, patchVerge, mutateVerge } = useVerge();
+  const { isAdminMode, isServiceMode } = useSystemState();
+  const { installServiceAndRestartCore } = useServiceInstaller();
+  const isTunAvailable = isServiceMode || isAdminMode;
+  const isProxyEnabled = verge?.enable_system_proxy || verge?.enable_tun_mode;
+
+  const handleToggleProxy = useLockFn(async () => {
+    const turningOn = !isProxyEnabled;
+    try {
+      if (turningOn) {
+        await patchVerge({ enable_tun_mode: true, enable_system_proxy: false });
+        toast.success(t('Proxy enabled'));
+      } else {
+        await patchVerge({ enable_tun_mode: false, enable_system_proxy: false });
+        toast.success(t('Proxy disabled'));
+      }
+      mutateVerge();
+    } catch (error: any) {
+      toast.error(t('Failed to toggle proxy'), { description: error.message });
+    }
   });
 
-  // 新增：打开设置弹窗
-  const openSettings = () => {
-    setSettingsOpen(true);
-  };
-
-  // 新增：保存设置时用requestIdleCallback/setTimeout
-  const handleSaveSettings = (newCards: HomeCardsSettings) => {
-    if (window.requestIdleCallback) {
-      window.requestIdleCallback(() => setHomeCards(newCards));
-    } else {
-      setTimeout(() => setHomeCards(newCards), 0);
-    }
-  };
+  const navMenuItems = [
+    { label: 'Profiles', path: '/profile' },
+    { label: 'Settings', path: '/settings' },
+    { label: 'Logs', path: '/logs' },
+    { label: 'Proxies', path: '/proxies' },
+    { label: 'Connections', path: '/connections' },
+    { label: 'Rules', path: '/rules' },
+  ];
 
   return (
-    <BasePage
-      title={t("Label-Home")}
-      contentStyle={{ padding: 2 }}
-      header={
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <Tooltip title={t("LightWeight Mode")} arrow>
-            <IconButton
-              onClick={async () => await entry_lightweight_mode()}
-              size="small"
-              color="inherit"
-            >
-              <HistoryEduOutlined />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t("Manual")} arrow>
-            <IconButton onClick={toGithubDoc} size="small" color="inherit">
-              <HelpOutlineRounded />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t("Home Settings")} arrow>
-            <IconButton onClick={openSettings} size="small" color="inherit">
-              <SettingsOutlined />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      }
-    >
-      <Grid container spacing={1.5} columns={{ xs: 6, sm: 6, md: 12 }}>
-        {/* 订阅和当前节点部分 */}
-        {homeCards.profile && (
-          <Grid size={6}>
-            <HomeProfileCard
-              current={current}
-              onProfileUpdated={mutateProfiles}
-            />
-          </Grid>
-        )}
+    <div className="flex flex-col h-screen p-5">
+      <header className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-xs pt-5 z-20">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+             <Button variant="outline" className="w-full">
+              <span className="truncate">{currentProfileName}</span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+             </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+            <DropdownMenuLabel>{t("Profiles")}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {profileItems.map((p) => (
+              <DropdownMenuItem key={p.uid} onSelect={() => handleProfileChange(p.uid)}>
+                <span className="flex-1 truncate">{p.name}</span>
+                {profiles?.current === p.uid && <Check className="ml-4 h-4 w-4" />}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => viewerRef.current?.create()}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              <span>{t("Add New Profile")}</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </header>
 
-        {homeCards.proxy && (
-          <Grid size={6}>
-            <CurrentProxyCard />
-          </Grid>
-        )}
+      <div className="absolute top-5 right-5 z-20">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>{t("Menu")}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {navMenuItems.map((item) => (
+                <DropdownMenuItem key={item.path} onSelect={() => navigate(item.path)}>
+                  {t(item.label)}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+      </div>
 
-        {/* 代理和网络设置区域 */}
-        {homeCards.network && (
-          <Grid size={6}>
-            <NetworkSettingsCard />
-          </Grid>
-        )}
 
-        {homeCards.mode && (
-          <Grid size={6}>
-            <ClashModeEnhancedCard />
-          </Grid>
-        )}
+      <div className="flex flex-col items-center justify-center flex-grow text-center w-full">
+        <h1 className="text-4xl mb-8 font-semibold" style={{ color: isProxyEnabled ? '#22c55e' : '#ef4444' }}>
+          {isProxyEnabled ? t('Connected') : t('Disconnected')}
+        </h1>
 
-        {/* 增强的流量统计区域 */}
-        {homeCards.traffic && (
-          <Grid size={12}>
-            <EnhancedCard
-              title={t("Traffic Stats")}
-              icon={<SpeedOutlined />}
-              iconColor="secondary"
-            >
-              <EnhancedTrafficStats />
-            </EnhancedCard>
-          </Grid>
-        )}
-        {/* 测试网站部分 */}
-        {homeCards.test && (
-          <Grid size={6}>
-            <TestCard />
-          </Grid>
-        )}
-        {/* IP信息卡片 */}
-        {homeCards.ip && (
-          <Grid size={6}>
-            <IpInfoCard />
-          </Grid>
-        )}
-        {/* Clash信息 */}
-        {homeCards.clashinfo && (
-          <Grid size={6}>
-            <ClashInfoCard />
-          </Grid>
-        )}
-        {/* 系统信息 */}
-        {homeCards.systeminfo && (
-          <Grid size={6}>
-            <SystemInfoCard />
-          </Grid>
-        )}
-      </Grid>
+        <div className="scale-[3.5] my-16">
+          <Switch
+            disabled={!isTunAvailable}
+            checked={!!isProxyEnabled}
+            onCheckedChange={handleToggleProxy}
+            aria-label={t("Toggle Proxy")}
+          />
+        </div>
 
-      {/* 首页设置弹窗 */}
-      <HomeSettingsDialog
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        homeCards={homeCards}
-        onSave={handleSaveSettings}
-      />
-    </BasePage>
+        <div className="w-full max-w-sm transition-all">
+          {!isTunAvailable && (
+            <Alert variant="destructive" className="text-center flex flex-col items-center gap-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5" />
+                <AlertTitle>{t("Attention Required")}</AlertTitle>
+              </div>
+              <AlertDescription>
+                {t("TUN requires Service Mode or Admin Mode")}
+              </AlertDescription>
+              {!isServiceMode && !isAdminMode && (
+                  <Button size="sm" className="mt-2" onClick={installServiceAndRestartCore}>
+                      <Wrench className="mr-2 h-4 w-4" />
+                      {t("Install Service")}
+                  </Button>
+              )}
+            </Alert>
+          )}
+        </div>
+
+        <div className="w-full mt-8">
+            <ProxySelectors />
+        </div>
+      </div>
+
+      <ProfileViewer ref={viewerRef} onChange={() => mutateProfiles()} />
+    </div>
   );
 };
 
-// 增强版网络设置卡片组件
-const NetworkSettingsCard = () => {
-  const { t } = useTranslation();
-  return (
-    <EnhancedCard
-      title={t("Network Settings")}
-      icon={<DnsOutlined />}
-      iconColor="primary"
-      action={null}
-    >
-      <ProxyTunCard />
-    </EnhancedCard>
-  );
-};
-
-// 增强版 Clash 模式卡片组件
-const ClashModeEnhancedCard = () => {
-  const { t } = useTranslation();
-  return (
-    <EnhancedCard
-      title={t("Proxy Mode")}
-      icon={<RouterOutlined />}
-      iconColor="info"
-      action={null}
-    >
-      <ClashModeCard />
-    </EnhancedCard>
-  );
-};
-
-export default HomePage;
+export default MinimalHomePage;

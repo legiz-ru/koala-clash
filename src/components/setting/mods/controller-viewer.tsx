@@ -1,185 +1,144 @@
-import { BaseDialog, DialogRef } from "@/components/base";
-import { useClashInfo } from "@/hooks/use-clash";
-import { showNotice } from "@/services/noticeService";
-import { ContentCopy } from "@mui/icons-material";
-import {
-  Alert,
-  Box,
-  CircularProgress,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  Snackbar,
-  TextField,
-  Tooltip,
-} from "@mui/material";
-import { useLockFn } from "ahooks";
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useLockFn } from "ahooks";
+import { useClashInfo } from "@/hooks/use-clash";
+import { showNotice } from "@/services/noticeService";
+
+// Новые импорты
+import { DialogRef } from "@/components/base";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Copy, Loader2 } from "lucide-react";
+
 
 export const ControllerViewer = forwardRef<DialogRef>((props, ref) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const [copySuccess, setCopySuccess] = useState<null | string>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const { clashInfo, patchInfo } = useClashInfo();
-  const [controller, setController] = useState(clashInfo?.server || "");
-  const [secret, setSecret] = useState(clashInfo?.secret || "");
+  const [controller, setController] = useState("");
+  const [secret, setSecret] = useState("");
 
-  // 对话框打开时初始化配置
   useImperativeHandle(ref, () => ({
     open: async () => {
-      setOpen(true);
       setController(clashInfo?.server || "");
       setSecret(clashInfo?.secret || "");
+      setOpen(true);
     },
     close: () => setOpen(false),
   }));
 
-  // 保存配置
   const onSave = useLockFn(async () => {
     if (!controller.trim()) {
       showNotice("error", t("Controller address cannot be empty"));
       return;
     }
-
-    if (!secret.trim()) {
-      showNotice("error", t("Secret cannot be empty"));
-      return;
-    }
-
+    // Секрет может быть пустым
+    // if (!secret.trim()) {
+    //   showNotice("error", t("Secret cannot be empty"));
+    //   return;
+    // }
     try {
       setIsSaving(true);
       await patchInfo({ "external-controller": controller, secret });
       showNotice("success", t("Configuration saved successfully"));
       setOpen(false);
     } catch (err: any) {
-      showNotice(
-        "error",
-        err.message || t("Failed to save configuration"),
-        4000,
-      );
+      showNotice("error", err.message || t("Failed to save configuration"), 4000);
     } finally {
       setIsSaving(false);
     }
   });
 
-  // 复制到剪贴板
-  const handleCopyToClipboard = useLockFn(
-    async (text: string, type: string) => {
-      try {
-        await navigator.clipboard.writeText(text);
-        setCopySuccess(type);
-        setTimeout(() => setCopySuccess(null));
-      } catch (err) {
-        showNotice("error", t("Failed to copy"));
-      }
-    },
-  );
+  const handleCopyToClipboard = useLockFn(async (text: string, type: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      // --- ИЗМЕНЕНИЕ: Используем showNotice вместо Snackbar ---
+      const message = type === "controller"
+        ? t("Controller address copied to clipboard")
+        : t("Secret copied to clipboard");
+      showNotice("success", message);
+    } catch (err) {
+      showNotice("error", t("Failed to copy"));
+    }
+  });
 
   return (
-    <BaseDialog
-      open={open}
-      title={t("External Controller")}
-      contentSx={{ width: 400 }}
-      okBtn={
-        isSaving ? (
-          <Box display="flex" alignItems="center" gap={1}>
-            <CircularProgress size={16} color="inherit" />
-            {t("Saving...")}
-          </Box>
-        ) : (
-          t("Save")
-        )
-      }
-      cancelBtn={t("Cancel")}
-      onClose={() => setOpen(false)}
-      onCancel={() => setOpen(false)}
-      onOk={onSave}
-    >
-      <List>
-        <ListItem
-          sx={{
-            padding: "5px 2px",
-            display: "flex",
-            justifyContent: "space-between",
-          }}
-        >
-          <ListItemText primary={t("External Controller")} />
-          <Box display="flex" alignItems="center" gap={1}>
-            <TextField
-              size="small"
-              sx={{
-                width: 175,
-                opacity: 1,
-                pointerEvents: "auto",
-              }}
-              value={controller}
-              placeholder="Required"
-              onChange={(e) => setController(e.target.value)}
-              disabled={isSaving}
-            />
-            <Tooltip title={t("Copy to clipboard")}>
-              <IconButton
-                size="small"
-                onClick={() => handleCopyToClipboard(controller, "controller")}
-                color="primary"
-                disabled={isSaving}
-              >
-                <ContentCopy fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </ListItem>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t("External Controller")}</DialogTitle>
+        </DialogHeader>
 
-        <ListItem
-          sx={{
-            padding: "5px 2px",
-            display: "flex",
-            justifyContent: "space-between",
-          }}
-        >
-          <ListItemText primary={t("Core Secret")} />
-          <Box display="flex" alignItems="center" gap={1}>
-            <TextField
-              size="small"
-              sx={{
-                width: 175,
-                opacity: 1,
-                pointerEvents: "auto",
-              }}
-              value={secret}
-              placeholder={t("Recommended")}
-              onChange={(e) => setSecret(e.target.value)}
-              disabled={isSaving}
-            />
-            <Tooltip title={t("Copy to clipboard")}>
-              <IconButton
-                size="small"
-                onClick={() => handleCopyToClipboard(secret, "secret")}
-                color="primary"
+        <div className="space-y-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="controller-address">{t("External Controller")}</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                id="controller-address"
+                value={controller}
+                placeholder="127.0.0.1:9090"
+                onChange={(e) => setController(e.target.value)}
                 disabled={isSaving}
-              >
-                <ContentCopy fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </ListItem>
-      </List>
+              />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={() => handleCopyToClipboard(controller, "controller")} disabled={isSaving}>
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent><p>{t("Copy to clipboard")}</p></TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
 
-      <Snackbar
-        open={copySuccess !== null}
-        autoHideDuration={2000}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert severity="success">
-          {copySuccess === "controller"
-            ? t("Controller address copied to clipboard")
-            : t("Secret copied to clipboard")}
-        </Alert>
-      </Snackbar>
-    </BaseDialog>
+          <div className="grid gap-2">
+            <Label htmlFor="core-secret">{t("Core Secret")}</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                id="core-secret"
+                value={secret}
+                placeholder={t("Recommended")}
+                onChange={(e) => setSecret(e.target.value)}
+                disabled={isSaving}
+              />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={() => handleCopyToClipboard(secret, "secret")} disabled={isSaving}>
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent><p>{t("Copy to clipboard")}</p></TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">{t("Cancel")}</Button>
+          </DialogClose>
+          <Button type="button" onClick={onSave} disabled={isSaving}>
+            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {t("Save")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 });

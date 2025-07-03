@@ -3,16 +3,28 @@ import { useLockFn } from "ahooks";
 import { useTranslation } from "react-i18next";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Box, Divider, MenuItem, Menu, styled, alpha } from "@mui/material";
-import { BaseLoading } from "@/components/base";
-import { LanguageRounded } from "@mui/icons-material";
-import { showNotice } from "@/services/noticeService";
-import { TestBox } from "./test-box";
-import delayManager from "@/services/delay";
-import { cmdTestDelay, downloadIconCache } from "@/services/cmds";
 import { UnlistenFn } from "@tauri-apps/api/event";
 import { convertFileSrc } from "@tauri-apps/api/core";
+
 import { useListen } from "@/hooks/use-listen";
+import { showNotice } from "@/services/noticeService";
+import delayManager from "@/services/delay";
+import { cmdTestDelay, downloadIconCache } from "@/services/cmds";
+
+// Новые импорты
+import { BaseLoading } from "@/components/base";
+import { TestBox } from "./test-box"; // Наш рефакторенный компонент
+import { Separator } from "@/components/ui/separator";
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
+import { Languages } from "lucide-react"; // Новая иконка
+
+// Вспомогательная функция для цвета задержки
+const getDelayColorClass = (delay: number): string => {
+  if (delay < 0 || delay >= 10000) return "text-destructive";
+  if (delay >= 500) return "text-destructive";
+  if (delay >= 200) return "text-yellow-500";
+  return "text-green-500";
+};
 
 interface Props {
   id: string;
@@ -23,34 +35,21 @@ interface Props {
 
 export const TestItem = (props: Props) => {
   const { itemData, onEdit, onDelete: onDeleteItem } = props;
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: props.id,
-  });
-
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.id });
   const { t } = useTranslation();
-  const [anchorEl, setAnchorEl] = useState<any>(null);
-  const [position, setPosition] = useState({ left: 0, top: 0 });
+
   const [delay, setDelay] = useState(-1);
   const { uid, name, icon, url } = itemData;
   const [iconCachePath, setIconCachePath] = useState("");
   const { addListener } = useListen();
 
-  const onDelay = async () => {
-    setDelay(-2);
+  const onDelay = useLockFn(async () => {
+    setDelay(-2); // Состояние загрузки
     const result = await cmdTestDelay(url);
     setDelay(result);
-  };
+  });
 
-  useEffect(() => {
-    initIconCachePath();
-  }, [icon]);
+  const getFileName = (url: string) => url.substring(url.lastIndexOf("/") + 1);
 
   async function initIconCachePath() {
     if (icon && icon.trim().startsWith("http")) {
@@ -60,17 +59,9 @@ export const TestItem = (props: Props) => {
     }
   }
 
-  function getFileName(url: string) {
-    return url.substring(url.lastIndexOf("/") + 1);
-  }
-
-  const onEditTest = () => {
-    setAnchorEl(null);
-    onEdit();
-  };
+  useEffect(() => { initIconCachePath(); }, [icon]);
 
   const onDelete = useLockFn(async () => {
-    setAnchorEl(null);
     try {
       onDeleteItem(uid);
     } catch (err: any) {
@@ -79,167 +70,73 @@ export const TestItem = (props: Props) => {
   });
 
   const menu = [
-    { label: "Edit", handler: onEditTest },
-    { label: "Delete", handler: onDelete },
+    { label: "Edit", handler: onEdit },
+    { label: "Delete", handler: onDelete, isDestructive: true },
   ];
 
   useEffect(() => {
     let unlistenFn: UnlistenFn | null = null;
-
     const setupListener = async () => {
-      if (unlistenFn) {
-        unlistenFn();
-      }
-      unlistenFn = await addListener("verge://test-all", () => {
-        onDelay();
-      });
+      if (unlistenFn) unlistenFn();
+      unlistenFn = await addListener("verge://test-all", onDelay);
     };
-
     setupListener();
+    return () => { unlistenFn?.(); };
+  }, [url, addListener, onDelay]);
 
-    return () => {
-      if (unlistenFn) {
-        console.log(
-          `TestItem for ${props.id} unmounting or url changed, cleaning up test-all listener.`,
-        );
-        unlistenFn();
-      }
-    };
-  }, [url, addListener, onDelay, props.id]);
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 100 : undefined,
+  };
 
   return (
-    <Box
-      sx={{
-        position: "relative",
-        transform: CSS.Transform.toString(transform),
-        transition,
-        zIndex: isDragging ? "calc(infinity)" : undefined,
-      }}
-    >
-      <TestBox
-        onContextMenu={(event) => {
-          const { clientX, clientY } = event;
-          setPosition({ top: clientY, left: clientX });
-          setAnchorEl(event.currentTarget);
-          event.preventDefault();
-        }}
-      >
-        <Box
-          position="relative"
-          sx={{ cursor: "move" }}
-          ref={setNodeRef}
-          {...attributes}
-          {...listeners}
-        >
-          {icon && icon.trim() !== "" ? (
-            <Box sx={{ display: "flex", justifyContent: "center" }}>
-              {icon.trim().startsWith("http") && (
-                <img
-                  src={iconCachePath === "" ? icon : iconCachePath}
-                  height="40px"
-                />
+    <div style={style} ref={setNodeRef} {...attributes}>
+      <ContextMenu>
+        <ContextMenuTrigger>
+          <TestBox>
+            {/* Мы применяем `listeners` к иконке, чтобы за нее можно было таскать */}
+            <div {...listeners} className="flex h-12 cursor-move items-center justify-center">
+              {icon ? (
+                 <img
+                    src={icon.startsWith('data') ? icon : icon.startsWith('<svg') ? `data:image/svg+xml;base64,${btoa(icon)}` : (iconCachePath || icon)}
+                    className="h-10"
+                    alt={name}
+                  />
+              ) : (
+                <Languages className="h-10 w-10 text-muted-foreground" />
               )}
-              {icon.trim().startsWith("data") && (
-                <img src={icon} height="40px" />
-              )}
-              {icon.trim().startsWith("<svg") && (
-                <img
-                  src={`data:image/svg+xml;base64,${btoa(icon)}`}
-                  height="40px"
-                />
-              )}
-            </Box>
-          ) : (
-            <Box sx={{ display: "flex", justifyContent: "center" }}>
-              <LanguageRounded sx={{ height: "40px" }} fontSize="large" />
-            </Box>
-          )}
+            </div>
 
-          <Box sx={{ display: "flex", justifyContent: "center" }}>{name}</Box>
-        </Box>
-        <Divider sx={{ marginTop: "8px" }} />
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            marginTop: "8px",
-            color: "primary.main",
-          }}
-        >
-          {delay === -2 && (
-            <Widget>
-              <BaseLoading />
-            </Widget>
-          )}
+            <p className="mt-1 text-center text-sm font-semibold truncate" title={name}>{name}</p>
 
-          {delay === -1 && (
-            <Widget
-              className="the-check"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onDelay();
-              }}
-              sx={({ palette }) => ({
-                ":hover": { bgcolor: alpha(palette.primary.main, 0.15) },
-              })}
+            <Separator className="my-2" />
+
+            <div
+              className="flex h-6 items-center justify-center text-sm font-medium"
+              onClick={(e) => { e.stopPropagation(); onDelay(); }}
             >
-              {t("Test")}
-            </Widget>
-          )}
+              {delay === -2 ? (
+                <BaseLoading className="h-4 w-4" />
+              ) : delay === -1 ? (
+                <span className="cursor-pointer rounded-md px-2 py-0.5 hover:bg-accent">{t("Test")}</span>
+              ) : (
+                <span className={`cursor-pointer rounded-md px-2 py-0.5 hover:bg-accent ${getDelayColorClass(delay)}`}>
+                  {delayManager.formatDelay(delay)} ms
+                </span>
+              )}
+            </div>
+          </TestBox>
+        </ContextMenuTrigger>
 
-          {delay >= 0 && (
-            // 显示延迟
-            <Widget
-              className="the-delay"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onDelay();
-              }}
-              color={delayManager.formatDelayColor(delay)}
-              sx={({ palette }) => ({
-                ":hover": {
-                  bgcolor: alpha(palette.primary.main, 0.15),
-                },
-              })}
-            >
-              {delayManager.formatDelay(delay)}
-            </Widget>
-          )}
-        </Box>
-      </TestBox>
-
-      <Menu
-        open={!!anchorEl}
-        anchorEl={anchorEl}
-        onClose={() => setAnchorEl(null)}
-        anchorPosition={position}
-        anchorReference="anchorPosition"
-        transitionDuration={225}
-        MenuListProps={{ sx: { py: 0.5 } }}
-        onContextMenu={(e) => {
-          setAnchorEl(null);
-          e.preventDefault();
-        }}
-      >
-        {menu.map((item) => (
-          <MenuItem
-            key={item.label}
-            onClick={item.handler}
-            sx={{ minWidth: 120 }}
-            dense
-          >
-            {t(item.label)}
-          </MenuItem>
-        ))}
-      </Menu>
-    </Box>
+        <ContextMenuContent>
+          {menu.map((item) => (
+            <ContextMenuItem key={item.label} onClick={item.handler} className={item.isDestructive ? "text-destructive" : ""}>
+              {t(item.label)}
+            </ContextMenuItem>
+          ))}
+        </ContextMenuContent>
+      </ContextMenu>
+    </div>
   );
 };
-const Widget = styled(Box)(({ theme: { typography } }) => ({
-  padding: "3px 6px",
-  fontSize: 14,
-  fontFamily: typography.fontFamily,
-  borderRadius: "4px",
-}));

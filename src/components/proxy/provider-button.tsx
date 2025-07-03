@@ -1,30 +1,23 @@
 import { useState } from "react";
-import {
-  Button,
-  Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  Typography,
-  Divider,
-  LinearProgress,
-  alpha,
-  styled,
-  useTheme,
-} from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { useLockFn } from "ahooks";
 import { proxyProviderUpdate } from "@/services/api";
 import { useAppData } from "@/providers/app-data-provider";
 import { showNotice } from "@/services/noticeService";
-import { StorageOutlined, RefreshRounded } from "@mui/icons-material";
+import { Database, RefreshCw } from "lucide-react";
 import dayjs from "dayjs";
 import parseTraffic from "@/utils/parse-traffic";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 
 // 定义代理提供者类型
 interface ProxyProviderItem {
@@ -40,19 +33,6 @@ interface ProxyProviderItem {
   };
 }
 
-// 样式化组件 - 类型框
-const TypeBox = styled(Box)<{ component?: React.ElementType }>(({ theme }) => ({
-  display: "inline-block",
-  border: "1px solid #ccc",
-  borderColor: alpha(theme.palette.secondary.main, 0.5),
-  color: alpha(theme.palette.secondary.main, 0.8),
-  borderRadius: 4,
-  fontSize: 10,
-  marginRight: "4px",
-  padding: "0 2px",
-  lineHeight: 1.25,
-}));
-
 // 解析过期时间
 const parseExpire = (expire?: number) => {
   if (!expire) return "-";
@@ -61,7 +41,6 @@ const parseExpire = (expire?: number) => {
 
 export const ProviderButton = () => {
   const { t } = useTranslation();
-  const theme = useTheme();
   const [open, setOpen] = useState(false);
   const { proxyProviders, refreshProxy, refreshProxyProviders } = useAppData();
   const [updating, setUpdating] = useState<Record<string, boolean>>({});
@@ -138,52 +117,40 @@ export const ProviderButton = () => {
     }
   });
 
-  const handleClose = () => {
-    setOpen(false);
-  };
-
   if (!hasProviders) return null;
 
   return (
-    <>
-      <Button
-        variant="outlined"
-        size="small"
-        startIcon={<StorageOutlined />}
-        onClick={() => setOpen(true)}
-        sx={{ mr: 1 }}
-      >
-        {t("Proxy Provider")}
-      </Button>
-
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-          >
-            <Typography variant="h6">{t("Proxy Provider")}</Typography>
-            <Box>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="mr-1">
+          <Database className="mr-2 h-4 w-4" />
+          {t("Proxy Provider")}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl max-h-[80vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>
+            <div className="flex justify-between items-center">
+              <span>{t("Proxy Provider")}</span>
               <Button
-                variant="contained"
-                size="small"
+                variant="default"
+                size="sm"
                 onClick={updateAllProviders}
+                disabled={Object.values(updating).some(Boolean)}
               >
                 {t("Update All")}
               </Button>
-            </Box>
-          </Box>
-        </DialogTitle>
+            </div>
+          </DialogTitle>
+        </DialogHeader>
 
-        <DialogContent>
-          <List sx={{ py: 0, minHeight: 250 }}>
+        <div className="flex-grow overflow-y-auto py-0 px-1 my-2">
+          <div className="space-y-2">
             {Object.entries(proxyProviders || {}).map(([key, item]) => {
               const provider = item as ProxyProviderItem;
               const time = dayjs(provider.updatedAt);
               const isUpdating = updating[key];
 
-              // 订阅信息
               const sub = provider.subscriptionInfo;
               const hasSubInfo = !!sub;
               const upload = sub?.Upload || 0;
@@ -191,7 +158,6 @@ export const ProviderButton = () => {
               const total = sub?.Total || 0;
               const expire = sub?.Expire || 0;
 
-              // 流量使用进度
               const progress =
                 total > 0
                   ? Math.min(
@@ -200,148 +166,78 @@ export const ProviderButton = () => {
                     )
                   : 0;
 
+              const TypeBoxDisplay = ({
+                children,
+              }: {
+                children: React.ReactNode;
+              }) => (
+                <span className="inline-block border border-border text-xs text-muted-foreground rounded px-1 py-0.5 mr-1">
+                  {children}
+                </span>
+              );
+
               return (
-                <ListItem
+                <div
                   key={key}
-                  sx={[
-                    {
-                      p: 0,
-                      mb: "8px",
-                      borderRadius: 2,
-                      overflow: "hidden",
-                      transition: "all 0.2s",
-                    },
-                    ({ palette: { mode, primary } }) => {
-                      const bgcolor = mode === "light" ? "#ffffff" : "#24252f";
-                      const hoverColor =
-                        mode === "light"
-                          ? alpha(primary.main, 0.1)
-                          : alpha(primary.main, 0.2);
-
-                      return {
-                        backgroundColor: bgcolor,
-                        "&:hover": {
-                          backgroundColor: hoverColor,
-                        },
-                      };
-                    },
-                  ]}
+                  className="p-3 rounded-lg border bg-card text-card-foreground shadow-sm flex items-center"
                 >
-                  <ListItemText
-                    sx={{ px: 2, py: 1 }}
-                    primary={
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                        }}
-                      >
-                        <Typography
-                          variant="subtitle1"
-                          component="div"
-                          noWrap
-                          title={key}
-                          sx={{ display: "flex", alignItems: "center" }}
-                        >
-                          <span style={{ marginRight: "8px" }}>{key}</span>
-                          <TypeBox component="span">
-                            {provider.proxies.length}
-                          </TypeBox>
-                          <TypeBox component="span">
-                            {provider.vehicleType}
-                          </TypeBox>
-                        </Typography>
-
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          noWrap
-                        >
-                          <small>{t("Update At")}: </small>
-                          {time.fromNow()}
-                        </Typography>
-                      </Box>
-                    }
-                    secondary={
-                      <>
-                        {/* 订阅信息 */}
-                        {hasSubInfo && (
-                          <>
-                            <Box
-                              sx={{
-                                mb: 1,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                              }}
-                            >
-                              <span title={t("Used / Total") as string}>
-                                {parseTraffic(upload + download)} /{" "}
-                                {parseTraffic(total)}
-                              </span>
-                              <span title={t("Expire Time") as string}>
-                                {parseExpire(expire)}
-                              </span>
-                            </Box>
-
-                            {/* 进度条 */}
-                            <LinearProgress
-                              variant="determinate"
-                              value={progress}
-                              sx={{
-                                height: 6,
-                                borderRadius: 3,
-                                opacity: total > 0 ? 1 : 0,
-                              }}
-                            />
-                          </>
+                  <div className="flex-grow space-y-1">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center font-semibold truncate">
+                        <span className="mr-2 truncate" title={key}>
+                          {key}
+                        </span>
+                        <TypeBoxDisplay>
+                          {provider.proxies.length}
+                        </TypeBoxDisplay>
+                        <TypeBoxDisplay>{provider.vehicleType}</TypeBoxDisplay>
+                      </div>
+                      <div className="text-xs text-muted-foreground whitespace-nowrap">
+                        <small>{t("Update At")}: </small>
+                        {time.fromNow()}
+                      </div>
+                    </div>
+                    {hasSubInfo && (
+                      <div className="text-xs">
+                        <div className="flex items-center justify-between mb-1">
+                          <span title={t("Used / Total") as string}>
+                            {parseTraffic(upload + download)} /{" "}
+                            {parseTraffic(total)}
+                          </span>
+                          <span title={t("Expire Time") as string}>
+                            {parseExpire(expire)}
+                          </span>
+                        </div>
+                        {total > 0 && (
+                          <Progress value={progress} className="h-1.5" />
                         )}
-                      </>
-                    }
-                  />
-                  <Divider orientation="vertical" flexItem />
-                  <Box
-                    sx={{
-                      width: 40,
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                    }}
-                  >
-                    <IconButton
-                      size="small"
-                      color="primary"
-                      onClick={(e) => {
-                        updateProvider(key);
-                      }}
+                      </div>
+                    )}
+                  </div>
+                  <div className="pl-3 ml-3 border-l border-border flex-shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => updateProvider(key)}
                       disabled={isUpdating}
-                      sx={{
-                        animation: isUpdating
-                          ? "spin 1s linear infinite"
-                          : "none",
-                        "@keyframes spin": {
-                          "0%": { transform: "rotate(0deg)" },
-                          "100%": { transform: "rotate(360deg)" },
-                        },
-                      }}
                       title={t("Update Provider") as string}
+                      className={isUpdating ? "animate-spin" : ""}
                     >
-                      <RefreshRounded />
-                    </IconButton>
-                  </Box>
-                </ListItem>
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               );
             })}
-          </List>
-        </DialogContent>
+          </div>
+        </div>
 
-        <DialogActions>
-          <Button onClick={handleClose} variant="outlined">
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
             {t("Close")}
           </Button>
-        </DialogActions>
-      </Dialog>
-    </>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

@@ -1,27 +1,22 @@
 import dayjs from "dayjs";
 import { useLockFn } from "ahooks";
-import {
-  styled,
-  ListItem,
-  IconButton,
-  ListItemText,
-  Box,
-  alpha,
-} from "@mui/material";
-import { CloseRounded } from "@mui/icons-material";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { deleteConnection } from "@/services/api";
 import parseTraffic from "@/utils/parse-traffic";
 
-const Tag = styled("span")(({ theme }) => ({
-  fontSize: "10px",
-  padding: "0 4px",
-  lineHeight: 1.375,
-  border: "1px solid",
-  borderRadius: 4,
-  borderColor: alpha(theme.palette.text.secondary, 0.35),
-  marginTop: "4px",
-  marginRight: "4px",
-}));
+interface TagProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+const Tag: React.FC<TagProps> = ({ children, className }) => {
+  const baseClasses =
+    "text-[10px] px-1 leading-[1.375] border rounded-[4px] border-muted-foreground/35";
+  return (
+    <span className={`${baseClasses} ${className || ""}`}>{children}</span>
+  );
+};
 
 interface Props {
   value: IConnectionsItem;
@@ -37,43 +32,42 @@ export const ConnectionItem = (props: Props) => {
   const showTraffic = curUpload! >= 100 || curDownload! >= 100;
 
   return (
-    <ListItem
-      dense
-      sx={{ borderBottom: "1px solid var(--divider-color)" }}
-      secondaryAction={
-        <IconButton edge="end" color="inherit" onClick={onDelete}>
-          <CloseRounded />
-        </IconButton>
-      }
-    >
-      <ListItemText
-        sx={{ userSelect: "text", cursor: "pointer" }}
-        primary={metadata.host || metadata.destinationIP}
+    <div className="flex items-center justify-between p-3 border-b border-border dark:border-border">
+      <div
+        className="flex-grow select-text cursor-pointer mr-2"
         onClick={onShowDetail}
-        secondary={
-          <Box sx={{ display: "flex", flexWrap: "wrap" }}>
-            <Tag sx={{ textTransform: "uppercase", color: "success" }}>
-              {metadata.network}
+      >
+        <div className="text-sm font-medium text-foreground">
+          {metadata.host || metadata.destinationIP}
+        </div>
+        <div className="flex flex-wrap gap-1 mt-1">
+          <Tag className="uppercase text-green-600 dark:text-green-500">
+            {metadata.network}
+          </Tag>
+
+          <Tag>{metadata.type}</Tag>
+
+          {!!metadata.process && <Tag>{metadata.process}</Tag>}
+
+          {chains?.length > 0 && <Tag>{[...chains].reverse().join(" / ")}</Tag>}
+
+          <Tag>{dayjs(start).fromNow()}</Tag>
+
+          {showTraffic && (
+            <Tag>
+              {parseTraffic(curUpload!)} / {parseTraffic(curDownload!)}
             </Tag>
-
-            <Tag>{metadata.type}</Tag>
-
-            {!!metadata.process && <Tag>{metadata.process}</Tag>}
-
-            {chains?.length > 0 && (
-              <Tag>{[...chains].reverse().join(" / ")}</Tag>
-            )}
-
-            <Tag>{dayjs(start).fromNow()}</Tag>
-
-            {showTraffic && (
-              <Tag>
-                {parseTraffic(curUpload!)} / {parseTraffic(curDownload!)}
-              </Tag>
-            )}
-          </Box>
-        }
-      />
-    </ListItem>
+          )}
+        </div>
+      </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onDelete}
+        className="ml-2 flex-shrink-0"
+      >
+        <X className="h-4 w-4" />
+      </Button>
+    </div>
   );
 };

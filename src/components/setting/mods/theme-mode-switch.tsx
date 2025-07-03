@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next";
-import { Button, ButtonGroup } from "@mui/material";
+import { Button } from "@/components/ui/button";
 
-type ThemeValue = IVergeConfig["theme_mode"];
+// Определяем возможные значения темы для TypeScript
+type ThemeValue = "light" | "dark" | "system";
 
 interface Props {
   value?: ThemeValue;
@@ -12,20 +13,25 @@ export const ThemeModeSwitch = (props: Props) => {
   const { value, onChange } = props;
   const { t } = useTranslation();
 
-  const modes = ["light", "dark", "system"] as const;
+  const modes: ThemeValue[] = ["light", "dark", "system"];
 
   return (
-    <ButtonGroup size="small" sx={{ my: "4px" }}>
+    // Создаем ту же самую группу кнопок, что и раньше
+    <div className="flex items-center rounded-md border bg-muted p-0.5">
       {modes.map((mode) => (
         <Button
           key={mode}
-          variant={mode === value ? "contained" : "outlined"}
+          variant={mode === value ? "default" : "ghost"}
           onClick={() => onChange?.(mode)}
-          sx={{ textTransform: "capitalize" }}
+          size="sm"
+          className="capitalize px-3 text-xs"
         >
+          {/* Ключевое исправление: мы используем ключи `theme.light`, `theme.dark` и т.д.
+            Это стандартный подход в i18next для корректной локализации.
+          */}
           {t(`theme.${mode}`)}
         </Button>
       ))}
-    </ButtonGroup>
+    </div>
   );
 };

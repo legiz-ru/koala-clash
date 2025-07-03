@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import path from "path";
+import tailwindcss from "@tailwindcss/vite";
 import svgr from "vite-plugin-svgr";
 import react from "@vitejs/plugin-react";
 import legacy from "@vitejs/plugin-legacy";
@@ -16,6 +17,7 @@ export default defineConfig({
   plugins: [
     svgr(),
     react(),
+    tailwindcss(),
     legacy({
       renderLegacyChunks: false,
       modernTargets: ["edge>=109", "safari>=13"],

@@ -1,33 +1,28 @@
 import { SVGProps, memo } from "react";
+import { useLockFn } from "ahooks";
+import { useTranslation } from "react-i18next";
+import dayjs from "dayjs";
+import { restartApp } from "@/services/cmds";
+import { deleteWebdavBackup, restoreWebDavBackup } from "@/services/cmds";
+import { showNotice } from "@/services/noticeService";
+
+// Новые импорты
 import {
-  Box,
-  Paper,
-  IconButton,
-  Divider,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  TablePagination,
-} from "@mui/material";
-import { Typography } from "@mui/material";
-import { useLockFn } from "ahooks";
-import { useTranslation } from "react-i18next";
-import { Dayjs } from "dayjs";
-import {
-  deleteWebdavBackup,
-  restoreWebDavBackup,
-  restartApp,
-} from "@/services/cmds";
-import DeleteIcon from "@mui/icons-material/Delete";
-import RestoreIcon from "@mui/icons-material/Restore";
-import { showNotice } from "@/services/noticeService";
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Trash2, History } from "lucide-react";
+
 
 export type BackupFile = IWebDavFile & {
   platform: string;
-  backup_time: Dayjs;
+  backup_time: dayjs.Dayjs;
   allow_apply: boolean;
 };
 
@@ -36,154 +31,12 @@ export const DEFAULT_ROWS_PER_PAGE = 5;
 export interface BackupTableViewerProps {
   datasource: BackupFile[];
   page: number;
-  onPageChange: (
-    event: React.MouseEvent<HTMLButtonElement> | null,
-    page: number,
-  ) => void;
+  onPageChange: (event: React.MouseEvent<HTMLButtonElement> | null, page: number) => void;
   total: number;
   onRefresh: () => Promise<void>;
 }
 
-export const BackupTableViewer = memo(
-  ({
-    datasource,
-    page,
-    onPageChange,
-    total,
-    onRefresh,
-  }: BackupTableViewerProps) => {
-    const { t } = useTranslation();
-
-    const handleDelete = useLockFn(async (filename: string) => {
-      await deleteWebdavBackup(filename);
-      await onRefresh();
-    });
-
-    const handleRestore = useLockFn(async (filename: string) => {
-      await restoreWebDavBackup(filename).then(() => {
-        showNotice("success", t("Restore Success, App will restart in 1s"));
-      });
-      await restartApp();
-    });
-
-    return (
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>{t("Filename")}</TableCell>
-              <TableCell>{t("Backup Time")}</TableCell>
-              <TableCell align="right">{t("Actions")}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {datasource.length > 0 ? (
-              datasource?.map((file, index) => (
-                <TableRow key={index}>
-                  <TableCell component="th" scope="row">
-                    {file.platform === "windows" ? (
-                      <WindowsIcon className="h-full w-full" />
-                    ) : file.platform === "linux" ? (
-                      <LinuxIcon className="h-full w-full" />
-                    ) : (
-                      <MacIcon className="h-full w-full" />
-                    )}
-                    {file.filename}
-                  </TableCell>
-                  <TableCell align="center">
-                    {file.backup_time.fromNow()}
-                  </TableCell>
-                  <TableCell align="right">
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "flex-end",
-                      }}
-                    >
-                      <IconButton
-                        color="secondary"
-                        aria-label={t("Delete")}
-                        size="small"
-                        title={t("Delete Backup")}
-                        onClick={async (e: React.MouseEvent) => {
-                          e.preventDefault();
-                          const confirmed = await window.confirm(
-                            t("Confirm to delete this backup file?"),
-                          );
-                          if (confirmed) {
-                            await handleDelete(file.filename);
-                          }
-                        }}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                      <Divider
-                        orientation="vertical"
-                        flexItem
-                        sx={{ mx: 1, height: 24 }}
-                      />
-                      <IconButton
-                        color="primary"
-                        aria-label={t("Restore")}
-                        size="small"
-                        title={t("Restore Backup")}
-                        disabled={!file.allow_apply}
-                        onClick={async (e: React.MouseEvent) => {
-                          e.preventDefault();
-                          const confirmed = await window.confirm(
-                            t("Confirm to restore this backup file?"),
-                          );
-                          if (confirmed) {
-                            await handleRestore(file.filename);
-                          }
-                        }}
-                      >
-                        <RestoreIcon />
-                      </IconButton>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={3} align="center">
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      height: 150,
-                    }}
-                  >
-                    <Typography
-                      variant="body1"
-                      color="textSecondary"
-                      align="center"
-                    >
-                      {t("No Backups")}
-                    </Typography>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-        <TablePagination
-          rowsPerPageOptions={[]}
-          component="div"
-          count={total}
-          rowsPerPage={DEFAULT_ROWS_PER_PAGE}
-          page={page}
-          onPageChange={onPageChange}
-          labelRowsPerPage={t("Rows per page")}
-        />
-      </TableContainer>
-    );
-  },
-);
-
+// Ваши кастомные иконки остаются без изменений
 function LinuxIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
@@ -264,3 +117,120 @@ function MacIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+
+export const BackupTableViewer = memo(
+  ({ datasource, page, onPageChange, total, onRefresh }: BackupTableViewerProps) => {
+    const { t } = useTranslation();
+
+    const handleDelete = useLockFn(async (filename: string) => {
+      await deleteWebdavBackup(filename);
+      await onRefresh();
+    });
+
+    const handleRestore = useLockFn(async (filename: string) => {
+      await restoreWebDavBackup(filename);
+      showNotice("success", t("Restore Success, App will restart in 1s"));
+      await restartApp();
+    });
+
+    return (
+      // Используем простой div в качестве контейнера
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t("Filename")}</TableHead>
+              <TableHead className="text-center">{t("Backup Time")}</TableHead>
+              <TableHead className="text-right">{t("Actions")}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {datasource.length > 0 ? (
+              datasource.map((file, index) => (
+                <TableRow key={index}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                        {file.platform === "windows" ? ( <WindowsIcon className="h-5 w-5" />
+                        ) : file.platform === "linux" ? ( <LinuxIcon className="h-5 w-5" />
+                        ) : ( <MacIcon className="h-5 w-5" /> )}
+                        <span>{file.filename}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center">{file.backup_time.fromNow()}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-end gap-2">
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-destructive hover:text-destructive"
+                                        onClick={async () => {
+                                            const confirmed = window.confirm(t("Confirm to delete this backup file?"));
+                                            if (confirmed) await handleDelete(file.filename);
+                                        }}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>{t("Delete Backup")}</p></TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                     <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        disabled={!file.allow_apply}
+                                        onClick={async () => {
+                                            const confirmed = window.confirm(t("Confirm to restore this backup file?"));
+                                            if (confirmed) await handleRestore(file.filename);
+                                        }}
+                                    >
+                                        <History className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>{t("Restore Backup")}</p></TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={3} className="h-24 text-center">
+                  {t("No Backups")}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+        {/* Новая кастомная пагинация */}
+        <div className="flex items-center justify-end space-x-2 p-2 border-t border-border">
+            <div className="flex-1 text-sm text-muted-foreground">
+                {t("Total")} {total}
+            </div>
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => onPageChange(e, page - 1)}
+                disabled={page === 0}
+            >
+                {t("Previous")}
+            </Button>
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => onPageChange(e, page + 1)}
+                disabled={(page + 1) * DEFAULT_ROWS_PER_PAGE >= total}
+            >
+                {t("Next")}
+            </Button>
+        </div>
+      </div>
+    );
+  }
+);

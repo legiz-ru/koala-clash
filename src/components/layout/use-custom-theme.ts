@@ -1,21 +1,21 @@
-import { useVerge } from "@/hooks/use-verge";
-import { defaultDarkTheme, defaultTheme } from "@/pages/_theme";
-import { useSetThemeMode, useThemeMode } from "@/services/states";
-import { alpha, createTheme, Theme as MuiTheme, Shadows } from "@mui/material";
-import {
-  arSD as arXDataGrid,
-  enUS as enXDataGrid,
-  faIR as faXDataGrid,
-  ruRU as ruXDataGrid,
-  zhCN as zhXDataGrid,
-} from "@mui/x-data-grid/locales";
+import { useEffect, useMemo } from "react";
+import { alpha, createTheme, Shadows, Theme as MuiTheme } from "@mui/material";
 import {
   getCurrentWebviewWindow,
   WebviewWindow,
 } from "@tauri-apps/api/webviewWindow";
-import { Theme as TauriOsTheme } from "@tauri-apps/api/window";
-import { useEffect, useMemo } from "react";
+import { useSetThemeMode, useThemeMode } from "@/services/states";
+import { defaultTheme, defaultDarkTheme } from "@/pages/_theme";
+import { useVerge } from "@/hooks/use-verge";
+import {
+  zhCN as zhXDataGrid,
+  enUS as enXDataGrid,
+  ruRU as ruXDataGrid,
+  faIR as faXDataGrid,
+  arSD as arXDataGrid,
+} from "@mui/x-data-grid/locales";
 import { useTranslation } from "react-i18next";
+import { Theme as TauriOsTheme } from "@tauri-apps/api/window";
 
 const languagePackMap: Record<string, any> = {
   zh: { ...zhXDataGrid },
@@ -39,10 +39,6 @@ export const useCustomTheme = () => {
   const mode = useThemeMode();
   const setMode = useSetThemeMode();
 
-  // 提取用户自定义的背景图URL
-  const userBackgroundImage = theme_setting?.background_image || "";
-  const hasUserBackground = !!userBackgroundImage;
-
   useEffect(() => {
     if (theme_mode === "light" || theme_mode === "dark") {
       setMode(theme_mode);
@@ -56,16 +52,19 @@ export const useCustomTheme = () => {
 
     let isMounted = true;
 
-    appWindow
-      .theme()
-      .then((systemTheme) => {
-        if (isMounted && systemTheme) {
-          setMode(systemTheme);
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to get initial system theme:", err);
-      });
+    const timerId = setTimeout(() => {
+      if (!isMounted) return;
+      appWindow
+        .theme()
+        .then((systemTheme) => {
+          if (isMounted && systemTheme) {
+            setMode(systemTheme);
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to get initial system theme:", err);
+        });
+    }, 0);
 
     const unlistenPromise = appWindow.onThemeChanged(({ payload }) => {
       if (isMounted) {
@@ -75,6 +74,7 @@ export const useCustomTheme = () => {
 
     return () => {
       isMounted = false;
+      clearTimeout(timerId);
       unlistenPromise
         .then((unlistenFn) => {
           if (typeof unlistenFn === "function") {
@@ -131,7 +131,6 @@ export const useCustomTheme = () => {
             },
             background: {
               paper: dt.background_color,
-              default: dt.background_color,
             },
           },
           shadows: Array(25).fill("none") as Shadows,
@@ -158,10 +157,6 @@ export const useCustomTheme = () => {
           warning: { main: dt.warning_color },
           success: { main: dt.success_color },
           text: { primary: dt.primary_text, secondary: dt.secondary_text },
-          background: {
-            paper: dt.background_color,
-            default: dt.background_color,
-          },
         },
         typography: { fontFamily: dt.font_family },
       });
@@ -169,10 +164,9 @@ export const useCustomTheme = () => {
 
     const rootEle = document.documentElement;
     if (rootEle) {
-      const backgroundColor =
-        mode === "light" ? "#ECECEC" : dt.background_color;
-      const selectColor = mode === "light" ? "#f5f5f5" : "#3E3E3E";
-      const scrollColor = mode === "light" ? "#90939980" : "#555555";
+      const backgroundColor = mode === "light" ? "#ECECEC" : "#2e303d";
+      const selectColor = mode === "light" ? "#f5f5f5" : "#d5d5d5";
+      const scrollColor = mode === "light" ? "#90939980" : "#3E3E3Eee";
       const dividerColor =
         mode === "light" ? "rgba(0, 0, 0, 0.06)" : "rgba(255, 255, 255, 0.06)";
 
@@ -188,96 +182,16 @@ export const useCustomTheme = () => {
         "--background-color-alpha",
         alpha(muiTheme.palette.primary.main, 0.1),
       );
-      // 添加CSS变量
-      rootEle.style.setProperty(
-        "--window-border-color",
-        mode === "light" ? "#cccccc" : "#1E1E1E",
-      );
-      rootEle.style.setProperty(
-        "--scrollbar-bg",
-        mode === "light" ? "#f1f1f1" : "#2E303D",
-      );
-      rootEle.style.setProperty(
-        "--scrollbar-thumb",
-        mode === "light" ? "#c1c1c1" : "#555555",
-      );
-
-      // 设置背景图相关变量
-      rootEle.style.setProperty(
-        "--user-background-image",
-        hasUserBackground ? `url('${userBackgroundImage}')` : "none",
-      );
-      rootEle.style.setProperty(
-        "--background-blend-mode",
-        setting.background_blend_mode || "normal",
-      );
-      rootEle.style.setProperty(
-        "--background-opacity",
-        setting.background_opacity !== undefined
-          ? String(setting.background_opacity)
-          : "1",
-      );
     }
-
+    // inject css
     let styleElement = document.querySelector("style#verge-theme");
     if (!styleElement) {
       styleElement = document.createElement("style");
       styleElement.id = "verge-theme";
       document.head.appendChild(styleElement!);
     }
-
     if (styleElement) {
-      // 改进的全局样式，支持用户自定义背景图
-      const globalStyles = `
-        /* 修复滚动条样式 */
-        ::-webkit-scrollbar {
-          width: 8px;
-          height: 8px;
-          background-color: var(--scrollbar-bg);
-        }
-        ::-webkit-scrollbar-thumb {
-          background-color: var(--scrollbar-thumb);
-          border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-          background-color: ${mode === "light" ? "#a1a1a1" : "#666666"};
-        }
-
-        /* 背景图处理 */
-        body {
-          background-color: var(--background-color);
-          ${
-            hasUserBackground
-              ? `
-            background-image: var(--user-background-image);
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            background-blend-mode: var(--background-blend-mode);
-            opacity: var(--background-opacity);
-          `
-              : ""
-          }
-        }
-
-        /* 修复可能的白色边框 */
-        .MuiPaper-root {
-          border-color: var(--window-border-color) !important;
-        }
-
-        /* 确保模态框和对话框也使用暗色主题 */
-        .MuiDialog-paper {
-          background-color: ${mode === "light" ? "#ffffff" : "#2E303D"} !important;
-        }
-
-        /* 移除可能的白色点或线条 */
-        * {
-          outline: none !important;
-          box-shadow: none !important;
-        }
-      `;
-
-      styleElement.innerHTML = (setting.css_injection || "") + globalStyles;
+      styleElement.innerHTML = setting.css_injection || "";
     }
 
     const { palette } = muiTheme;
@@ -293,13 +207,7 @@ export const useCustomTheme = () => {
     }, 0);
 
     return muiTheme;
-  }, [
-    mode,
-    theme_setting,
-    i18n.language,
-    userBackgroundImage,
-    hasUserBackground,
-  ]);
+  }, [mode, theme_setting, i18n.language]);
 
   return { theme };
 };

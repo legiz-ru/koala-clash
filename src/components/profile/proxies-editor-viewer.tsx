@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState, forwardRef } from "react";
 import { useLockFn } from "ahooks";
 import yaml from "js-yaml";
 import { useTranslation } from "react-i18next";
@@ -14,32 +14,40 @@ import {
 import {
   SortableContext,
   sortableKeyboardCoordinates,
+  useSortable,
 } from "@dnd-kit/sortable";
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  List,
-  ListItem,
-  TextField,
-  styled,
-} from "@mui/material";
-import {
-  VerticalAlignTopRounded,
-  VerticalAlignBottomRounded,
-} from "@mui/icons-material";
-import { ProxyItem } from "@/components/profile/proxy-item";
-import { readProfileFile, saveProfileFile } from "@/services/cmds";
-import getSystem from "@/utils/get-system";
-import { BaseSearchBox } from "../base/base-search-box";
+import { CSS } from "@dnd-kit/utilities";
 import { Virtuoso } from "react-virtuoso";
 import MonacoEditor from "react-monaco-editor";
+
+import { readProfileFile, saveProfileFile } from "@/services/cmds";
+import getSystem from "@/utils/get-system";
 import { useThemeMode } from "@/services/states";
 import parseUri from "@/utils/uri-parser";
 import { showNotice } from "@/services/noticeService";
+
+// Компоненты
+import { BaseSearchBox } from "../base/base-search-box";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+
+// Иконки
+import {
+  GripVertical,
+  Trash2,
+  Undo2,
+  ArrowDownToLine,
+  ArrowUpToLine,
+} from "lucide-react";
 
 interface Props {
   profileUid: string;
@@ -48,6 +56,69 @@ interface Props {
   onClose: () => void;
   onSave?: (prev?: string, curr?: string) => void;
 }
+
+// Новый, легковесный компонент для элемента списка, с поддержкой drag-and-drop
+const EditorProxyItem = ({
+  p_type,
+  proxy,
+  onDelete,
+  id,
+}: {
+  p_type: string;
+  proxy: IProxyConfig;
+  onDelete: () => void;
+  id: string;
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 100 : undefined,
+  };
+
+  const isDelete = p_type === "delete";
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center p-2 mb-1 rounded-md bg-secondary"
+      {...attributes}
+    >
+      <div
+        {...listeners}
+        className="cursor-grab p-1 text-muted-foreground hover:bg-accent rounded-sm"
+      >
+        <GripVertical className="h-5 w-5" />
+      </div>
+      <p
+        className={`flex-1 truncate text-sm ${isDelete ? "line-through text-muted-foreground" : ""}`}
+      >
+        {proxy.name}
+      </p>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7"
+        onClick={onDelete}
+      >
+        {isDelete ? (
+          <Undo2 className="h-4 w-4" />
+        ) : (
+          <Trash2 className="h-4 w-4 text-destructive" />
+        )}
+      </Button>
+    </div>
+  );
+};
 
 export const ProxiesEditorViewer = (props: Props) => {
   const { profileUid, property, open, onClose, onSave } = props;
@@ -83,6 +154,7 @@ export const ProxiesEditorViewer = (props: Props) => {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
+
   const reorder = (
     list: IProxyConfig[],
     startIndex: number,
@@ -93,44 +165,33 @@ export const ProxiesEditorViewer = (props: Props) => {
     result.splice(endIndex, 0, removed);
     return result;
   };
+
   const onPrependDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    if (over) {
-      if (active.id !== over.id) {
-        let activeIndex = 0;
-        let overIndex = 0;
-        prependSeq.forEach((item, index) => {
-          if (item.name === active.id) {
-            activeIndex = index;
-          }
-          if (item.name === over.id) {
-            overIndex = index;
-          }
-        });
-
-        setPrependSeq(reorder(prependSeq, activeIndex, overIndex));
-      }
+    if (over && active.id !== over.id) {
+      let activeIndex = 0;
+      let overIndex = 0;
+      prependSeq.forEach((item, index) => {
+        if (item.name === active.id) activeIndex = index;
+        if (item.name === over.id) overIndex = index;
+      });
+      setPrependSeq(reorder(prependSeq, activeIndex, overIndex));
     }
   };
+
   const onAppendDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    if (over) {
-      if (active.id !== over.id) {
-        let activeIndex = 0;
-        let overIndex = 0;
-        appendSeq.forEach((item, index) => {
-          if (item.name === active.id) {
-            activeIndex = index;
-          }
-          if (item.name === over.id) {
-            overIndex = index;
-          }
-        });
-        setAppendSeq(reorder(appendSeq, activeIndex, overIndex));
-      }
+    if (over && active.id !== over.id) {
+      let activeIndex = 0;
+      let overIndex = 0;
+      appendSeq.forEach((item, index) => {
+        if (item.name === active.id) activeIndex = index;
+        if (item.name === over.id) overIndex = index;
+      });
+      setAppendSeq(reorder(appendSeq, activeIndex, overIndex));
     }
   };
-  // 优化：异步分片解析，避免主线程阻塞，解析完成后批量setState
+
   const handleParseAsync = (cb: (proxies: IProxyConfig[]) => void) => {
     let proxies: IProxyConfig[] = [];
     let names: string[] = [];
@@ -154,7 +215,7 @@ export const ProxiesEditorViewer = (props: Props) => {
             names.push(proxy.name);
           }
         } catch (err: any) {
-          // 不阻塞主流程
+          // Ignore parse errors
         }
       }
       if (idx < lines.length) {
@@ -165,40 +226,39 @@ export const ProxiesEditorViewer = (props: Props) => {
     }
     parseBatch();
   };
+
   const fetchProfile = async () => {
     let data = await readProfileFile(profileUid);
-
     let originProxiesObj = yaml.load(data) as {
       proxies: IProxyConfig[];
     } | null;
-
     setProxyList(originProxiesObj?.proxies || []);
   };
 
   const fetchContent = async () => {
     let data = await readProfileFile(property);
     let obj = yaml.load(data) as ISeqProfileConfig | null;
-
     setPrependSeq(obj?.prepend || []);
     setAppendSeq(obj?.append || []);
     setDeleteSeq(obj?.delete || []);
-
     setPrevData(data);
     setCurrData(data);
   };
 
   useEffect(() => {
-    if (currData === "") return;
-    if (visualization !== true) return;
-
-    let obj = yaml.load(currData) as {
-      prepend: [];
-      append: [];
-      delete: [];
-    } | null;
-    setPrependSeq(obj?.prepend || []);
-    setAppendSeq(obj?.append || []);
-    setDeleteSeq(obj?.delete || []);
+    if (currData === "" || visualization !== true) return;
+    try {
+      let obj = yaml.load(currData) as {
+        prepend: [];
+        append: [];
+        delete: [];
+      } | null;
+      setPrependSeq(obj?.prepend || []);
+      setAppendSeq(obj?.append || []);
+      setDeleteSeq(obj?.delete || []);
+    } catch (e) {
+      console.error("Error parsing YAML in visualization mode:", e);
+    }
   }, [visualization]);
 
   useEffect(() => {
@@ -212,7 +272,7 @@ export const ProxiesEditorViewer = (props: Props) => {
             ),
           );
         } catch (e) {
-          // 防止异常导致UI卡死
+          console.error("Error dumping YAML:", e);
         }
       };
       if (window.requestIdleCallback) {
@@ -241,242 +301,202 @@ export const ProxiesEditorViewer = (props: Props) => {
   });
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xl" fullWidth>
-      <DialogTitle>
-        {
-          <Box display="flex" justifyContent="space-between">
-            {t("Edit Proxies")}
-            <Box>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={() => {
-                  setVisualization((prev) => !prev);
-                }}
-              >
-                {visualization ? t("Advanced") : t("Visualization")}
-              </Button>
-            </Box>
-          </Box>
-        }
-      </DialogTitle>
-
-      <DialogContent
-        sx={{ display: "flex", width: "auto", height: "calc(100vh - 185px)" }}
-      >
-        {visualization ? (
-          <>
-            <List
-              sx={{
-                width: "50%",
-                padding: "0 10px",
-              }}
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+        <DialogHeader>
+          <div className="flex justify-between items-center">
+            <DialogTitle>{t("Edit Proxies")}</DialogTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setVisualization((prev) => !prev)}
             >
-              <Box
-                sx={{
-                  height: "calc(100% - 80px)",
-                  overflowY: "auto",
-                }}
-              >
-                <Item>
-                  <TextField
-                    autoComplete="new-password"
-                    placeholder={t("Use newlines for multiple uri")}
-                    fullWidth
-                    rows={9}
-                    multiline
-                    size="small"
-                    onChange={(e) => setProxyUri(e.target.value)}
+              {visualization ? t("Advanced") : t("Visualization")}
+            </Button>
+          </div>
+        </DialogHeader>
+
+        <div className="flex-1 min-h-0">
+          {visualization ? (
+            <div className="h-full flex gap-4">
+              <div className="w-1/3 flex flex-col gap-4">
+                <Textarea
+                  placeholder={t("Use newlines for multiple uri")}
+                  className="flex-1"
+                  value={proxyUri}
+                  onChange={(e) => setProxyUri(e.target.value)}
+                />
+                <div className="flex flex-col gap-2">
+                  <Button
+                    onClick={() =>
+                      handleParseAsync((proxies) =>
+                        setPrependSeq((prev) => [...proxies, ...prev]),
+                      )
+                    }
+                  >
+                    <ArrowUpToLine className="mr-2 h-4 w-4" />
+                    {t("Prepend Proxy")}
+                  </Button>
+                  <Button
+                    onClick={() =>
+                      handleParseAsync((proxies) =>
+                        setAppendSeq((prev) => [...prev, ...proxies]),
+                      )
+                    }
+                  >
+                    <ArrowDownToLine className="mr-2 h-4 w-4" />
+                    {t("Append Proxy")}
+                  </Button>
+                </div>
+              </div>
+
+              <Separator orientation="vertical" />
+
+              <div className="w-2/3 flex flex-col">
+                <BaseSearchBox
+                  onSearch={(matcher) => setMatch(() => matcher)}
+                />
+                <div className="flex-1 min-h-0 mt-2 rounded-md border">
+                  <Virtuoso
+                    className="h-full"
+                    totalCount={
+                      filteredProxyList.length +
+                      (filteredPrependSeq.length > 0 ? 1 : 0) +
+                      (filteredAppendSeq.length > 0 ? 1 : 0)
+                    }
+                    itemContent={(index) => {
+                      let shift = filteredPrependSeq.length > 0 ? 1 : 0;
+                      if (filteredPrependSeq.length > 0 && index === 0) {
+                        return (
+                          <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={onPrependDragEnd}
+                          >
+                            <SortableContext
+                              items={filteredPrependSeq.map((x) => x.name)}
+                            >
+                              {filteredPrependSeq.map((item) => (
+                                <EditorProxyItem
+                                  key={item.name}
+                                  id={item.name}
+                                  p_type="prepend"
+                                  proxy={item}
+                                  onDelete={() =>
+                                    setPrependSeq(
+                                      prependSeq.filter(
+                                        (v) => v.name !== item.name,
+                                      ),
+                                    )
+                                  }
+                                />
+                              ))}
+                            </SortableContext>
+                          </DndContext>
+                        );
+                      } else if (index < filteredProxyList.length + shift) {
+                        const newIndex = index - shift;
+                        const currentProxy = filteredProxyList[newIndex];
+                        return (
+                          <EditorProxyItem
+                            key={currentProxy.name}
+                            id={currentProxy.name}
+                            p_type={
+                              deleteSeq.includes(currentProxy.name)
+                                ? "delete"
+                                : "original"
+                            }
+                            proxy={currentProxy}
+                            onDelete={() => {
+                              if (deleteSeq.includes(currentProxy.name)) {
+                                setDeleteSeq(
+                                  deleteSeq.filter(
+                                    (v) => v !== currentProxy.name,
+                                  ),
+                                );
+                              } else {
+                                setDeleteSeq((prev) => [
+                                  ...prev,
+                                  currentProxy.name,
+                                ]);
+                              }
+                            }}
+                          />
+                        );
+                      } else {
+                        return (
+                          <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={onAppendDragEnd}
+                          >
+                            <SortableContext
+                              items={filteredAppendSeq.map((x) => x.name)}
+                            >
+                              {filteredAppendSeq.map((item) => (
+                                <EditorProxyItem
+                                  key={item.name}
+                                  id={item.name}
+                                  p_type="append"
+                                  proxy={item}
+                                  onDelete={() =>
+                                    setAppendSeq(
+                                      appendSeq.filter(
+                                        (v) => v.name !== item.name,
+                                      ),
+                                    )
+                                  }
+                                />
+                              ))}
+                            </SortableContext>
+                          </DndContext>
+                        );
+                      }
+                    }}
                   />
-                </Item>
-              </Box>
-              <Item>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  startIcon={<VerticalAlignTopRounded />}
-                  onClick={() => {
-                    handleParseAsync((proxies) => {
-                      setPrependSeq((prev) => [...proxies, ...prev]);
-                    });
-                  }}
-                >
-                  {t("Prepend Proxy")}
-                </Button>
-              </Item>
-              <Item>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  startIcon={<VerticalAlignBottomRounded />}
-                  onClick={() => {
-                    handleParseAsync((proxies) => {
-                      setAppendSeq((prev) => [...prev, ...proxies]);
-                    });
-                  }}
-                >
-                  {t("Append Proxy")}
-                </Button>
-              </Item>
-            </List>
-
-            <List
-              sx={{
-                width: "50%",
-                padding: "0 10px",
-              }}
-            >
-              <BaseSearchBox onSearch={(match) => setMatch(() => match)} />
-              <Virtuoso
-                style={{ height: "calc(100% - 24px)", marginTop: "8px" }}
-                totalCount={
-                  filteredProxyList.length +
-                  (filteredPrependSeq.length > 0 ? 1 : 0) +
-                  (filteredAppendSeq.length > 0 ? 1 : 0)
-                }
-                increaseViewportBy={256}
-                itemContent={(index) => {
-                  let shift = filteredPrependSeq.length > 0 ? 1 : 0;
-                  if (filteredPrependSeq.length > 0 && index === 0) {
-                    return (
-                      <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={onPrependDragEnd}
-                      >
-                        <SortableContext
-                          items={filteredPrependSeq.map((x) => {
-                            return x.name;
-                          })}
-                        >
-                          {filteredPrependSeq.map((item, index) => {
-                            return (
-                              <ProxyItem
-                                key={`${item.name}-${index}`}
-                                type="prepend"
-                                proxy={item}
-                                onDelete={() => {
-                                  setPrependSeq(
-                                    prependSeq.filter(
-                                      (v) => v.name !== item.name,
-                                    ),
-                                  );
-                                }}
-                              />
-                            );
-                          })}
-                        </SortableContext>
-                      </DndContext>
-                    );
-                  } else if (index < filteredProxyList.length + shift) {
-                    let newIndex = index - shift;
-                    return (
-                      <ProxyItem
-                        key={`${filteredProxyList[newIndex].name}-${index}`}
-                        type={
-                          deleteSeq.includes(filteredProxyList[newIndex].name)
-                            ? "delete"
-                            : "original"
-                        }
-                        proxy={filteredProxyList[newIndex]}
-                        onDelete={() => {
-                          if (
-                            deleteSeq.includes(filteredProxyList[newIndex].name)
-                          ) {
-                            setDeleteSeq(
-                              deleteSeq.filter(
-                                (v) => v !== filteredProxyList[newIndex].name,
-                              ),
-                            );
-                          } else {
-                            setDeleteSeq((prev) => [
-                              ...prev,
-                              filteredProxyList[newIndex].name,
-                            ]);
-                          }
-                        }}
-                      />
-                    );
-                  } else {
-                    return (
-                      <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={onAppendDragEnd}
-                      >
-                        <SortableContext
-                          items={filteredAppendSeq.map((x) => {
-                            return x.name;
-                          })}
-                        >
-                          {filteredAppendSeq.map((item, index) => {
-                            return (
-                              <ProxyItem
-                                key={`${item.name}-${index}`}
-                                type="append"
-                                proxy={item}
-                                onDelete={() => {
-                                  setAppendSeq(
-                                    appendSeq.filter(
-                                      (v) => v.name !== item.name,
-                                    ),
-                                  );
-                                }}
-                              />
-                            );
-                          })}
-                        </SortableContext>
-                      </DndContext>
-                    );
-                  }
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="h-full rounded-md border">
+              <MonacoEditor
+                height="100%"
+                language="yaml"
+                value={currData}
+                theme={themeMode === "light" ? "vs" : "vs-dark"}
+                options={{
+                  tabSize: 2,
+                  minimap: {
+                    enabled: document.documentElement.clientWidth >= 1500,
+                  },
+                  mouseWheelZoom: true,
+                  quickSuggestions: {
+                    strings: true,
+                    comments: true,
+                    other: true,
+                  },
+                  padding: { top: 16 },
+                  fontFamily: `Fira Code, JetBrains Mono, Roboto Mono, "Source Code Pro", Consolas, Menlo, Monaco, monospace, "Courier New", "Apple Color Emoji"${getSystem() === "windows" ? ", twemoji mozilla" : ""}`,
+                  fontLigatures: false,
+                  smoothScrolling: true,
                 }}
+                onChange={(value) => setCurrData(value)}
               />
-            </List>
-          </>
-        ) : (
-          <MonacoEditor
-            height="100%"
-            language="yaml"
-            value={currData}
-            theme={themeMode === "light" ? "vs" : "vs-dark"}
-            options={{
-              tabSize: 2, // 根据语言类型设置缩进大小
-              minimap: {
-                enabled: document.documentElement.clientWidth >= 1500, // 超过一定宽度显示minimap滚动条
-              },
-              mouseWheelZoom: true, // 按住Ctrl滚轮调节缩放比例
-              quickSuggestions: {
-                strings: true, // 字符串类型的建议
-                comments: true, // 注释类型的建议
-                other: true, // 其他类型的建议
-              },
-              padding: {
-                top: 33, // 顶部padding防止遮挡snippets
-              },
-              fontFamily: `Fira Code, JetBrains Mono, Roboto Mono, "Source Code Pro", Consolas, Menlo, Monaco, monospace, "Courier New", "Apple Color Emoji"${
-                getSystem() === "windows" ? ", twemoji mozilla" : ""
-              }`,
-              fontLigatures: false, // 连字符
-              smoothScrolling: true, // 平滑滚动
-            }}
-            onChange={(value) => setCurrData(value)}
-          />
-        )}
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="mt-4">
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              {t("Cancel")}
+            </Button>
+          </DialogClose>
+          <Button type="button" onClick={handleSave}>
+            {t("Save")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-
-      <DialogActions>
-        <Button onClick={onClose} variant="outlined">
-          {t("Cancel")}
-        </Button>
-
-        <Button onClick={handleSave} variant="contained">
-          {t("Save")}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 };
-
-const Item = styled(ListItem)(() => ({
-  padding: "5px 2px",
-}));

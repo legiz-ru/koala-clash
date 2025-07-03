@@ -1,46 +1,48 @@
-import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+
+// Новые импорты из shadcn/ui
 import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-} from "@mui/material";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@root/lib/utils";
 
 interface Props {
   open: boolean;
   title: string;
-  message: string;
-  onClose: () => void;
+  description: string;
+  onOpenChange: (open: boolean) => void; // shadcn использует этот коллбэк
   onConfirm: () => void;
 }
 
 export const ConfirmViewer = (props: Props) => {
-  const { open, title, message, onClose, onConfirm } = props;
-
+  const { open, title, description, onOpenChange, onConfirm } = props;
   const { t } = useTranslation();
 
-  useEffect(() => {
-    if (!open) return;
-  }, [open]);
-
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>{title}</DialogTitle>
-
-      <DialogContent sx={{ pb: 1, userSelect: "text" }}>
-        {message}
-      </DialogContent>
-
-      <DialogActions>
-        <Button onClick={onClose} variant="outlined">
-          {t("Cancel")}
-        </Button>
-        <Button onClick={onConfirm} variant="contained">
-          {t("Confirm")}
-        </Button>
-      </DialogActions>
-    </Dialog>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
+          <AlertDialogAction
+            className={cn(buttonVariants({ variant: "destructive" }))}
+            onClick={onConfirm}
+          >
+            {t("Confirm")}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };

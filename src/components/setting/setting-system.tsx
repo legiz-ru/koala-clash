@@ -1,267 +1,180 @@
-import { mutate } from "swr";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  SettingsRounded,
-  PlayArrowRounded,
-  PauseRounded,
-  WarningRounded,
-  BuildRounded,
-  DeleteForeverRounded,
-} from "@mui/icons-material";
+import { useLockFn } from "ahooks";
+import { mutate } from "swr";
+import { invoke } from "@tauri-apps/api/core";
+import getSystem from "@/utils/get-system";
+
+// Сервисы и хуки
 import { useVerge } from "@/hooks/use-verge";
-import { useSystemProxyState } from "@/hooks/use-system-proxy-state";
+import { useSystemProxyState } from "@/hooks/use-system-proxy-state"; // Ваш хук
+import { useSystemState } from "@/hooks/use-system-state";
+import { useServiceInstaller } from "@/hooks/useServiceInstaller";
+import { uninstallService, restartCore, stopCore, invoke_uwp_tool } from "@/services/cmds";
+import { showNotice } from "@/services/noticeService";
+
+// Компоненты
 import { DialogRef, Switch } from "@/components/base";
-import { SettingList, SettingItem } from "./mods/setting-comp";
+import { TooltipIcon } from "@/components/base/base-tooltip-icon";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { GuardState } from "./mods/guard-state";
+
+// Иконки
+import { Settings, PlayCircle, PauseCircle, AlertTriangle, Wrench, Trash2, Funnel, Monitor, Power, BellOff, Repeat } from "lucide-react";
+
+// Модальные окна
 import { SysproxyViewer } from "./mods/sysproxy-viewer";
 import { TunViewer } from "./mods/tun-viewer";
-import { TooltipIcon } from "@/components/base/base-tooltip-icon";
-import { uninstallService, restartCore, stopCore } from "@/services/cmds";
-import { useLockFn } from "ahooks";
-import { Button, Tooltip } from "@mui/material";
-import { useSystemState } from "@/hooks/use-system-state";
 
-import { showNotice } from "@/services/noticeService";
-import { useServiceInstaller } from "@/hooks/useServiceInstaller";
+const isWIN = getSystem() === "windows";
+interface Props { onError?: (err: Error) => void; }
 
-interface Props {
-  onError?: (err: Error) => void;
-}
+const SettingRow = ({ label, extra, children, onClick }: { label: React.ReactNode; extra?: React.ReactNode; children?: React.ReactNode; onClick?: () => void; }) => (
+    <div className={`flex items-center justify-between py-3 border-b border-border last:border-b-0 ${onClick ? 'cursor-pointer hover:bg-accent/50 -mx-3 px-3 rounded-md' : ''}`} onClick={onClick}>
+        <div className="flex items-center gap-2"><div className="text-sm font-medium">{label}</div>{extra && <div className="text-muted-foreground">{extra}</div>}</div>
+        <div>{children}</div>
+    </div>
+);
+
+const LabelWithIcon = ({ icon, text }: { icon: React.ElementType, text: string }) => {
+    const Icon = icon;
+    return ( <span className="flex items-center gap-3"><Icon className="h-4 w-4 text-muted-foreground" />{text}</span> );
+};
 
 const SettingSystem = ({ onError }: Props) => {
   const { t } = useTranslation();
-
-  const { verge, mutateVerge, patchVerge } = useVerge();
+  const { verge, patchVerge, mutateVerge } = useVerge();
   const { installServiceAndRestartCore } = useServiceInstaller();
+
+  // --- НАЧАЛО ИСПРАВЛЕНИЯ ---
+  // Используем синтаксис переименования: `actualState` становится `systemProxyActualState`
   const {
     actualState: systemProxyActualState,
     indicator: systemProxyIndicator,
     toggleSystemProxy,
   } = useSystemProxyState();
+  // --- КОНЕЦ ИСПРАВЛЕНИЯ ---
 
   const { isAdminMode, isServiceMode, mutateRunningMode } = useSystemState();
-
-  // +++ isTunAvailable 现在使用 SWR 的 isServiceMode
   const isTunAvailable = isServiceMode || isAdminMode;
 
   const sysproxyRef = useRef<DialogRef>(null);
   const tunRef = useRef<DialogRef>(null);
 
-  const { enable_tun_mode, enable_auto_launch, enable_silent_start } =
-    verge ?? {};
+  const { enable_tun_mode, enable_auto_launch, enable_silent_start } = verge ?? {};
 
-  const onSwitchFormat = (_e: any, value: boolean) => value;
+  const onSwitchFormat = (val: boolean) => val;
   const onChangeData = (patch: Partial<IVergeConfig>) => {
     mutateVerge({ ...verge, ...patch }, false);
   };
 
-  // 抽象服务操作逻辑
-  const handleServiceOperation = useLockFn(
-    async ({
-      beforeMsg,
-      action,
-      actionMsg,
-      successMsg,
-    }: {
-      beforeMsg: string;
-      action: () => Promise<void>;
-      actionMsg: string;
-      successMsg: string;
-    }) => {
+  const handleServiceOperation = useLockFn(async ({ beforeMsg, action, actionMsg, successMsg }: { beforeMsg: string; action: () => Promise<void>; actionMsg: string; successMsg: string; }) => {
+    try {
+      showNotice("info", beforeMsg);
+      await stopCore();
+      showNotice("info", actionMsg);
+      await action();
+      showNotice("success", successMsg);
+      showNotice("info", t("Restarting Core..."));
+      await restartCore();
+      await mutateRunningMode();
+    } catch (err: any) {
+      showNotice("error", err.message || err.toString());
       try {
-        showNotice("info", beforeMsg);
-        await stopCore();
-        showNotice("info", actionMsg);
-        await action();
-        showNotice("success", successMsg);
-        showNotice("info", t("Restarting Core..."));
+        showNotice("info", t("Try running core as Sidecar..."));
         await restartCore();
         await mutateRunningMode();
-      } catch (err: any) {
-        showNotice("error", err.message || err.toString());
-        try {
-          showNotice("info", t("Try running core as Sidecar..."));
-          await restartCore();
-          await mutateRunningMode();
-        } catch (e: any) {
-          showNotice("error", e?.message || e?.toString());
-        }
+      } catch (e: any) {
+        showNotice("error", e?.message || e?.toString());
       }
-    },
-  );
+    }
+  });
 
-  // 卸载系统服务
-  const onUninstallService = () =>
-    handleServiceOperation({
+  const onUninstallService = () => handleServiceOperation({
       beforeMsg: t("Stopping Core..."),
       action: uninstallService,
       actionMsg: t("Uninstalling Service..."),
       successMsg: t("Service Uninstalled Successfully"),
-    });
+  });
 
   return (
-    <SettingList title={t("System Setting")}>
-      <SysproxyViewer ref={sysproxyRef} />
-      <TunViewer ref={tunRef} />
+    <div>
+      <h3 className="text-lg font-medium mb-4">{t("System Setting")}</h3>
+      <div className="space-y-1">
+        <SysproxyViewer ref={sysproxyRef} />
+        <TunViewer ref={tunRef} />
 
-      <SettingItem
-        label={t("Tun Mode")}
-        extra={
-          <>
-            <TooltipIcon
-              title={t("Tun Mode Info")}
-              icon={SettingsRounded}
-              onClick={() => tunRef.current?.open()}
-            />
-            {!isTunAvailable && (
-              <Tooltip title={t("TUN requires Service Mode or Admin Mode")}>
-                <WarningRounded sx={{ color: "warning.main", mr: 1 }} />
-              </Tooltip>
-            )}
-            {!isServiceMode && !isAdminMode && (
-              <Tooltip title={t("Install Service")}>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  size="small"
-                  onClick={installServiceAndRestartCore}
-                  sx={{ mr: 1, minWidth: "32px", p: "4px" }}
-                >
-                  <BuildRounded fontSize="small" />
-                </Button>
-              </Tooltip>
-            )}
-            {isServiceMode && (
-              <Tooltip title={t("Uninstall Service")}>
-                <Button
-                  // variant="outlined"
-                  color="secondary"
-                  size="small"
-                  onClick={onUninstallService}
-                  sx={{ mr: 1, minWidth: "32px", p: "4px" }}
-                >
-                  <DeleteForeverRounded fontSize="small" />
-                </Button>
-              </Tooltip>
-            )}
-          </>
-        }
-      >
-        <GuardState
-          value={enable_tun_mode ?? false}
-          valueProps="checked"
-          onCatch={onError}
-          onFormat={onSwitchFormat}
-          onChange={(e) => {
-            if (!isTunAvailable) return;
-            onChangeData({ enable_tun_mode: e });
-          }}
-          onGuard={(e) => {
-            if (!isTunAvailable) {
-              showNotice("error", t("TUN requires Service Mode or Admin Mode"));
-              return Promise.reject(
-                new Error(t("TUN requires Service Mode or Admin Mode")),
-              );
-            }
-            return patchVerge({ enable_tun_mode: e });
-          }}
+        <SettingRow
+          label={<LabelWithIcon icon={Funnel} text={t("Tun Mode")} />}
+          extra={
+            <div className="flex items-center gap-1">
+              <TooltipIcon tooltip={t("Tun Mode Info")} icon={<Settings className="h-4 w-4" />} onClick={() => tunRef.current?.open()} />
+              {!isTunAvailable && <TooltipProvider><Tooltip><TooltipTrigger><AlertTriangle className="h-4 w-4 text-amber-500" /></TooltipTrigger><TooltipContent><p>{t("TUN requires Service Mode or Admin Mode")}</p></TooltipContent></Tooltip></TooltipProvider>}
+              {!isServiceMode && !isAdminMode && <TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-7 w-7" onClick={installServiceAndRestartCore}><Wrench className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>{t("Install Service")}</p></TooltipContent></Tooltip></TooltipProvider>}
+              {isServiceMode && <TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="destructive" size="icon" className="h-7 w-7" onClick={onUninstallService}><Trash2 className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>{t("Uninstall Service")}</p></TooltipContent></Tooltip></TooltipProvider>}
+            </div>
+          }
         >
-          <Switch edge="end" disabled={!isTunAvailable} />
-        </GuardState>
-      </SettingItem>
-      <SettingItem
-        label={t("System Proxy")}
-        extra={
-          <>
-            <TooltipIcon
-              title={t("System Proxy Info")}
-              icon={SettingsRounded}
-              onClick={() => sysproxyRef.current?.open()}
-            />
-            {systemProxyIndicator ? (
-              <PlayArrowRounded sx={{ color: "success.main", mr: 1 }} />
-            ) : (
-              <PauseRounded sx={{ color: "error.main", mr: 1 }} />
-            )}
-          </>
-        }
-      >
-        <GuardState
-          value={systemProxyActualState}
-          valueProps="checked"
-          onCatch={onError}
-          onFormat={onSwitchFormat}
-          onGuard={(e) => toggleSystemProxy(e)}
-        >
-          <Switch edge="end" checked={systemProxyActualState} />
-        </GuardState>
-      </SettingItem>
+          <GuardState
+            value={enable_tun_mode ?? false}
+            valueProps="checked"
+            onChangeProps="onCheckedChange"
+            onFormat={onSwitchFormat}
+            onChange={(e) => onChangeData({ enable_tun_mode: e })}
+            onGuard={(e) => { if (!isTunAvailable) { showNotice("error", t("TUN requires Service Mode or Admin Mode")); return Promise.reject(new Error(t("TUN requires Service Mode or Admin Mode"))); } return patchVerge({ enable_tun_mode: e }); }}
+            onCatch={onError}
+          >
+            <Switch disabled={!isTunAvailable} />
+          </GuardState>
+        </SettingRow>
 
-      <SettingItem
-        label={t("Auto Launch")}
-        extra={
-          isAdminMode && (
-            <Tooltip
-              title={t("Administrator mode may not support auto launch")}
-            >
-              <WarningRounded sx={{ color: "warning.main", mr: 1 }} />
-            </Tooltip>
-          )
-        }
-      >
-        <GuardState
-          value={enable_auto_launch ?? false}
-          valueProps="checked"
-          onCatch={onError}
-          onFormat={onSwitchFormat}
-          onChange={(e) => {
-            // 移除管理员模式检查提示
-            onChangeData({ enable_auto_launch: e });
-          }}
-          onGuard={async (e) => {
-            if (isAdminMode) {
-              showNotice(
-                "info",
-                t("Administrator mode may not support auto launch"),
-              );
-            }
-
-            try {
-              // 先触发UI更新立即看到反馈
-              onChangeData({ enable_auto_launch: e });
-              await patchVerge({ enable_auto_launch: e });
-              await mutate("getAutoLaunchStatus");
-              return Promise.resolve();
-            } catch (error) {
-              // 如果出错，恢复原始状态
-              onChangeData({ enable_auto_launch: !e });
-              return Promise.reject(error);
-            }
-          }}
+        <SettingRow
+          label={<LabelWithIcon icon={Monitor} text={t("System Proxy")} />}
+          extra={
+            <div className="flex items-center gap-2">
+              <TooltipIcon tooltip={t("System Proxy Info")} icon={<Settings className="h-4 w-4" />} onClick={() => sysproxyRef.current?.open()} />
+              {systemProxyIndicator ? <PlayCircle className="h-5 w-5 text-green-500" /> : <PauseCircle className="h-5 w-5 text-red-500" />}
+            </div>
+          }
         >
-          <Switch edge="end" />
-        </GuardState>
-      </SettingItem>
+          <GuardState value={systemProxyActualState} valueProps="checked" onChangeProps="onCheckedChange" onFormat={onSwitchFormat} onGuard={(e) => toggleSystemProxy(e)} onCatch={onError}>
+            <Switch />
+          </GuardState>
+        </SettingRow>
 
-      <SettingItem
-        label={t("Silent Start")}
-        extra={
-          <TooltipIcon title={t("Silent Start Info")} sx={{ opacity: "0.7" }} />
-        }
-      >
-        <GuardState
-          value={enable_silent_start ?? false}
-          valueProps="checked"
-          onCatch={onError}
-          onFormat={onSwitchFormat}
-          onChange={(e) => onChangeData({ enable_silent_start: e })}
-          onGuard={(e) => patchVerge({ enable_silent_start: e })}
+        <SettingRow
+          label={<LabelWithIcon icon={Power} text={t("Auto Launch")} />}
+          extra={isAdminMode && <TooltipProvider><Tooltip><TooltipTrigger><AlertTriangle className="h-4 w-4 text-amber-500" /></TooltipTrigger><TooltipContent><p>{t("Administrator mode may not support auto launch")}</p></TooltipContent></Tooltip></TooltipProvider>}
         >
-          <Switch edge="end" />
-        </GuardState>
-      </SettingItem>
-    </SettingList>
+          <GuardState
+            value={enable_auto_launch ?? false}
+            valueProps="checked"
+            onChangeProps="onCheckedChange"
+            onFormat={onSwitchFormat}
+            onChange={(e) => onChangeData({ enable_auto_launch: e })}
+            onGuard={async (e) => { if (isAdminMode) { showNotice("info", t("Administrator mode may not support auto launch")); } try { onChangeData({ enable_auto_launch: e }); await patchVerge({ enable_auto_launch: e }); await mutate("getAutoLaunchStatus"); return Promise.resolve(); } catch (error) { onChangeData({ enable_auto_launch: !e }); return Promise.reject(error); } }}
+            onCatch={onError}
+          >
+            <Switch />
+          </GuardState>
+        </SettingRow>
+
+        <SettingRow label={<LabelWithIcon icon={BellOff} text={t("Silent Start")} />} extra={<TooltipIcon tooltip={t("Silent Start Info")} />}>
+          <GuardState
+            value={enable_silent_start ?? false}
+            valueProps="checked"
+            onChangeProps="onCheckedChange"
+            onFormat={onSwitchFormat}
+            onChange={(e) => onChangeData({ enable_silent_start: e })}
+            onGuard={(e) => patchVerge({ enable_silent_start: e })}
+            onCatch={onError}
+          >
+            <Switch />
+          </GuardState>
+        </SettingRow>
+      </div>
+    </div>
   );
 };
 

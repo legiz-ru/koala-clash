@@ -4,8 +4,9 @@ import ProfilesPage from "./profiles";
 import SettingsPage from "./settings";
 import ConnectionsPage from "./connections";
 import RulesPage from "./rules";
-import HomePage from "./home";
+// import HomePage from "./home"; // Удаляем импорт старой HomePage
 import UnlockPage from "./unlock";
+import MinimalHomePage from "./home";
 import { BaseErrorBoundary } from "@/components/base";
 
 import HomeSvg from "@/assets/image/itemicon/home.svg?react";
@@ -25,17 +26,22 @@ import SubjectRoundedIcon from "@mui/icons-material/SubjectRounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import LockOpenRoundedIcon from "@mui/icons-material/LockOpenRounded";
+import { Navigate } from "react-router-dom";
 
 export const routers = [
   {
-    label: "Label-Home",
+    path: "/",
+    element: <Navigate to="/home" replace />,
+  },
+  {
+    label: "Label-Home", // Изменяем label для главной страницы (если нужно)
     path: "/home",
     icon: [<HomeRoundedIcon />, <HomeSvg />],
-    element: <HomePage />,
+    element: <MinimalHomePage />,
   },
   {
     label: "Label-Proxies",
-    path: "/",
+    path: "/proxies",
     icon: [<WifiRoundedIcon />, <ProxiesSvg />],
     element: <ProxiesPage />,
   },

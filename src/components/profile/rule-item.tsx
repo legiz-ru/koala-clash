@@ -1,25 +1,44 @@
-import {
-  Box,
-  IconButton,
-  ListItem,
-  ListItemText,
-  alpha,
-  styled,
-} from "@mui/material";
-import { DeleteForeverRounded, UndoRounded } from "@mui/icons-material";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { cn } from "@root/lib/utils";
+
+// Новые импорты
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { GripVertical, Trash2, Undo2 } from "lucide-react";
+
 interface Props {
   type: "prepend" | "original" | "delete" | "append";
   ruleRaw: string;
   onDelete: () => void;
 }
 
-export const RuleItem = (props: Props) => {
-  let { type, ruleRaw, onDelete } = props;
-  const sortable = type === "prepend" || type === "append";
-  const rule = ruleRaw.replace(",no-resolve", "");
+// Определяем стили для каждого типа элемента
+const typeStyles = {
+  original: "bg-secondary/50",
+  delete: "bg-destructive/20 text-muted-foreground line-through",
+  prepend: "bg-green-500/20",
+  append: "bg-green-500/20",
+};
 
+// Вспомогательная функция для цвета политики прокси
+const PROXY_COLOR_CLASSES = ["text-sky-500", "text-violet-500", "text-amber-500", "text-lime-500", "text-emerald-500"];
+const getProxyColorClass = (proxyName: string): string => {
+  if (proxyName === "REJECT" || proxyName === "REJECT-DROP") return "text-destructive";
+  if (proxyName === "DIRECT") return "text-primary";
+  let sum = 0;
+  for (let i = 0; i < proxyName.length; i++) sum += proxyName.charCodeAt(i);
+  return PROXY_COLOR_CLASSES[sum % PROXY_COLOR_CLASSES.length];
+};
+
+export const RuleItem = (props: Props) => {
+  const { type, ruleRaw, onDelete } = props;
+
+  // Drag-and-drop будет работать только для 'prepend' и 'append' типов
+  const isSortable = type === "prepend" || type === "append";
+
+  // Логика парсинга строки правила остается без изменений
+  const rule = ruleRaw.replace(",no-resolve", "");
   const ruleType = rule.match(/^[^,]+/)?.[0] ?? "";
   const proxyPolicy = rule.match(/[^,]+$/)?.[0] ?? "";
   const ruleContent = rule.slice(ruleType.length + 1, -proxyPolicy.length - 1);
@@ -31,112 +50,55 @@ export const RuleItem = (props: Props) => {
     transform,
     transition,
     isDragging,
-  } = sortable
-    ? useSortable({ id: ruleRaw })
-    : {
-        attributes: {},
-        listeners: {},
-        setNodeRef: null,
-        transform: null,
-        transition: null,
-        isDragging: false,
-      };
+  } = useSortable({ id: ruleRaw, disabled: !isSortable });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 100 : undefined,
+  };
+
   return (
-    <ListItem
-      dense
-      sx={({ palette }) => ({
-        position: "relative",
-        background:
-          type === "original"
-            ? palette.mode === "dark"
-              ? alpha(palette.background.paper, 0.3)
-              : alpha(palette.grey[400], 0.3)
-            : type === "delete"
-              ? alpha(palette.error.main, 0.3)
-              : alpha(palette.success.main, 0.3),
-        height: "100%",
-        margin: "8px 0",
-        borderRadius: "8px",
-        transform: CSS.Transform.toString(transform),
-        transition,
-        zIndex: isDragging ? "calc(infinity)" : undefined,
-      })}
+    <div
+      ref={setNodeRef}
+      style={style}
+      // Применяем условные стили
+      className={cn(
+        "flex items-center p-2 mb-1 rounded-lg transition-shadow",
+        typeStyles[type],
+        isDragging && "shadow-lg"
+      )}
     >
-      <ListItemText
+      {/* Ручка для перетаскивания */}
+      <div
         {...attributes}
         {...listeners}
-        ref={setNodeRef}
-        sx={{ cursor: sortable ? "move" : "" }}
-        primary={
-          <StyledPrimary
-            title={ruleContent || "-"}
-            sx={{ textDecoration: type === "delete" ? "line-through" : "" }}
-          >
-            {ruleContent || "-"}
-          </StyledPrimary>
-        }
-        secondary={
-          <ListItemTextChild
-            sx={{
-              width: "62%",
-              overflow: "hidden",
-              display: "flex",
-              justifyContent: "space-between",
-              pt: "2px",
-            }}
-          >
-            <Box sx={{ marginTop: "2px" }}>
-              <StyledTypeBox>{ruleType}</StyledTypeBox>
-            </Box>
-            <StyledSubtitle sx={{ color: "text.secondary" }}>
-              {proxyPolicy}
-            </StyledSubtitle>
-          </ListItemTextChild>
-        }
-        secondaryTypographyProps={{
-          sx: {
-            display: "flex",
-            alignItems: "center",
-            color: "#ccc",
-          },
-        }}
-      />
-      <IconButton onClick={onDelete}>
-        {type === "delete" ? <UndoRounded /> : <DeleteForeverRounded />}
-      </IconButton>
-    </ListItem>
+        className={cn("p-1 text-muted-foreground rounded-sm", isSortable ? "cursor-move hover:bg-accent" : "cursor-default")}
+      >
+        <GripVertical className="h-5 w-5" />
+      </div>
+
+      {/* Основной контент */}
+      <div className="flex-1 min-w-0 ml-2">
+        <p className="text-sm font-semibold truncate" title={ruleContent || "-"}>
+          {ruleContent || "-"}
+        </p>
+        <div className="flex items-center justify-between text-xs mt-1">
+          <Badge variant="outline">{ruleType}</Badge>
+          <p className={cn("font-medium", getProxyColorClass(proxyPolicy))}>
+            {proxyPolicy}
+          </p>
+        </div>
+      </div>
+
+      {/* Кнопка действия */}
+      <Button variant="ghost" size="icon" className="h-8 w-8 ml-2" onClick={onDelete}>
+        {type === "delete" ? (
+          <Undo2 className="h-4 w-4" />
+        ) : (
+          <Trash2 className="h-4 w-4 text-destructive" />
+        )}
+      </Button>
+    </div>
   );
 };
-
-const StyledPrimary = styled("div")`
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.5;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-const StyledSubtitle = styled("span")`
-  font-size: 13px;
-  overflow: hidden;
-  color: text.secondary;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-const ListItemTextChild = styled("span")`
-  display: block;
-`;
-
-const StyledTypeBox = styled(ListItemTextChild)(({ theme }) => ({
-  display: "inline-block",
-  border: "1px solid #ccc",
-  borderColor: alpha(theme.palette.primary.main, 0.5),
-  color: alpha(theme.palette.primary.main, 0.8),
-  borderRadius: 4,
-  fontSize: 10,
-  padding: "0 4px",
-  lineHeight: 1.5,
-  marginRight: "8px",
-}));

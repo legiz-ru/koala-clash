@@ -1,44 +1,4 @@
-import { styled, Box } from "@mui/material";
 import { SearchState } from "@/components/base/base-search-box";
-
-const Item = styled(Box)(({ theme: { palette, typography } }) => ({
-  padding: "8px 0",
-  margin: "0 12px",
-  lineHeight: 1.35,
-  borderBottom: `1px solid ${palette.divider}`,
-  fontSize: "0.875rem",
-  fontFamily: typography.fontFamily,
-  userSelect: "text",
-  "& .time": {
-    color: palette.text.secondary,
-  },
-  "& .type": {
-    display: "inline-block",
-    marginLeft: 8,
-    textAlign: "center",
-    borderRadius: 2,
-    textTransform: "uppercase",
-    fontWeight: "600",
-  },
-  '& .type[data-type="error"], & .type[data-type="err"]': {
-    color: palette.error.main,
-  },
-  '& .type[data-type="warning"], & .type[data-type="warn"]': {
-    color: palette.warning.main,
-  },
-  '& .type[data-type="info"], & .type[data-type="inf"]': {
-    color: palette.info.main,
-  },
-  "& .data": {
-    color: palette.text.primary,
-    overflowWrap: "anywhere",
-  },
-  "& .highlight": {
-    backgroundColor: palette.mode === "dark" ? "#ffeb3b40" : "#ffeb3b90",
-    borderRadius: 2,
-    padding: "0 2px",
-  },
-}));
 
 interface Props {
   value: ILogItem;
@@ -70,7 +30,10 @@ const LogItem = ({ value, searchState }: Props) => {
 
       return parts.map((part, index) => {
         return index % 2 === 1 ? (
-          <span key={index} className="highlight">
+          <span
+            key={index}
+            className="highlight bg-yellow-300 dark:bg-yellow-500 bg-opacity-50 dark:bg-opacity-40 rounded px-0.5"
+          >
             {part}
           </span>
         ) : (
@@ -82,18 +45,34 @@ const LogItem = ({ value, searchState }: Props) => {
     }
   };
 
+  let typeColorClass = "text-gray-500 dark:text-gray-400";
+  const lowerCaseType = value.type.toLowerCase();
+
+  if (lowerCaseType === "error" || lowerCaseType === "err") {
+    typeColorClass = "text-red-500 dark:text-red-400";
+  } else if (lowerCaseType === "warning" || lowerCaseType === "warn") {
+    typeColorClass = "text-yellow-500 dark:text-yellow-400";
+  } else if (lowerCaseType === "info" || lowerCaseType === "inf") {
+    typeColorClass = "text-blue-500 dark:text-blue-400";
+  }
+
   return (
-    <Item>
+    <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700 text-sm font-mono select-text">
       <div>
-        <span className="time">{renderHighlightText(value.time || "")}</span>
-        <span className="type" data-type={value.type.toLowerCase()}>
+        <span className="text-gray-500 dark:text-gray-400 mr-2">
+          {renderHighlightText(value.time || "")}
+        </span>
+        <span
+          className={`inline-block ml-2 text-center rounded uppercase font-semibold ${typeColorClass}`}
+          data-type={lowerCaseType}
+        >
           {renderHighlightText(value.type)}
         </span>
       </div>
-      <div>
-        <span className="data">{renderHighlightText(value.payload)}</span>
+      <div className="text-gray-800 dark:text-gray-200 break-all whitespace-pre-wrap">
+        {renderHighlightText(value.payload)}
       </div>
-    </Item>
+    </div>
   );
 };
 

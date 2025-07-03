@@ -1,10 +1,10 @@
 import useSWR from "swr";
 import { useRef } from "react";
-import { Button } from "@mui/material";
 import { check } from "@tauri-apps/plugin-updater";
 import { UpdateViewer } from "../setting/mods/update-viewer";
 import { DialogRef } from "../base";
 import { useVerge } from "@/hooks/use-verge";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   className?: string;
@@ -34,9 +34,8 @@ export const UpdateButton = (props: Props) => {
       <UpdateViewer ref={viewerRef} />
 
       <Button
-        color="error"
-        variant="contained"
-        size="small"
+        variant="destructive"
+        size="sm"
         className={className}
         onClick={() => viewerRef.current?.open()}
       >

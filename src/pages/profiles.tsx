@@ -1,7 +1,11 @@
-import useSWR from "swr";
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
 import { useLockFn } from "ahooks";
-import { Box, Button, IconButton, Stack, Divider, Grid } from "@mui/material";
 import {
   DndContext,
   closestCenter,
@@ -15,148 +19,128 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
-import { LoadingButton } from "@mui/lab";
-import {
-  ClearRounded,
-  ContentPasteRounded,
-  LocalFireDepartmentRounded,
-  RefreshRounded,
-  TextSnippetOutlined,
-} from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import {
   importProfile,
   enhanceProfiles,
-  //restartCore,
-  getRuntimeLogs,
   deleteProfile,
   updateProfile,
   reorderProfile,
   createProfile,
 } from "@/services/cmds";
-import { useSetLoadingCache, useThemeMode } from "@/services/states";
+import { useSetLoadingCache } from "@/services/states";
 import { closeAllConnections } from "@/services/api";
-import { BasePage, DialogRef } from "@/components/base";
+import { DialogRef } from "@/components/base";
 import {
   ProfileViewer,
   ProfileViewerRef,
 } from "@/components/profile/profile-viewer";
-import { ProfileMore } from "@/components/profile/profile-more";
 import { ProfileItem } from "@/components/profile/profile-item";
 import { useProfiles } from "@/hooks/use-profiles";
 import { ConfigViewer } from "@/components/setting/mods/config-viewer";
 import { throttle } from "lodash-es";
-import { BaseStyledTextField } from "@/components/base/base-styled-text-field";
 import { readTextFile } from "@tauri-apps/plugin-fs";
 import { readText } from "@tauri-apps/plugin-clipboard-manager";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useListen } from "@/hooks/use-listen";
-import { listen } from "@tauri-apps/api/event";
-import { TauriEvent } from "@tauri-apps/api/event";
+import { listen, TauriEvent } from "@tauri-apps/api/event";
 import { showNotice } from "@/services/noticeService";
+import { cn } from "@root/lib/utils";
 
-// 记录profile切换状态
-const debugProfileSwitch = (action: string, profile: string, extra?: any) => {
-  const timestamp = new Date().toISOString().substring(11, 23);
-  console.log(
-    `[Profile-Debug][${timestamp}] ${action}: ${profile}`,
-    extra || "",
-  );
-};
+// Компоненты shadcn/ui
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-// 检查请求是否已过期
-const isRequestOutdated = (
-  currentSequence: number,
-  requestSequenceRef: any,
-  profile: string,
-) => {
-  if (currentSequence !== requestSequenceRef.current) {
-    debugProfileSwitch(
-      "REQUEST_OUTDATED",
-      profile,
-      `当前序列号: ${currentSequence}, 最新序列号: ${requestSequenceRef.current}`,
-    );
-    return true;
-  }
-  return false;
-};
-
-// 检查是否被中断
-const isOperationAborted = (
-  abortController: AbortController,
-  profile: string,
-) => {
-  if (abortController.signal.aborted) {
-    debugProfileSwitch("OPERATION_ABORTED", profile);
-    return true;
-  }
-  return false;
-};
+// Иконки
+import {
+  ClipboardPaste,
+  X,
+  PlusCircle,
+  RefreshCw,
+  Zap,
+  FileText,
+  Loader2,
+  Menu,
+} from "lucide-react";
 
 const ProfilePage = () => {
   const { t } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
   const { addListener } = useListen();
   const [url, setUrl] = useState("");
   const [disabled, setDisabled] = useState(false);
   const [activatings, setActivatings] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const [updateAllLoading, setUpdateAllLoading] = useState(false);
+  const [enhanceLoading, setEnhanceLoading] = useState(false);
 
-  // 防止重复切换
-  const switchingProfileRef = useRef<string | null>(null);
+  // Логика для "липкой" шапки
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
 
-  // 支持中断当前切换操作
-  const abortControllerRef = useRef<AbortController | null>(null);
+  useEffect(() => {
+    const currentScroller = scrollerRef.current;
+    if (!currentScroller) return;
+    const handleScroll = () => setIsScrolled(currentScroller.scrollTop > 5);
+    currentScroller.addEventListener("scroll", handleScroll);
+    return () => currentScroller.removeEventListener("scroll", handleScroll);
+  }, []);
 
-  // 只处理最新的切换请求
-  const requestSequenceRef = useRef<number>(0);
-
-  // 待处理请求跟踪，取消排队的请求
-  const pendingRequestRef = useRef<Promise<any> | null>(null);
-
-  // 处理profile切换中断
-  const handleProfileInterrupt = (
-    previousSwitching: string,
-    newProfile: string,
-  ) => {
-    debugProfileSwitch(
-      "INTERRUPT_PREVIOUS",
-      previousSwitching,
-      `被 ${newProfile} 中断`,
-    );
-
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      debugProfileSwitch("ABORT_CONTROLLER_TRIGGERED", previousSwitching);
-    }
-
-    if (pendingRequestRef.current) {
-      debugProfileSwitch("CANCEL_PENDING_REQUEST", previousSwitching);
-    }
-
-    setActivatings((prev) => prev.filter((id) => id !== previousSwitching));
-    showNotice(
-      "info",
-      `${t("Profile switch interrupted by new selection")}: ${previousSwitching} → ${newProfile}`,
-      3000,
-    );
-  };
-
-  // 清理切换状态
-  const cleanupSwitchState = (profile: string, sequence: number) => {
-    setActivatings((prev) => prev.filter((id) => id !== profile));
-    switchingProfileRef.current = null;
-    abortControllerRef.current = null;
-    pendingRequestRef.current = null;
-    debugProfileSwitch("SWITCH_END", profile, `序列号: ${sequence}`);
-  };
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
-  const { current } = location.state || {};
+
+  let currentProfileFromLocation: string | undefined;
+  if (
+    location.state &&
+    typeof location.state === "object" &&
+    location.state !== null
+  ) {
+    const stateAsObject = location.state as { current?: unknown };
+    if (typeof stateAsObject.current === "string") {
+      currentProfileFromLocation = stateAsObject.current;
+    }
+  }
+
+  const profilesHookData = useProfiles();
+  const profiles = profilesHookData.profiles || {};
+  const activateSelected = profilesHookData.activateSelected;
+  const patchProfiles = profilesHookData.patchProfiles;
+  const mutateProfiles = profilesHookData.mutateProfiles;
+
+  const viewerRef = useRef<ProfileViewerRef>(null);
+  const configRef = useRef<DialogRef>(null);
+
+  const profileItems = useMemo(() => {
+    const items =
+      profiles && Array.isArray(profiles.items) ? profiles.items : [];
+    const type1 = ["local", "remote"];
+    return items.filter((i) => i && type1.includes(i.type!));
+  }, [profiles]);
+
+  const currentActivatings = () => {
+    const currentProfileValue =
+      profiles && typeof profiles.current === "string" ? profiles.current : "";
+    return [...new Set([currentProfileValue])].filter(Boolean);
+  };
 
   useEffect(() => {
     const handleFileDrop = async () => {
@@ -164,7 +148,6 @@ const ProfilePage = () => {
         TauriEvent.DRAG_DROP,
         async (event: any) => {
           const paths = event.payload.paths;
-
           for (let file of paths) {
             if (!file.endsWith(".yaml") && !file.endsWith(".yml")) {
               showNotice("error", t("Only YAML Files Supported"));
@@ -172,13 +155,10 @@ const ProfilePage = () => {
             }
             const item = {
               type: "local",
-              name: file.split(/\/|\\/).pop() ?? "New Profile",
+              name: file.split(/\\|\//).pop() ?? "New Profile",
               desc: "",
               url: "",
-              option: {
-                with_proxy: false,
-                self_proxy: false,
-              },
+              option: { with_proxy: false, self_proxy: false },
             } as IProfileItem;
             let data = await readTextFile(file);
             await createProfile(item, data);
@@ -186,77 +166,72 @@ const ProfilePage = () => {
           }
         },
       );
-
       return unlisten;
     };
-
     const unsubscribe = handleFileDrop();
-
     return () => {
       unsubscribe.then((cleanup) => cleanup());
     };
-  }, []);
+  }, [addListener, mutateProfiles, t]);
 
-  const {
-    profiles = {},
-    activateSelected,
-    patchProfiles,
-    mutateProfiles,
-  } = useProfiles();
-
-  const { data: chainLogs = {}, mutate: mutateLogs } = useSWR(
-    "getRuntimeLogs",
-    getRuntimeLogs,
+  const activateProfile = useCallback(
+    async (profile: string, notifySuccess: boolean) => {
+      const reset = setTimeout(
+        () => setActivatings((prev) => [...prev, profile]),
+        100,
+      );
+      try {
+        const success = await patchProfiles({ current: profile });
+        closeAllConnections();
+        await activateSelected();
+        if (notifySuccess && success) {
+          showNotice("success", t("Profile Switched"), 1000);
+        }
+      } catch (err: any) {
+        showNotice("error", err?.message || err.toString(), 4000);
+      } finally {
+        clearTimeout(reset);
+        setActivatings([]);
+      }
+    },
+    [patchProfiles, activateSelected, t],
   );
 
-  const viewerRef = useRef<ProfileViewerRef>(null);
-  const configRef = useRef<DialogRef>(null);
+  useEffect(() => {
+    (async () => {
+      if (currentProfileFromLocation) {
+        await activateProfile(currentProfileFromLocation, false);
+      }
+    })();
+  }, [currentProfileFromLocation]);
 
-  // distinguish type
-  const profileItems = useMemo(() => {
-    const items = profiles.items || [];
+  const onSelect = useLockFn(
+    async (selectedProfileId: string, force: boolean) => {
+      if (!force && selectedProfileId === profiles.current) return;
+      await activateProfile(selectedProfileId, true);
+    },
+  );
 
-    const type1 = ["local", "remote"];
-
-    return items.filter((i) => i && type1.includes(i.type!));
-  }, [profiles]);
-
-  const currentActivatings = () => {
-    return [...new Set([profiles.current ?? ""])].filter(Boolean);
-  };
-
-  const onImport = async () => {
+  const onImport = useLockFn(async () => {
     if (!url) return;
-    // 校验url是否为http/https
-    if (!/^https?:\/\//i.test(url)) {
-      showNotice("error", t("Invalid Profile URL"));
-      return;
-    }
-    setLoading(true);
+    setImportLoading(true);
+    setDisabled(true);
+
     try {
-      // 尝试正常导入
       await importProfile(url);
       showNotice("success", t("Profile Imported Successfully"));
       setUrl("");
       mutateProfiles();
-      await onEnhance(false);
+      await onEnhance(false, false);
     } catch (err: any) {
-      // 首次导入失败，尝试使用自身代理
-      const errmsg = err.message || err.toString();
       showNotice("info", t("Import failed, retrying with Clash proxy..."));
       try {
-        // 使用自身代理尝试导入
-        await importProfile(url, {
-          with_proxy: false,
-          self_proxy: true,
-        });
-        // 回退导入成功
+        await importProfile(url, { with_proxy: false, self_proxy: true });
         showNotice("success", t("Profile Imported with Clash proxy"));
         setUrl("");
         mutateProfiles();
-        await onEnhance(false);
+        await onEnhance(false, false);
       } catch (retryErr: any) {
-        // 回退导入也失败
         const retryErrmsg = retryErr?.message || retryErr.toString();
         showNotice(
           "error",
@@ -265,224 +240,43 @@ const ProfilePage = () => {
       }
     } finally {
       setDisabled(false);
-      setLoading(false);
-    }
-  };
-
-  const onDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over) {
-      if (active.id !== over.id) {
-        await reorderProfile(active.id.toString(), over.id.toString());
-        mutateProfiles();
-      }
-    }
-  };
-
-  const executeBackgroundTasks = async (
-    profile: string,
-    sequence: number,
-    abortController: AbortController,
-  ) => {
-    try {
-      if (
-        sequence === requestSequenceRef.current &&
-        switchingProfileRef.current === profile &&
-        !abortController.signal.aborted
-      ) {
-        await activateSelected();
-        console.log(`[Profile] 后台处理完成，序列号: ${sequence}`);
-      } else {
-        debugProfileSwitch(
-          "BACKGROUND_TASK_SKIPPED",
-          profile,
-          `序列号过期或被中断: ${sequence} vs ${requestSequenceRef.current}`,
-        );
-      }
-    } catch (err: any) {
-      console.warn("Failed to activate selected proxies:", err);
-    }
-  };
-
-  const activateProfile = async (profile: string, notifySuccess: boolean) => {
-    if (profiles.current === profile && !notifySuccess) {
-      console.log(`[Profile] 目标profile ${profile} 已经是当前配置，跳过切换`);
-      return;
-    }
-
-    const currentSequence = ++requestSequenceRef.current;
-    debugProfileSwitch("NEW_REQUEST", profile, `序列号: ${currentSequence}`);
-
-    // 处理中断逻辑
-    const previousSwitching = switchingProfileRef.current;
-    if (previousSwitching && previousSwitching !== profile) {
-      handleProfileInterrupt(previousSwitching, profile);
-    }
-
-    // 防止重复切换同一个profile
-    if (switchingProfileRef.current === profile) {
-      debugProfileSwitch("DUPLICATE_SWITCH_BLOCKED", profile);
-      return;
-    }
-
-    // 初始化切换状态
-    switchingProfileRef.current = profile;
-    debugProfileSwitch("SWITCH_START", profile, `序列号: ${currentSequence}`);
-
-    const currentAbortController = new AbortController();
-    abortControllerRef.current = currentAbortController;
-
-    setActivatings((prev) => {
-      if (prev.includes(profile)) return prev;
-      return [...prev, profile];
-    });
-
-    try {
-      console.log(
-        `[Profile] 开始切换到: ${profile}，序列号: ${currentSequence}`,
-      );
-
-      // 检查请求有效性
-      if (
-        isRequestOutdated(currentSequence, requestSequenceRef, profile) ||
-        isOperationAborted(currentAbortController, profile)
-      ) {
-        return;
-      }
-
-      // 执行切换请求
-      const requestPromise = patchProfiles(
-        { current: profile },
-        currentAbortController.signal,
-      );
-      pendingRequestRef.current = requestPromise;
-
-      const success = await requestPromise;
-
-      if (pendingRequestRef.current === requestPromise) {
-        pendingRequestRef.current = null;
-      }
-
-      // 再次检查有效性
-      if (
-        isRequestOutdated(currentSequence, requestSequenceRef, profile) ||
-        isOperationAborted(currentAbortController, profile)
-      ) {
-        return;
-      }
-
-      // 完成切换
-      await mutateLogs();
-      closeAllConnections();
-
-      if (notifySuccess && success) {
-        showNotice("success", t("Profile Switched"), 1000);
-      }
-
-      console.log(
-        `[Profile] 切换到 ${profile} 完成，序列号: ${currentSequence}，开始后台处理`,
-      );
-
-      // 延迟执行后台任务
-      setTimeout(
-        () =>
-          executeBackgroundTasks(
-            profile,
-            currentSequence,
-            currentAbortController,
-          ),
-        50,
-      );
-    } catch (err: any) {
-      if (pendingRequestRef.current) {
-        pendingRequestRef.current = null;
-      }
-
-      // 检查是否因为中断或过期而出错
-      if (
-        isOperationAborted(currentAbortController, profile) ||
-        isRequestOutdated(currentSequence, requestSequenceRef, profile)
-      ) {
-        return;
-      }
-
-      console.error(`[Profile] 切换失败:`, err);
-      showNotice("error", err?.message || err.toString(), 4000);
-    } finally {
-      // 只有当前profile仍然是正在切换的profile且序列号匹配时才清理状态
-      if (
-        switchingProfileRef.current === profile &&
-        currentSequence === requestSequenceRef.current
-      ) {
-        cleanupSwitchState(profile, currentSequence);
-      } else {
-        debugProfileSwitch(
-          "CLEANUP_SKIPPED",
-          profile,
-          `序列号不匹配或已被接管: ${currentSequence} vs ${requestSequenceRef.current}`,
-        );
-      }
-    }
-  };
-  const onSelect = async (current: string, force: boolean) => {
-    // 阻止重复点击或已激活的profile
-    if (switchingProfileRef.current === current) {
-      debugProfileSwitch("DUPLICATE_CLICK_IGNORED", current);
-      return;
-    }
-
-    if (!force && current === profiles.current) {
-      debugProfileSwitch("ALREADY_CURRENT_IGNORED", current);
-      return;
-    }
-
-    await activateProfile(current, true);
-  };
-
-  useEffect(() => {
-    (async () => {
-      if (current) {
-        mutateProfiles();
-        await activateProfile(current, false);
-      }
-    })();
-  }, current);
-
-  const onEnhance = useLockFn(async (notifySuccess: boolean) => {
-    if (switchingProfileRef.current) {
-      console.log(
-        `[Profile] 有profile正在切换中(${switchingProfileRef.current})，跳过enhance操作`,
-      );
-      return;
-    }
-
-    const currentProfiles = currentActivatings();
-    setActivatings((prev) => [...new Set([...prev, ...currentProfiles])]);
-
-    try {
-      await enhanceProfiles();
-      mutateLogs();
-      if (notifySuccess) {
-        showNotice("success", t("Profile Reactivated"), 1000);
-      }
-    } catch (err: any) {
-      showNotice("error", err.message || err.toString(), 3000);
-    } finally {
-      // 保留正在切换的profile，清除其他状态
-      setActivatings((prev) =>
-        prev.filter((id) => id === switchingProfileRef.current),
-      );
+      setImportLoading(false);
     }
   });
 
+  const onDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      await reorderProfile(active.id.toString(), over.id.toString());
+      mutateProfiles();
+    }
+  };
+
+  const onEnhance = useLockFn(
+    async (notifySuccess: boolean = true, showLoading: boolean = true) => {
+      if (showLoading) setEnhanceLoading(true);
+      setActivatings(currentActivatings());
+      try {
+        await enhanceProfiles();
+        if (notifySuccess) {
+          showNotice("success", t("Profile Reactivated"), 1000);
+        }
+      } catch (err: any) {
+        showNotice("error", err.message || err.toString(), 3000);
+      } finally {
+        setActivatings([]);
+        if (showLoading) setEnhanceLoading(false);
+      }
+    },
+  );
+
   const onDelete = useLockFn(async (uid: string) => {
-    const current = profiles.current === uid;
+    const currentProfile = profiles.current === uid;
     try {
-      setActivatings([...(current ? currentActivatings() : []), uid]);
+      setActivatings([...(currentProfile ? currentActivatings() : []), uid]);
       await deleteProfile(uid);
       mutateProfiles();
-      mutateLogs();
-      current && (await onEnhance(false));
+      if (currentProfile) await onEnhance(false, false);
     } catch (err: any) {
       showNotice("error", err?.message || err.toString());
     } finally {
@@ -490,18 +284,16 @@ const ProfilePage = () => {
     }
   });
 
-  // 更新所有订阅
   const setLoadingCache = useSetLoadingCache();
   const onUpdateAll = useLockFn(async () => {
-    const throttleMutate = throttle(mutateProfiles, 2000, {
-      trailing: true,
-    });
+    setUpdateAllLoading(true);
+    const throttleMutate = throttle(mutateProfiles, 2000, { trailing: true });
     const updateOne = async (uid: string) => {
       try {
         await updateProfile(uid);
         throttleMutate();
       } catch (err: any) {
-        console.error(`更新订阅 ${uid} 失败:`, err);
+        console.error(`Update subscription ${uid} failed:`, err);
       } finally {
         setLoadingCache((cache) => ({ ...cache, [uid]: false }));
       }
@@ -509,16 +301,14 @@ const ProfilePage = () => {
 
     return new Promise((resolve) => {
       setLoadingCache((cache) => {
-        // 获取没有正在更新的订阅
         const items = profileItems.filter(
           (e) => e.type === "remote" && !cache[e.uid],
         );
         const change = Object.fromEntries(items.map((e) => [e.uid, true]));
-
         Promise.allSettled(items.map((e) => updateOne(e.uid))).then(resolve);
         return { ...cache, ...change };
       });
-    });
+    }).finally(() => setUpdateAllLoading(false));
   });
 
   const onCopyLink = async () => {
@@ -526,251 +316,225 @@ const ProfilePage = () => {
     if (text) setUrl(text);
   };
 
-  const mode = useThemeMode();
-  const islight = mode === "light" ? true : false;
-  const dividercolor = islight
-    ? "rgba(0, 0, 0, 0.06)"
-    : "rgba(255, 255, 255, 0.06)";
-
-  // 监听后端配置变更
   useEffect(() => {
     let unlistenPromise: Promise<() => void> | undefined;
-    let lastProfileId: string | null = null;
-    let lastUpdateTime = 0;
-    const debounceDelay = 200;
-
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
     const setupListener = async () => {
-      unlistenPromise = listen<string>("profile-changed", (event) => {
-        const newProfileId = event.payload;
-        const now = Date.now();
-
-        console.log(`[Profile] 收到配置变更事件: ${newProfileId}`);
-
-        if (
-          lastProfileId === newProfileId &&
-          now - lastUpdateTime < debounceDelay
-        ) {
-          console.log(`[Profile] 重复事件被防抖，跳过`);
-          return;
-        }
-
-        lastProfileId = newProfileId;
-        lastUpdateTime = now;
-
-        console.log(`[Profile] 执行配置数据刷新`);
-
-        // 使用异步调度避免阻塞事件处理
-        setTimeout(() => {
-          mutateProfiles().catch((error) => {
-            console.error("[Profile] 配置数据刷新失败:", error);
-          });
-        }, 0);
+      unlistenPromise = listen<string>("profile-changed", () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          mutateProfiles();
+          timeoutId = undefined;
+        }, 300);
       });
     };
-
     setupListener();
-
     return () => {
-      unlistenPromise?.then((unlisten) => unlisten()).catch(console.error);
+      if (timeoutId) clearTimeout(timeoutId);
+      unlistenPromise?.then((unlisten) => unlisten());
     };
   }, [mutateProfiles]);
 
-  // 组件卸载时清理中断控制器
-  useEffect(() => {
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-        debugProfileSwitch("COMPONENT_UNMOUNT_CLEANUP", "all");
-      }
-    };
-  }, []);
+  const menuItems = [
+    { label: t("Home"), path: "/home" },
+    { label: t("Settings"), path: "/settings" },
+    { label: t("Logs"), path: "/logs" },
+    { label: t("Proxies"), path: "/proxies" },
+    { label: t("Connections"), path: "/connections" },
+    { label: t("Rules"), path: "/rules" },
+  ];
 
   return (
-    <BasePage
-      full
-      title={t("Profiles")}
-      contentStyle={{ height: "100%" }}
-      header={
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <IconButton
-            size="small"
-            color="inherit"
-            title={t("Update All Profiles")}
-            onClick={onUpdateAll}
-          >
-            <RefreshRounded />
-          </IconButton>
-
-          <IconButton
-            size="small"
-            color="inherit"
-            title={t("View Runtime Config")}
-            onClick={() => configRef.current?.open()}
-          >
-            <TextSnippetOutlined />
-          </IconButton>
-
-          <IconButton
-            size="small"
-            color="primary"
-            title={t("Reactivate Profiles")}
-            onClick={() => onEnhance(true)}
-          >
-            <LocalFireDepartmentRounded />
-          </IconButton>
-        </Box>
-      }
-    >
-      <Stack
-        direction="row"
-        spacing={1}
-        sx={{
-          pt: 1,
-          mb: 0.5,
-          mx: "10px",
-          height: "36px",
-          display: "flex",
-          alignItems: "center",
-        }}
+    <div className="h-full w-full relative">
+      <div
+        className={cn(
+          "absolute top-0 left-0 right-0 z-10 p-4 space-y-4 transition-all duration-200",
+          { "bg-background/80 backdrop-blur-sm shadow-sm": isScrolled },
+        )}
       >
-        <BaseStyledTextField
-          value={url}
-          variant="outlined"
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder={t("Profile URL")}
-          slotProps={{
-            input: {
-              sx: { pr: 1 },
-              endAdornment: !url ? (
-                <IconButton
-                  size="small"
-                  sx={{ p: 0.5 }}
-                  title={t("Paste")}
-                  onClick={onCopyLink}
-                >
-                  <ContentPasteRounded fontSize="inherit" />
-                </IconButton>
-              ) : (
-                <IconButton
-                  size="small"
-                  sx={{ p: 0.5 }}
-                  title={t("Clear")}
-                  onClick={() => setUrl("")}
-                >
-                  <ClearRounded fontSize="inherit" />
-                </IconButton>
-              ),
-            },
-          }}
-        />
-        <LoadingButton
-          disabled={!url || disabled}
-          loading={loading}
-          variant="contained"
-          size="small"
-          sx={{ borderRadius: "6px" }}
-          onClick={onImport}
-        >
-          {t("Import")}
-        </LoadingButton>
-        <Button
-          variant="contained"
-          size="small"
-          sx={{ borderRadius: "6px" }}
-          onClick={() => viewerRef.current?.create()}
-        >
-          {t("New")}
-        </Button>
-      </Stack>
-
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={onDragEnd}
-      >
-        <Box
-          sx={{
-            pl: "10px",
-            pr: "10px",
-            height: "calc(100% - 48px)",
-            overflowY: "auto",
-          }}
-        >
-          <Box sx={{ mb: 1.5 }}>
-            <Grid container spacing={{ xs: 1, lg: 1 }}>
-              <SortableContext
-                items={profileItems.map((x) => {
-                  return x.uid;
-                })}
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            {t("Profiles")}
+          </h2>
+          <TooltipProvider delayDuration={100}>
+            <div className="flex items-center gap-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => viewerRef.current?.create()}
+                  >
+                    <PlusCircle className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t("New")}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onUpdateAll}
+                    disabled={updateAllLoading}
+                  >
+                    {updateAllLoading ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-5 w-5" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t("Update All Profiles")}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onEnhance(true, true)}
+                    disabled={enhanceLoading}
+                  >
+                    {enhanceLoading ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <Zap className="h-5 w-5" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t("Reactivate Profiles")}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => configRef.current?.open()}
+                  >
+                    <FileText className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t("View Runtime Config")}</p>
+                </TooltipContent>
+              </Tooltip>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" title={t("Menu")}>
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>{t("Menu")}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {menuItems.map((item) => (
+                    <DropdownMenuItem
+                      key={item.path}
+                      onSelect={() => navigate(item.path)}
+                      disabled={location.pathname === item.path}
+                    >
+                      {item.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </TooltipProvider>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 flex-grow sm:flex-grow-0">
+            <Input
+              type="text"
+              placeholder={t("Profile URL")}
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              className="h-9 min-w-[200px] flex-grow sm:w-80"
+            />
+            {url ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                title={t("Clear")}
+                onClick={() => setUrl("")}
+                className="h-9 w-9 flex-shrink-0"
               >
+                <X className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                title={t("Paste")}
+                onClick={onCopyLink}
+                className="h-9 w-9 flex-shrink-0"
+              >
+                <ClipboardPaste className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          <Button
+            onClick={onImport}
+            disabled={!url || disabled || importLoading}
+            className="h-9"
+          >
+            {importLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {t("Import")}
+          </Button>
+        </div>
+      </div>
+
+      <div
+        ref={scrollerRef}
+        className="absolute top-0 left-0 right-0 bottom-0 pt-40 overflow-y-auto"
+      >
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={onDragEnd}
+        >
+          <div className="p-4 pt-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <SortableContext items={profileItems.map((x) => x.uid)}>
                 {profileItems.map((item) => (
-                  <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={item.file}>
-                    <ProfileItem
-                      id={item.uid}
-                      selected={profiles.current === item.uid}
-                      activating={activatings.includes(item.uid)}
-                      itemData={item}
-                      onSelect={(f) => onSelect(item.uid, f)}
-                      onEdit={() => viewerRef.current?.edit(item)}
-                      onSave={async (prev, curr) => {
-                        if (prev !== curr && profiles.current === item.uid) {
-                          await onEnhance(false);
-                          //  await restartCore();
-                          //   Notice.success(t("Clash Core Restarted"), 1000);
-                        }
-                      }}
-                      onDelete={() => onDelete(item.uid)}
-                    />
-                  </Grid>
+                  <ProfileItem
+                    key={item.uid}
+                    id={item.uid}
+                    selected={profiles.current === item.uid}
+                    activating={activatings.includes(item.uid)}
+                    itemData={item}
+                    onSelect={(f) => onSelect(item.uid, f)}
+                    onEdit={() => viewerRef.current?.edit(item)}
+                    onSave={async (prev, curr) => {
+                      if (prev !== curr && profiles.current === item.uid) {
+                        await onEnhance(false, false);
+                      }
+                    }}
+                    onDelete={() => onDelete(item.uid)}
+                  />
                 ))}
               </SortableContext>
-            </Grid>
-          </Box>
-          <Divider
-            variant="middle"
-            flexItem
-            sx={{ width: `calc(100% - 32px)`, borderColor: dividercolor }}
-          ></Divider>
-          <Box sx={{ mt: 1.5, mb: "10px" }}>
-            <Grid container spacing={{ xs: 1, lg: 1 }}>
-              <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6 }}>
-                <ProfileMore
-                  id="Merge"
-                  onSave={async (prev, curr) => {
-                    if (prev !== curr) {
-                      await onEnhance(false);
-                    }
-                  }}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6 }}>
-                <ProfileMore
-                  id="Script"
-                  logInfo={chainLogs["Script"]}
-                  onSave={async (prev, curr) => {
-                    if (prev !== curr) {
-                      await onEnhance(false);
-                    }
-                  }}
-                />
-              </Grid>
-            </Grid>
-          </Box>
-        </Box>
-      </DndContext>
+            </div>
+          </div>
+        </DndContext>
+      </div>
 
       <ProfileViewer
         ref={viewerRef}
         onChange={async (isActivating) => {
           mutateProfiles();
-          // 只有更改当前激活的配置时才触发全局重新加载
           if (isActivating) {
-            await onEnhance(false);
+            await onEnhance(false, false);
           }
         }}
       />
       <ConfigViewer ref={configRef} />
-    </BasePage>
+    </div>
   );
 };
 

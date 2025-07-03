@@ -21,6 +21,7 @@ import { useCustomTheme } from "@/components/layout/use-custom-theme";
 import getSystem from "@/utils/get-system";
 import "dayjs/locale/ru";
 import "dayjs/locale/zh-cn";
+import { getPortableFlag } from "@/services/cmds";
 import React from "react";
 import { useListen } from "@/hooks/use-listen";
 import { listen } from "@tauri-apps/api/event";
@@ -478,19 +479,7 @@ const Layout = () => {
   }
 
   return (
-    <SWRConfig
-      value={{
-        errorRetryCount: 3,
-        errorRetryInterval: 5000,
-        onError: (error, key) => {
-          console.error(`[SWR Error] Key: ${key}, Error:`, error);
-          if (key !== "getAutotemProxy") {
-            console.error(`SWR Error for ${key}:`, error);
-          }
-        },
-        dedupingInterval: 2000,
-      }}
-    >
+    <SWRConfig value={{ errorRetryCount: 3 }}>
       <ThemeProvider theme={theme}>
         <NoticeManager />
         <div
@@ -507,13 +496,22 @@ const Layout = () => {
             }
           `}
         </style>
+
+        {/* --- НАЧАЛО ИЗМЕНЕНИЙ --- */}
+
+        {/* 1. Убрали класс "layout" с компонента Paper */}
         <Paper
           square
           elevation={0}
-          className={`${OS} layout`}
+          className={OS} // Был: className={`${OS} layout`}
           style={{
             borderTopLeftRadius: "0px",
             borderTopRightRadius: "0px",
+            // Добавляем стили, чтобы контейнер занимал все пространство
+            width: "100vw",
+            height: "100vh",
+            display: "flex", // Используем flex, чтобы контент растянулся
+            flexDirection: "column",
           }}
           onContextMenu={(e) => {
             if (
@@ -532,63 +530,30 @@ const Layout = () => {
               ? {
                   borderRadius: "8px",
                   border: "1px solid var(--divider-color)",
-                  width: "100vw",
-                  height: "100vh",
                 }
               : {},
           ]}
         >
-          <div className="layout__left">
-            <div className="the-logo" data-tauri-drag-region="true">
-              <div
-                data-tauri-drag-region="true"
-                style={{
-                  height: "27px",
-                  display: "flex",
-                  justifyContent: "space-between",
-                }}
-              >
-                <SvgIcon
-                  component={isDark ? iconDark : iconLight}
-                  style={{
-                    height: "36px",
-                    width: "36px",
-                    marginTop: "-3px",
-                    marginRight: "5px",
-                    marginLeft: "-3px",
-                  }}
-                  inheritViewBox
-                />
-                <LogoSvg fill={isDark ? "white" : "black"} />
-              </div>
-              <UpdateButton className="the-newbtn" />
-            </div>
+          {/* 2. Левая колонка <div className="layout__left">...</div> ПОЛНОСТЬЮ УДАЛЕНА */}
 
-            <List className="the-menu">
-              {routers.map((router) => (
-                <LayoutItem
-                  key={router.label}
-                  to={router.path}
-                  icon={router.icon}
-                >
-                  {t(router.label)}
-                </LayoutItem>
-              ))}
-            </List>
+          {/* 3. Оставляем только "правую" часть, которая теперь станет основной */}
+          {/* и заставляем ее занять все доступное место */}
+          <div
+            className="main-content-area"
+            style={{ flex: 1, display: "flex", flexDirection: "column" }}
+          >
+            {/* 4. Бар-разделитель <div className="the-bar"></div> тоже удален, он больше не нужен */}
 
-            <div className="the-traffic">
-              <LayoutTraffic />
-            </div>
-          </div>
-
-          <div className="layout__right">
-            <div className="the-bar"></div>
-
-            <div className="the-content">
+            <div
+              className="the-content"
+              style={{ flex: 1, position: "relative" }}
+            >
               {React.cloneElement(routersEles, { key: location.pathname })}
             </div>
           </div>
         </Paper>
+
+        {/* --- КОНЕЦ ИЗМЕНЕНИЙ --- */}
       </ThemeProvider>
     </SWRConfig>
   );

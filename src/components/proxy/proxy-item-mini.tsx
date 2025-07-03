@@ -1,11 +1,14 @@
+// ProxyItemMini.tsx
+
 import { useEffect, useState } from "react";
 import { useLockFn } from "ahooks";
-import { CheckCircleOutlineRounded } from "@mui/icons-material";
-import { alpha, Box, ListItemButton, styled, Typography } from "@mui/material";
-import { BaseLoading } from "@/components/base";
-import delayManager from "@/services/delay";
 import { useVerge } from "@/hooks/use-verge";
+import delayManager from "@/services/delay";
 import { useTranslation } from "react-i18next";
+import { CheckCircle2, RefreshCw } from "lucide-react";
+import { BaseLoading } from "@/components/base";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@root/lib/utils";
 
 interface Props {
   group: IProxyGroupItem;
@@ -15,16 +18,20 @@ interface Props {
   onClick?: (name: string) => void;
 }
 
-// 多列布局
+const getDelayColorClass = (delay: number): string => {
+  if (delay < 0 || delay >= 10000) return "text-destructive";
+  if (delay >= 500) return "text-destructive";
+  if (delay >= 200) return "text-yellow-500";
+  return "text-green-500";
+};
+
 export const ProxyItemMini = (props: Props) => {
   const { group, proxy, selected, showType = true, onClick } = props;
-
   const { t } = useTranslation();
 
   const presetList = ["DIRECT", "REJECT", "REJECT-DROP", "PASS", "COMPATIBLE"];
   const isPreset = presetList.includes(proxy.name);
-  // -1/<=0 为 不显示
-  // -2 为 loading
+
   const [delay, setDelay] = useState(-1);
   const { verge } = useVerge();
   const timeout = verge?.default_latency_timeout || 10000;
@@ -32,205 +39,97 @@ export const ProxyItemMini = (props: Props) => {
   useEffect(() => {
     if (isPreset) return;
     delayManager.setListener(proxy.name, group.name, setDelay);
-
-    return () => {
-      delayManager.removeListener(proxy.name, group.name);
-    };
-  }, [proxy.name, group.name]);
+    return () => delayManager.removeListener(proxy.name, group.name);
+  }, [proxy.name, group.name, isPreset]);
 
   useEffect(() => {
     if (!proxy) return;
     setDelay(delayManager.getDelayFix(proxy, group.name));
-  }, [proxy]);
+  }, [proxy, group.name]);
 
   const onDelay = useLockFn(async () => {
     setDelay(-2);
     setDelay(await delayManager.checkDelay(proxy.name, group.name, timeout));
   });
 
-  return (
-    <ListItemButton
-      dense
-      selected={selected}
-      onClick={() => onClick?.(proxy.name)}
-      sx={[
-        {
-          height: 56,
-          borderRadius: 1.5,
-          pl: 1.5,
-          pr: 1,
-          justifyContent: "space-between",
-          alignItems: "center",
-        },
-        ({ palette: { mode, primary } }) => {
-          const bgcolor = mode === "light" ? "#ffffff" : "#24252f";
-          const showDelay = delay > 0;
-          const selectColor = mode === "light" ? primary.main : primary.light;
+  const handleItemClick = () => onClick?.(proxy.name);
 
-          return {
-            "&:hover .the-check": { display: !showDelay ? "block" : "none" },
-            "&:hover .the-delay": { display: showDelay ? "block" : "none" },
-            "&:hover .the-icon": { display: "none" },
-            "& .the-pin, & .the-unpin": {
-              position: "absolute",
-              fontSize: "12px",
-              top: "-5px",
-              right: "-5px",
-            },
-            "& .the-unpin": { filter: "grayscale(1)" },
-            "&.Mui-selected": {
-              width: `calc(100% + 3px)`,
-              marginLeft: `-3px`,
-              borderLeft: `3px solid ${selectColor}`,
-              bgcolor:
-                mode === "light"
-                  ? alpha(primary.main, 0.15)
-                  : alpha(primary.main, 0.35),
-            },
-            backgroundColor: bgcolor,
-          };
-        },
-      ]}
+  const handleDelayClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!proxy.provider) onDelay();
+  };
+
+  return (
+    // --- НАЧАЛО ИЗМЕНЕНИЙ ---
+    // Увеличиваем высоту (h-16) и внутренние отступы (p-3)
+    <div
+      data-selected={selected}
+      onClick={handleItemClick}
+      title={`${proxy.name}\n${proxy.now ?? ""}`}
+      className="group relative flex h-16 cursor-pointer items-center justify-between rounded-lg border border-transparent bg-card p-3 transition-all duration-200 data-[selected=true]:border-primary data-[selected=true]:bg-accent"
     >
-      <Box
-        title={`${proxy.name}\n${proxy.now ?? ""}`}
-        sx={{ overflow: "hidden" }}
-      >
-        <Typography
-          variant="body2"
-          component="div"
-          color="text.primary"
-          sx={{
-            display: "block",
-            textOverflow: "ellipsis",
-            wordBreak: "break-all",
-            overflow: "hidden",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {proxy.name}
-        </Typography>
+      {/* --- КОНЕЦ ИЗМЕНЕНИЙ --- */}
+      <div className="flex-1 min-w-0">
+        <p className="truncate text-sm font-medium">{proxy.name}</p>
 
         {showType && (
-          <Box
-            sx={{
-              display: "flex",
-              flexWrap: "nowrap",
-              flex: "none",
-              marginTop: "4px",
-            }}
-          >
+          <div className="mt-1.5 flex items-center gap-1.5 overflow-hidden">
             {proxy.now && (
-              <Typography
-                variant="body2"
-                component="div"
-                color="text.secondary"
-                sx={{
-                  display: "block",
-                  textOverflow: "ellipsis",
-                  wordBreak: "break-all",
-                  overflow: "hidden",
-                  whiteSpace: "nowrap",
-                  marginRight: "8px",
-                }}
-              >
+              <span className="truncate text-xs text-muted-foreground">
                 {proxy.now}
-              </Typography>
+              </span>
             )}
             {!!proxy.provider && (
-              <TypeBox color="text.secondary" component="span">
+              <Badge variant="outline" className="flex-shrink-0">
                 {proxy.provider}
-              </TypeBox>
+              </Badge>
             )}
-            <TypeBox color="text.secondary" component="span">
+            <Badge variant="outline" className="flex-shrink-0">
               {proxy.type}
-            </TypeBox>
+            </Badge>
             {proxy.udp && (
-              <TypeBox color="text.secondary" component="span">
+              <Badge variant="outline" className="flex-shrink-0">
                 UDP
-              </TypeBox>
+              </Badge>
             )}
-            {proxy.xudp && (
-              <TypeBox color="text.secondary" component="span">
-                XUDP
-              </TypeBox>
-            )}
-            {proxy.tfo && (
-              <TypeBox color="text.secondary" component="span">
-                TFO
-              </TypeBox>
-            )}
-            {proxy.mptcp && (
-              <TypeBox color="text.secondary" component="span">
-                MPTCP
-              </TypeBox>
-            )}
-            {proxy.smux && (
-              <TypeBox color="text.secondary" component="span">
-                SMUX
-              </TypeBox>
-            )}
-          </Box>
+          </div>
         )}
-      </Box>
-      <Box
-        sx={{ ml: 0.5, color: "primary.main", display: isPreset ? "none" : "" }}
-      >
-        {delay === -2 && (
-          <Widget>
-            <BaseLoading />
-          </Widget>
-        )}
-        {!proxy.provider && delay !== -2 && (
-          // provider的节点不支持检测
-          <Widget
-            className="the-check"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onDelay();
-            }}
-            sx={({ palette }) => ({
-              display: "none", // hover才显示
-              ":hover": { bgcolor: alpha(palette.primary.main, 0.15) },
-            })}
-          >
-            Check
-          </Widget>
-        )}
+      </div>
 
-        {delay > 0 && (
-          // 显示延迟
-          <Widget
-            className="the-delay"
-            onClick={(e) => {
-              if (proxy.provider) return;
-              e.preventDefault();
-              e.stopPropagation();
-              onDelay();
-            }}
-            color={delayManager.formatDelayColor(delay, timeout)}
-            sx={({ palette }) =>
-              !proxy.provider
-                ? { ":hover": { bgcolor: alpha(palette.primary.main, 0.15) } }
-                : {}
-            }
+      <div className="ml-2 flex h-6 w-14 items-center justify-end text-sm">
+        {isPreset ? null : delay === -2 ? (
+          <div className="flex items-center text-muted-foreground">
+            <BaseLoading className="h-4 w-4" />
+          </div>
+        ) : delay > 0 ? (
+          <div
+            onClick={handleDelayClick}
+            className={`font-medium ${getDelayColorClass(delay)} ${!proxy.provider ? "hover:opacity-70" : "cursor-default"}`}
           >
             {delayManager.formatDelay(delay, timeout)}
-          </Widget>
+          </div>
+        ) : (
+          <>
+            {selected && (
+              <CheckCircle2 className="h-5 w-5 text-primary group-hover:hidden" />
+            )}
+            {!selected && !proxy.provider && (
+              <div
+                onClick={handleDelayClick}
+                className="hidden h-full w-full items-center justify-center rounded-md text-muted-foreground hover:bg-primary/10 group-hover:flex"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </div>
+            )}
+          </>
         )}
-        {delay !== -2 && delay <= 0 && selected && (
-          // 展示已选择的icon
-          <CheckCircleOutlineRounded
-            className="the-icon"
-            sx={{ fontSize: 16, mr: 0.5, display: "block" }}
-          />
-        )}
-      </Box>
-      {group.fixed && group.fixed === proxy.name && (
-        // 展示fixed状态
+      </div>
+
+      {group.fixed === proxy.name && (
         <span
-          className={proxy.name === group.now ? "the-pin" : "the-unpin"}
+          className={cn("absolute -top-1 -right-1 text-base", {
+            grayscale: proxy.name !== group.now,
+          })}
           title={
             group.type === "URLTest" ? t("Delay check to cancel fixed") : ""
           }
@@ -238,29 +137,6 @@ export const ProxyItemMini = (props: Props) => {
           📌
         </span>
       )}
-    </ListItemButton>
+    </div>
   );
 };
-
-const Widget = styled(Box)(({ theme: { typography } }) => ({
-  padding: "2px 4px",
-  fontSize: 14,
-  fontFamily: typography.fontFamily,
-  borderRadius: "4px",
-}));
-
-const TypeBox = styled(Box, {
-  shouldForwardProp: (prop) => prop !== "component",
-})<{ component?: React.ElementType }>(({ theme: { palette, typography } }) => ({
-  display: "inline-block",
-  border: "1px solid #ccc",
-  borderColor: "text.secondary",
-  color: "text.secondary",
-  borderRadius: 4,
-  fontSize: 10,
-  fontFamily: typography.fontFamily,
-  marginRight: "4px",
-  marginTop: "auto",
-  padding: "0 4px",
-  lineHeight: 1.5,
-}));

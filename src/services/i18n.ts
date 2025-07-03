@@ -21,8 +21,8 @@ const resources = Object.fromEntries(
 
 i18n.use(initReactI18next).init({
   resources,
-  lng: "zh",
-  fallbackLng: "zh",
+  lng: "ru",
+  fallbackLng: "ru",
   interpolation: {
     escapeValue: false,
   },
