@@ -104,7 +104,7 @@ const RulesPage = () => {
             {t("Rules")}
           </h2>
           <div className="flex items-center gap-2">
-            <div className="w-64">
+            <div className="w-70">
               {/* Передаем стабильную функцию handleSearch в пропс */}
               <BaseSearchBox onSearch={handleSearch} />
             </div>

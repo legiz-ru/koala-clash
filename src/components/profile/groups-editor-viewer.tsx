@@ -358,9 +358,9 @@ export const GroupsEditorViewer = (props: Props) => {
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
+            <DialogContent className="min-w-6xl h-[90vh] flex flex-col">
                 <DialogHeader>
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center pr-8">
                         <DialogTitle>{t("Edit Groups")}</DialogTitle>
                         <Button variant="outline" size="sm" onClick={() => setVisualization(prev => !prev)}>
                             {visualization ? t("Advanced") : t("Visualization")}
@@ -376,7 +376,7 @@ export const GroupsEditorViewer = (props: Props) => {
                                 <div className="w-1/2 flex flex-col border rounded-md p-4">
                                     <h3 className="text-lg font-medium mb-4">Constructor</h3>
                                     <Separator className="mb-4"/>
-                                    <div className="space-y-3 overflow-y-auto pr-3 -mr-3">
+                                    <div className="space-y-3 overflow-y-auto p-1 -mr-3 ">
                                         <FormField control={control} name="type" render={({ field }) => (<FormItem><FormLabel>{t("Group Type")}</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="select">select</SelectItem><SelectItem value="url-test">url-test</SelectItem><SelectItem value="fallback">fallback</SelectItem><SelectItem value="load-balance">load-balance</SelectItem><SelectItem value="relay">relay</SelectItem></SelectContent></Select></FormItem>)}/>
                                         <FormField control={control} name="name" render={({ field }) => (<FormItem><FormLabel>{t("Group Name")}</FormLabel><FormControl><Input {...field} required/></FormControl></FormItem>)}/>
                                         <FormField control={control} name="icon" render={({ field }) => (<FormItem><FormLabel>{t("Proxy Group Icon")}</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)}/>

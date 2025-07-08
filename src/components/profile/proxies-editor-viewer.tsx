@@ -302,9 +302,9 @@ export const ProxiesEditorViewer = (props: Props) => {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+      <DialogContent className="min-w-4xl h-[80vh] flex flex-col">
         <DialogHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center pr-8">
             <DialogTitle>{t("Edit Proxies")}</DialogTitle>
             <Button
               variant="outline"

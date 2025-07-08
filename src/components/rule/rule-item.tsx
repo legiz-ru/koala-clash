@@ -38,7 +38,7 @@ const RuleItem = (props: Props) => {
 
   return (
     // Корневой элемент, стилизованный с помощью Tailwind
-    <div className="flex p-4 border-b border-border">
+    <div className="flex p-3 border-b border-border">
       {/* Номер правила */}
       <p className="w-10 text-center text-sm text-muted-foreground mr-4 pt-0.5">
         {index}
