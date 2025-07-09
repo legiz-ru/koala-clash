@@ -45,7 +45,7 @@ export const ProxyRender = (props: RenderProps) => {
   if (type === 0) {
     return (
       <div
-        className="flex items-center mx-2 my-1 p-3 rounded-lg bg-card hover:bg-accent cursor-pointer transition-colors"
+        className="flex items-center mx-2 my-1 p-3 rounded-lg bg-card hover:bg-accent cursor-pointer transition-colors border shadow-sm"
         onClick={() => onHeadState(group.name, { open: !headState?.open })}
       >
         {/* Логика иконок групп (сохранена) */}

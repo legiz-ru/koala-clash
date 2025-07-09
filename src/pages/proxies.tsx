@@ -1,5 +1,3 @@
-// ProxyPage.tsx
-
 import useSWR from "swr";
 import { useEffect } from "react";
 import { useLockFn } from "ahooks";
@@ -62,9 +60,7 @@ const ProxyPage = () => {
   ];
 
   return (
-    // Используем наш знакомый паттерн для создания макета с прокручиваемым контентом
     <div className="h-full flex flex-col">
-      {/* Шапка страницы */}
       <div className="p-4 pb-2 flex justify-between items-center">
         <h2 className="text-2xl font-semibold tracking-tight">
           {t("Proxies")}
@@ -107,8 +103,7 @@ const ProxyPage = () => {
         </div>
       </div>
 
-      {/* Основной контент, который будет скроллиться */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <div className="flex-1 overflow-y-auto min-h-0 p-4">
         <ProxyGroups mode={curMode!} />
       </div>
     </div>

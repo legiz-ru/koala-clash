@@ -79,7 +79,7 @@ export const ProxyItem = (props: Props) => {
     <div
       data-selected={selected}
       onClick={handleItemClick}
-      className="group mx-2 mb-2 flex cursor-pointer items-center rounded-lg border border-transparent bg-card p-2 pr-3 transition-all duration-200 data-[selected=true]:border-primary data-[selected=true]:bg-accent"
+      className="group mx-2 mb-1 flex cursor-pointer items-center rounded-lg border bg-card p-3 transition-all duration-200 hover:shadow-md data-[selected=true]:ring-2 data-[selected=true]:ring-primary"
     >
       {/* Левая часть с названием и тегами */}
       <div className="flex-1 min-w-0">
