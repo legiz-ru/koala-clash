@@ -111,31 +111,25 @@ jobs:
           cat > release.txt << EOF
           $UPDATE_LOGS
 
-          ## 我应该下载哪个版本？
+          ## Which version should I download?
 
           ### MacOS
-          - MacOS intel芯片: x64.dmg
-          - MacOS apple M芯片: aarch64.dmg
+          - MacOS Intel Chip: x64.dmg
+          - MacOS Apple M Chip: aarch64.dmg
 
           ### Linux
-          - Linux 64位: amd64.deb/amd64.rpm
-          - Linux arm64 architecture: arm64.deb/aarch64.rpm
-          - Linux armv7架构: armhf.deb/armhfp.rpm
+          - Linux 64-bit: amd64.deb/amd64.rpm
+          - Linux arm64: arm64.deb/aarch64.rpm
+          - Linux armv7: armhf.deb/armhfp.rpm
 
-          ### Windows (不再支持Win7)
-          #### 正常版本(推荐)
-          - 64位: x64-setup.exe
-          - arm64架构: arm64-setup.exe
-          #### 便携版问题很多不再提供
-          #### 内置Webview2版(体积较大，仅在企业版系统或无法安装webview2时使用)
-          - 64位: x64_fixed_webview2-setup.exe
-          - arm64架构: arm64_fixed_webview2-setup.exe
-
-          ### FAQ
-          - [常见问题](https://clash-verge-rev.github.io/faq/windows.html)
-
-          ### 稳定机场VPN推荐
-          - [狗狗加速](https://verge.dginv.click/#/register?code=oaxsAGo6)
+          ### Windows (Win7 is no longer supported)
+          #### Normal version (recommended)
+          - 64-bit: x64-setup.exe
+          - arm64: arm64-setup.exe
+          #### Portable version is no longer available with many problems
+          #### Built-in Webview version 2 (large size, only used in enterprise version of the system or can not install webview2)
+          - 64-bit: x64_fixed_webview2-setup.exe
+          - arm64: arm64_fixed_webview2-setup.exe
 
           Created at ${{ env.BUILDTIME }}.
           EOF
@@ -239,12 +233,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tagName: ${{ env.TAG_NAME }}
           releaseName: "Clash Verge Rev ${{ env.TAG_CHANNEL }}"
