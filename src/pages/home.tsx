@@ -164,7 +164,7 @@ const MinimalHomePage: React.FC = () => {
 
           {!isTunAvailable && (
             <div className="w-full max-w-sm">
-                <Alert variant="destructive" className="text-center">
+                <Alert variant="destructive" className="flex flex-col items-center gap-2 text-center">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>{t("Attention Required")}</AlertTitle>
                     <AlertDescription className="text-xs">
