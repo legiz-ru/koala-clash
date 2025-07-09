@@ -1,10 +1,9 @@
-import React, { useRef, useMemo, useCallback } from 'react';
+import React, { useRef, useMemo, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLockFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
-// Импорты
 import { useProfiles } from '@/hooks/use-profiles';
 import { ProfileViewer, ProfileViewerRef } from '@/components/profile/profile-viewer';
 import {
@@ -12,7 +11,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { ChevronsUpDown, Check, PlusCircle, Menu, Wrench, AlertTriangle } from 'lucide-react';
+import { ChevronsUpDown, Check, PlusCircle, Menu, Wrench, AlertTriangle, Loader2 } from 'lucide-react';
 import { useVerge } from '@/hooks/use-verge';
 import { useSystemState } from '@/hooks/use-system-state';
 import { useServiceInstaller } from '@/hooks/useServiceInstaller';
@@ -25,24 +24,19 @@ import { closeAllConnections } from '@/services/api';
 const MinimalHomePage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-
-  // --- НАЧАЛО ИЗМЕНЕНИЙ 1: Правильно используем хук ---
+  const [isToggling, setIsToggling] = useState(false);
   const { profiles, patchProfiles, activateSelected, mutateProfiles } = useProfiles();
   const viewerRef = useRef<ProfileViewerRef>(null);
 
-  // Воссоздаем логику фильтрации профилей здесь
   const profileItems = useMemo(() => {
     const items = profiles && Array.isArray(profiles.items) ? profiles.items : [];
     const allowedTypes = ["local", "remote"];
-    // Добавляем явное указание типа, чтобы избежать ошибок
     return items.filter((i: any) => i && allowedTypes.includes(i.type!));
   }, [profiles]);
 
   const currentProfileName = useMemo(() => {
-    // Находим в списке профилей тот, чей uid совпадает с активным
     return profileItems.find(p => p.uid === profiles?.current)?.name || profiles?.current;
   }, [profileItems, profiles?.current]);
-  // Воссоздаем логику активации профиля здесь
   const activateProfile = useCallback(async (uid: string, notifySuccess: boolean) => {
     try {
       await patchProfiles({ current: uid });
@@ -53,7 +47,7 @@ const MinimalHomePage: React.FC = () => {
       }
     } catch (err: any) {
       toast.error(err.message || err.toString());
-      mutateProfiles(); // Откатываем в случае ошибки
+      mutateProfiles();
     }
   }, [patchProfiles, activateSelected, mutateProfiles, t]);
 
@@ -61,7 +55,6 @@ const MinimalHomePage: React.FC = () => {
     if (profiles?.current === uid) return;
     await activateProfile(uid, true);
   });
-  // --- КОНЕЦ ИЗМЕНЕНИЙ 1 ---
 
   const { verge, patchVerge, mutateVerge } = useVerge();
   const { isAdminMode, isServiceMode } = useSystemState();
@@ -71,6 +64,7 @@ const MinimalHomePage: React.FC = () => {
 
   const handleToggleProxy = useLockFn(async () => {
     const turningOn = !isProxyEnabled;
+    setIsToggling(true);
     try {
       if (turningOn) {
         await patchVerge({ enable_tun_mode: true, enable_system_proxy: false });
@@ -82,6 +76,8 @@ const MinimalHomePage: React.FC = () => {
       mutateVerge();
     } catch (error: any) {
       toast.error(t('Failed to toggle proxy'), { description: error.message });
+    } finally {
+      setIsToggling(false);
     }
   });
 
@@ -96,88 +92,98 @@ const MinimalHomePage: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen p-5">
-      <header className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-xs pt-5 z-20">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-             <Button variant="outline" className="w-full">
-              <span className="truncate">{currentProfileName}</span>
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
-            <DropdownMenuLabel>{t("Profiles")}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {profileItems.map((p) => (
-              <DropdownMenuItem key={p.uid} onSelect={() => handleProfileChange(p.uid)}>
-                <span className="flex-1 truncate">{p.name}</span>
-                {profiles?.current === p.uid && <Check className="ml-4 h-4 w-4" />}
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => viewerRef.current?.create()}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              <span>{t("Add New Profile")}</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </header>
+      <header className="absolute top-0 left-0 right-0 p-5 flex items-center justify-between z-20">
+        <div className="w-10"></div>
 
-      <div className="absolute top-5 right-5 z-20">
+        <div className="flex-shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Menu className="h-5 w-5" />
+              <Button variant="outline" className="w-full max-w-[250px] sm:max-w-xs">
+                <span className="truncate">{currentProfileName}</span>
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{t("Menu")}</DropdownMenuLabel>
+            <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+              <DropdownMenuLabel>{t("Profiles")}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {navMenuItems.map((item) => (
-                <DropdownMenuItem key={item.path} onSelect={() => navigate(item.path)}>
-                  {t(item.label)}
+              {profileItems.map((p) => (
+                <DropdownMenuItem key={p.uid} onSelect={() => handleProfileChange(p.uid)}>
+                  <span className="flex-1 truncate">{p.name}</span>
+                  {profiles?.current === p.uid && <Check className="ml-4 h-4 w-4" />}
                 </DropdownMenuItem>
               ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => viewerRef.current?.create()}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                <span>{t("Add New Profile")}</span>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-      </div>
-
-
-      <div className="flex flex-col items-center justify-center flex-grow text-center w-full">
-        <h1 className="text-4xl mb-8 font-semibold" style={{ color: isProxyEnabled ? '#22c55e' : '#ef4444' }}>
-          {isProxyEnabled ? t('Connected') : t('Disconnected')}
-        </h1>
-
-        <div className="scale-[3.5] my-16">
-          <Switch
-            disabled={!isTunAvailable}
-            checked={!!isProxyEnabled}
-            onCheckedChange={handleToggleProxy}
-            aria-label={t("Toggle Proxy")}
-          />
         </div>
 
-        <div className="w-full max-w-sm transition-all">
+        <div className="w-10">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>{t("Menu")}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {navMenuItems.map((item) => (
+                  <DropdownMenuItem key={item.path} onSelect={() => navigate(item.path)}>
+                    {t(item.label)}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
+      </header>
+
+      <div className="flex items-center justify-center flex-grow w-full">
+        <div className="flex flex-col items-center gap-8 pt-10">
+
+          <div className="text-center">
+            <h1 className="text-4xl mb-2 font-semibold" style={{ color: isProxyEnabled ? '#22c55e' : '#ef4444' }}>
+              {isProxyEnabled ? t('Connected') : t('Disconnected')}
+            </h1>
+            <p className="h-6 text-sm text-muted-foreground transition-opacity duration-300">
+              {isToggling && (isProxyEnabled ? t('Disconnecting...') : t('Connecting...'))}
+            </p>
+          </div>
+
+          <div className="scale-[7] my-16">
+            <Switch
+              disabled={!isTunAvailable || isToggling}
+              checked={!!isProxyEnabled}
+              onCheckedChange={handleToggleProxy}
+              aria-label={t("Toggle Proxy")}
+            />
+          </div>
+
           {!isTunAvailable && (
-            <Alert variant="destructive" className="text-center flex flex-col items-center gap-3">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5" />
-                <AlertTitle>{t("Attention Required")}</AlertTitle>
-              </div>
-              <AlertDescription>
-                {t("TUN requires Service Mode or Admin Mode")}
-              </AlertDescription>
-              {!isServiceMode && !isAdminMode && (
-                  <Button size="sm" className="mt-2" onClick={installServiceAndRestartCore}>
-                      <Wrench className="mr-2 h-4 w-4" />
-                      {t("Install Service")}
-                  </Button>
-              )}
-            </Alert>
+            <div className="w-full max-w-sm">
+                <Alert variant="destructive" className="text-center">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>{t("Attention Required")}</AlertTitle>
+                    <AlertDescription className="text-xs">
+                        {t("TUN requires Service Mode or Admin Mode")}
+                    </AlertDescription>
+                    {!isServiceMode && !isAdminMode && (
+                        <Button size="sm" className="mt-2" onClick={installServiceAndRestartCore}>
+                            <Wrench className="mr-2 h-4 w-4" />
+                            {t("Install Service")}
+                        </Button>
+                    )}
+                </Alert>
+            </div>
           )}
-        </div>
 
-        <div className="w-full mt-8">
-            <ProxySelectors />
+          <div className="w-full">
+              <ProxySelectors />
+          </div>
+
         </div>
       </div>
 
