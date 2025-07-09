@@ -1,5 +1,3 @@
-// SettingPage.tsx
-
 import React, { useState, useRef, useEffect } from "react";
 import { useLockFn } from "ahooks";
 import { useTranslation } from "react-i18next";
@@ -11,10 +9,7 @@ import SettingSystem from "@/components/setting/setting-system";
 import { showNotice } from "@/services/noticeService";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-// --- НАЧАЛО ИЗМЕНЕНИЙ ---
-// Убираем CardHeader и CardTitle из импортов
 import { Card, CardContent } from "@/components/ui/card";
-// --- КОНЕЦ ИЗМЕНЕНИЙ ---
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,13 +44,7 @@ const SettingPage = () => {
   const onError = (err: any) =>
     showNotice("error", err?.message || err.toString());
   const toGithubRepo = useLockFn(() =>
-    openWebUrl("https://github.com/clash-verge-rev/clash-verge-rev"),
-  );
-  const toGithubDoc = useLockFn(() =>
-    openWebUrl("https://clash-verge-rev.github.io/index.html"),
-  );
-  const toTelegramChannel = useLockFn(() =>
-    openWebUrl("https://t.me/clash_verge_re"),
+    openWebUrl("https://github.com/coolcoala/clash-verge-rev-lite"),
   );
   const menuItems = [
     { label: t("Home"), path: "/home" },
@@ -78,23 +67,6 @@ const SettingPage = () => {
           {t("Settings")}
         </h2>
         <div className="flex items-center gap-2">
-          {/* ...кнопки... */}
-          <Button
-            variant="ghost"
-            size="icon"
-            title={t("Manual")}
-            onClick={toGithubDoc}
-          >
-            <HelpCircle className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            title={t("TG Channel")}
-            onClick={toTelegramChannel}
-          >
-            <Send className="h-5 w-5" />
-          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -132,9 +104,6 @@ const SettingPage = () => {
       >
         <div className="p-4 pt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* --- НАЧАЛО ИЗМЕНЕНИЙ --- */}
-
-            {/* Column 1 */}
             <div className="space-y-4">
               <Card>
                 <CardContent>
@@ -147,8 +116,6 @@ const SettingPage = () => {
                 </CardContent>
               </Card>
             </div>
-
-            {/* Column 2 */}
             <div className="space-y-4">
               <Card>
                 <CardContent>
@@ -161,8 +128,6 @@ const SettingPage = () => {
                 </CardContent>
               </Card>
             </div>
-
-            {/* --- КОНЕЦ ИЗМЕНЕНИЙ --- */}
           </div>
         </div>
       </div>
