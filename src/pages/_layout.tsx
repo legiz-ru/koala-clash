@@ -150,7 +150,7 @@ const Layout = () => {
   const mode = useThemeMode();
   const isDark = mode === "light" ? false : true;
   const { t } = useTranslation();
-  const { theme } = useCustomTheme();
+  useCustomTheme();
   const { verge } = useVerge();
   const { clashInfo } = useClashInfo();
   const [enableLog] = useEnableLog();
@@ -160,11 +160,6 @@ const Layout = () => {
   const routersEles = useRoutes(routers);
   const { addListener, setupCloseListener } = useListen();
   const initRef = useRef(false);
-  const [themeReady, setThemeReady] = useState(false);
-
-  useEffect(() => {
-    setThemeReady(true);
-  }, [theme]);
 
   const handleNotice = useCallback(
     (payload: [string, string]) => {
@@ -445,116 +440,18 @@ const Layout = () => {
     }
   }, [start_page]);
 
-  if (!themeReady) {
-    return (
-      <div
-        style={{
-          width: "100vw",
-          height: "100vh",
-          background: mode === "light" ? "#fff" : "#181a1b",
-          transition: "background 0.2s",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: mode === "light" ? "#333" : "#fff",
-        }}
-      ></div>
-    );
-  }
-
   if (!routersEles) {
-    return (
-      <div
-        style={{
-          width: "100vw",
-          height: "100vh",
-          background: mode === "light" ? "#fff" : "#181a1b",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: mode === "light" ? "#333" : "#fff",
-        }}
-      ></div>
-    );
+    return <div className="h-screen w-screen bg-background" />;
   }
 
   return (
     <SWRConfig value={{ errorRetryCount: 3 }}>
-      <ThemeProvider theme={theme}>
-        <NoticeManager />
-        <div
-          style={{
-            animation: "fadeIn 0.5s",
-            WebkitAnimation: "fadeIn 0.5s",
-          }}
-        />
-        <style>
-          {`
-            @keyframes fadeIn {
-              from { opacity: 0; }
-              to { opacity: 1; }
-            }
-          `}
-        </style>
-
-        {/* --- НАЧАЛО ИЗМЕНЕНИЙ --- */}
-
-        {/* 1. Убрали класс "layout" с компонента Paper */}
-        <Paper
-          square
-          elevation={0}
-          className={OS} // Был: className={`${OS} layout`}
-          style={{
-            borderTopLeftRadius: "0px",
-            borderTopRightRadius: "0px",
-            // Добавляем стили, чтобы контейнер занимал все пространство
-            width: "100vw",
-            height: "100vh",
-            display: "flex", // Используем flex, чтобы контент растянулся
-            flexDirection: "column",
-          }}
-          onContextMenu={(e) => {
-            if (
-              OS === "windows" &&
-              !["input", "textarea"].includes(
-                e.currentTarget.tagName.toLowerCase(),
-              ) &&
-              !e.currentTarget.isContentEditable
-            ) {
-              e.preventDefault();
-            }
-          }}
-          sx={[
-            ({ palette }) => ({ bgcolor: palette.background.paper }),
-            OS === "linux"
-              ? {
-                  borderRadius: "8px",
-                  border: "1px solid var(--divider-color)",
-                }
-              : {},
-          ]}
-        >
-          {/* 2. Левая колонка <div className="layout__left">...</div> ПОЛНОСТЬЮ УДАЛЕНА */}
-
-          {/* 3. Оставляем только "правую" часть, которая теперь станет основной */}
-          {/* и заставляем ее занять все доступное место */}
-          <div
-            className="main-content-area"
-            style={{ flex: 1, display: "flex", flexDirection: "column" }}
-          >
-            {/* 4. Бар-разделитель <div className="the-bar"></div> тоже удален, он больше не нужен */}
-
-            <div
-              className="the-content"
-              style={{ flex: 1, position: "relative" }}
-            >
-              {React.cloneElement(routersEles, { key: location.pathname })}
-            </div>
-          </div>
-        </Paper>
-
-        {/* --- КОНЕЦ ИЗМЕНЕНИЙ --- */}
-      </ThemeProvider>
+      <NoticeManager />
+      <div className="h-screen w-screen bg-background text-foreground overflow-hidden">
+        <div className="h-full w-full relative">
+            {React.cloneElement(routersEles, { key: location.pathname })}
+        </div>
+      </div>
     </SWRConfig>
   );
 };

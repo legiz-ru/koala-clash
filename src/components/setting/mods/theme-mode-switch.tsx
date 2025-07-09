@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 
-// Определяем возможные значения темы для TypeScript
 type ThemeValue = "light" | "dark" | "system";
 
 interface Props {
@@ -16,7 +15,6 @@ export const ThemeModeSwitch = (props: Props) => {
   const modes: ThemeValue[] = ["light", "dark", "system"];
 
   return (
-    // Создаем ту же самую группу кнопок, что и раньше
     <div className="flex items-center rounded-md border bg-muted p-0.5">
       {modes.map((mode) => (
         <Button
@@ -26,9 +24,6 @@ export const ThemeModeSwitch = (props: Props) => {
           size="sm"
           className="capitalize px-3 text-xs"
         >
-          {/* Ключевое исправление: мы используем ключи `theme.light`, `theme.dark` и т.д.
-            Это стандартный подход в i18next для корректной локализации.
-          */}
           {t(`theme.${mode}`)}
         </Button>
       ))}

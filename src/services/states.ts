@@ -2,8 +2,8 @@ import { createContextState } from "foxact/create-context-state";
 import { useLocalStorage } from "foxact/use-local-storage";
 
 const [ThemeModeProvider, useThemeMode, useSetThemeMode] = createContextState<
-  "light" | "dark"
->("light");
+  "light" | "dark" | "system"
+>("system");
 
 export const useEnableLog = () => useLocalStorage("enable-log", false);
 
