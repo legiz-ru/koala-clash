@@ -1,9 +1,7 @@
-import { forwardRef, useImperativeHandle, useState, useMemo } from "react";
+import { forwardRef, useImperativeHandle, useState, useEffect, useCallback } from "react";
 import { useLockFn } from "ahooks";
 import { useTranslation } from "react-i18next";
-import { useTheme } from "@mui/material/styles"; // Оставляем для получения дефолтных цветов темы
 
-// Новые импорты
 import { useVerge } from "@/hooks/use-verge";
 import { defaultTheme, defaultDarkTheme } from "@/pages/_theme";
 import { DialogRef } from "@/components/base";
@@ -14,53 +12,62 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Edit } from "lucide-react";
+import { useThemeMode } from "@/services/states"; // Наш хук для получения текущего режима
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {HexColorPicker} from "react-colorful";
+
 
 interface Props {}
 
-// Дочерний компонент для одной строки настройки цвета
 const ColorSettingRow = ({ label, value, placeholder, onChange }: {
   label: string;
   value: string;
   placeholder: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}) => (
-  <div className="flex items-center justify-between">
-    <Label>{label}</Label>
-    <div className="flex items-center gap-2">
-      {/* --- НАЧАЛО ИЗМЕНЕНИЙ --- */}
-      {/* Этот контейнер теперь позиционирован, чтобы спрятать input внутри */}
-      <div className="relative h-6 w-6 cursor-pointer">
-        {/* Видимый образец цвета */}
-        <div
-          className="h-full w-full rounded-full border"
-          style={{ backgroundColor: value || placeholder }}
-        />
-        {/* Невидимый input, который и открывает палитру */}
+  onChange: (e: { target: { value: string } }) => void; // Адаптируем тип для совместимости
+}) => {
+  const color = value || placeholder;
+
+  return (
+    <div className="flex items-center justify-between">
+      <Label>{label}</Label>
+      <div className="flex items-center gap-2">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="h-8 w-8 p-0 border-2"
+              style={{ backgroundColor: color }}
+              aria-label={`Choose ${label}`}
+            />
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 border-0">
+            <HexColorPicker color={color} onChange={(newColor) => onChange({ target: { value: newColor } })} />
+          </PopoverContent>
+        </Popover>
         <Input
-          type="color"
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-          value={value || placeholder}
+          className="w-32 h-8 font-mono text-sm"
+          value={value ?? ""}
+          placeholder={placeholder}
           onChange={onChange}
         />
       </div>
-      {/* --- КОНЕЦ ИЗМЕНЕНИЙ --- */}
-      <Input
-        className="w-32 h-8 font-mono text-sm"
-        value={value ?? ""}
-        placeholder={placeholder}
-        onChange={onChange}
-      />
     </div>
-  </div>
-);
+  );
+};
+
 
 export const ThemeViewer = forwardRef<DialogRef>((props, ref) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
-  const { verge, patchVerge } = useVerge();
+  const { verge, patchVerge, mutateVerge } = useVerge();
   const { theme_setting } = verge ?? {};
   const [theme, setTheme] = useState(theme_setting || {});
+
+  const mode = useThemeMode();
+  const resolvedMode = mode === 'system'
+    ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+    : mode;
 
   useImperativeHandle(ref, () => ({
     open: () => {
@@ -70,32 +77,30 @@ export const ThemeViewer = forwardRef<DialogRef>((props, ref) => {
     close: () => setOpen(false),
   }));
 
-  const handleChange = (field: keyof typeof theme) => (e: any) => {
+  const handleChange = (field: keyof typeof theme) => (e: { target: { value: string } }) => {
     setTheme((t) => ({ ...t, [field]: e.target.value }));
   };
 
   const onSave = useLockFn(async () => {
     try {
       await patchVerge({ theme_setting: theme });
+      await mutateVerge();
       setOpen(false);
-      showNotice("success", t("Saved Successfully, please restart the app to take effect"));
+      showNotice("success", t("Theme updated successfully"));
     } catch (err: any) {
       showNotice("error", err.toString());
     }
   });
 
-  const muiTheme = useTheme();
-  const dt = muiTheme.palette.mode === "light" ? defaultTheme : defaultDarkTheme;
+
+  const dt = resolvedMode === "light" ? defaultTheme : defaultDarkTheme;
   type ThemeKey = keyof typeof theme & keyof typeof defaultTheme;
 
   const renderItem = (label: string, key: ThemeKey) => {
     return (
       <ColorSettingRow
         label={label}
-        // --- НАЧАЛО ИСПРАВЛЕНИЯ ---
-        // Добавляем `?? ''` чтобы value всегда был строкой
         value={theme[key] ?? ""}
-        // --- КОНЕЦ ИСПРАВЛЕНИЯ ---
         placeholder={dt[key]}
         onChange={handleChange(key)}
       />
@@ -124,9 +129,7 @@ export const ThemeViewer = forwardRef<DialogRef>((props, ref) => {
               <Label>{t("Font Family")}</Label>
               <Input
                   className="w-48 h-8"
-                  // --- НАЧАЛО ИСПРАВЛЕНИЯ ---
                   value={theme.font_family ?? ""}
-                  // --- КОНЕЦ ИСПРАВЛЕНИЯ ---
                   onChange={handleChange("font_family")}
               />
             </div>
