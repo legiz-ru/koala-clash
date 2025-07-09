@@ -8,7 +8,6 @@ import { showNotice } from "@/services/noticeService";
 import getSystem from "@/utils/get-system";
 import { routers } from "@/pages/_routers";
 
-// Компоненты
 import { DialogRef, Switch } from "@/components/base";
 import { TooltipIcon } from "@/components/base/base-tooltip-icon";
 import { Button } from "@/components/ui/button";
@@ -17,13 +16,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { GuardState } from "./mods/guard-state";
 import { ThemeModeSwitch } from "./mods/theme-mode-switch"; // Импортируем наш новый компонент
 
-// Иконки
 import {
   Copy, Languages, Palette, MousePointerClick, Terminal, Home, FileTerminal,
   SwatchBook, LayoutTemplate, Sparkles, Keyboard
 } from "lucide-react";
 
-// Модальные окна
 import { ConfigViewer } from "./mods/config-viewer";
 import { HotkeyViewer } from "./mods/hotkey-viewer";
 import { MiscViewer } from "./mods/misc-viewer";
@@ -80,6 +77,8 @@ const SettingVergeBasic = ({ onError }: Props) => {
     showNotice("success", t("Copy Success"), 1000);
   }, [t]);
 
+  const onSelectFormat = (value: string) => value;
+
   return (
     <div>
       <h3 className="text-lg font-medium mb-4">{t("Verge Basic Setting")}</h3>
@@ -92,9 +91,16 @@ const SettingVergeBasic = ({ onError }: Props) => {
         <UpdateViewer ref={updateRef} />
         <BackupViewer ref={backupRef} />
 
-        <SettingRow label={<LabelWithIcon icon={Languages} text={t("Language")} />}>
-          <GuardState value={language ?? "en"} onCatch={onError} onFormat={v => v} onChange={(e) => onChangeData({ language: e })} onGuard={(e) => patchVerge({ language: e })}>
-            <Select onValueChange={(value) => onChangeData({ language: value })} value={language}>
+       <SettingRow label={<LabelWithIcon icon={Languages} text={t("Language")} />}>
+          <GuardState
+            value={language ?? "en"}
+            onCatch={onError}
+            onChangeProps="onValueChange"
+            onFormat={onSelectFormat}
+            onChange={(e) => onChangeData({ language: e })}
+            onGuard={(e) => patchVerge({ language: e })}
+          >
+            <Select>
               <SelectTrigger className="w-32 h-8"><SelectValue /></SelectTrigger>
               <SelectContent>{languageOptions.map(({ code, label }) => (<SelectItem key={code} value={code}>{label}</SelectItem>))}</SelectContent>
             </Select>
@@ -145,17 +151,23 @@ const SettingVergeBasic = ({ onError }: Props) => {
         </SettingRow>
 
         <SettingRow label={<LabelWithIcon icon={Home} text={t("Start Page")} />}>
-            <GuardState value={start_page ?? "/"} onCatch={onError} onFormat={v => v} onChange={(e) => onChangeData({ start_page: e })} onGuard={(e) => patchVerge({ start_page: e })}>
-                <Select onValueChange={(value) => onChangeData({ start_page: value })} value={start_page}>
+            <GuardState
+              value={start_page ?? "/"}
+              onCatch={onError}
+              onChangeProps="onValueChange"
+              onFormat={(value: string) => value}
+              onChange={(e) => onChangeData({ start_page: e })}
+              onGuard={(e) => patchVerge({ start_page: e })}
+            >
+                <Select>
                   <SelectTrigger className="w-40 h-8"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {routers
-                        .filter((page) => !!page.label) // 1. Оставляем только страницы, у которых есть `label`
-                        .map((page) => ( // 2. Теперь TypeScript уверен, что у `page` есть `label`
-                          <SelectItem key={page.path} value={page.path}>
-                            {t(page.label!)}
-                          </SelectItem>
-                      ))}
+                      {routers
+                        .filter(page => page.label && page.path !== '/')
+                        .map(page => (
+                          <SelectItem key={page.path} value={page.path}>{t(page.label!)}</SelectItem>
+                        ))
+                      }
                   </SelectContent>
                 </Select>
             </GuardState>
