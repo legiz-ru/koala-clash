@@ -77,6 +77,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Update git tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f ${{ env.TAG_NAME }}
+          git push --force origin ${{ env.TAG_NAME }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Fetch UPDATE logs
         id: fetch_update_logs
         run: |
