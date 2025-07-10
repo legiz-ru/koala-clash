@@ -108,7 +108,7 @@ pub async fn test_delay(url: String) -> anyhow::Result<u32> {
     let start = Instant::now();
 
     let response = NetworkManager::global()
-        .get_with_interrupt(&url, proxy_type, Some(10), user_agent, false)
+        .get_with_interrupt(&url, proxy_type, Some(10), user_agent, false, false)
         .await;
 
     match response {

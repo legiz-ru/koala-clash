@@ -7,7 +7,7 @@ use std::{
 };
 use tokio::runtime::{Builder, Runtime};
 
-use crate::{config::Config, logging, utils::logging::Type};
+use crate::{config::Config, logging, utils::logging::Type, utils::sys_info};
 
 // HTTP2 相关
 const H2_CONNECTION_WINDOW_SIZE: u32 = 1024 * 1024;
@@ -248,6 +248,7 @@ impl NetworkManager {
         timeout_secs: Option<u64>,
         user_agent: Option<String>,
         accept_invalid_certs: bool,
+        use_hwid: bool,
     ) -> RequestBuilder {
         if self.should_reset_clients() {
             self.reset_clients();
@@ -331,7 +332,18 @@ impl NetworkManager {
 
         let client = builder.build().expect("Failed to build custom HTTP client");
 
-        client.get(url)
+        let mut request_builder = client.get(url);
+
+        if use_hwid {
+            let sys_info = sys_info::get_system_info();
+            logging!(info, Type::Network, true, "Adding HWID headers to request");
+            request_builder = request_builder
+                .header("x-hwid", &sys_info.hwid)
+                .header("x-device-os", &sys_info.os_type)
+                .header("x-ver-os", &sys_info.os_ver);
+        }
+
+        request_builder
     }
 
     /*     /// 执行GET请求，添加错误跟踪
@@ -378,6 +390,7 @@ impl NetworkManager {
         timeout_secs: Option<u64>,
         user_agent: Option<String>,
         accept_invalid_certs: bool,
+        use_hwid: bool,
     ) -> Result<Response> {
         let request = self.create_request(
             url,
@@ -385,6 +398,7 @@ impl NetworkManager {
             timeout_secs,
             user_agent,
             accept_invalid_certs,
+            use_hwid,
         );
 
         let timeout_duration = timeout_secs.unwrap_or(20);

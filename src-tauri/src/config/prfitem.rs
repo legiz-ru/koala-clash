@@ -113,6 +113,9 @@ pub struct PrfOption {
     pub proxies: Option<String>,
 
     pub groups: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub use_hwid: Option<bool>,
 }
 
 impl PrfOption {
@@ -132,6 +135,7 @@ impl PrfOption {
                 a.proxies = b.proxies.or(a.proxies);
                 a.groups = b.groups.or(a.groups);
                 a.timeout_seconds = b.timeout_seconds.or(a.timeout_seconds);
+                a.use_hwid = b.use_hwid.or(a.use_hwid);
                 Some(a)
             }
             t => t.0.or(t.1),
@@ -251,6 +255,7 @@ impl PrfItem {
         let user_agent = opt_ref.and_then(|o| o.user_agent.clone());
         let update_interval = opt_ref.and_then(|o| o.update_interval);
         let timeout = opt_ref.and_then(|o| o.timeout_seconds).unwrap_or(20);
+        let use_hwid = opt_ref.is_some_and(|o| o.use_hwid.unwrap_or(true));
         let mut merge = opt_ref.and_then(|o| o.merge.clone());
         let mut script = opt_ref.and_then(|o| o.script.clone());
         let mut rules = opt_ref.and_then(|o| o.rules.clone());
@@ -274,6 +279,7 @@ impl PrfItem {
                 Some(timeout),
                 user_agent.clone(),
                 accept_invalid_certs,
+                use_hwid,
             )
             .await
         {

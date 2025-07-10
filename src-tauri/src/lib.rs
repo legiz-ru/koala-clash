@@ -343,7 +343,7 @@ pub fn run() {
                     .get_webview_window("main")
                 {
                     logging!(info, Type::Window, true, "设置macOS窗口标题");
-                    let _ = window.set_title("Clash Verge");
+                    let _ = window.set_title("Clash Verge Rev Lite");
                 }
             }
         }
