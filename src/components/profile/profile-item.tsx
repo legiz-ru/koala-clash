@@ -436,7 +436,7 @@ export const ProfileItem = (props: Props) => {
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         onConfirm={onDelete}
-        title={t(`Delete Profile ${name}?`)}
+        title={t('Delete Profile', { name })}
         description={t("This action cannot be undone.")}
       />
     </div>

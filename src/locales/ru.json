@@ -588,5 +588,10 @@
   "TUN requires Service Mode or Admin Mode": "TUN режим требует Режима Службы или прав Администратора",
   "Menu": "Меню",
   "Proxy enabled": "Прокси включено",
-  "Proxy disabled": "Прокси выключено"
+  "Proxy disabled": "Прокси выключено",
+  "Connecting...": "Подключение...",
+  "Disconnecting...": "Отключение...",
+  "Add New Profile": "Добавить новый профиль",
+  "Delete Profile": "Удалить профиль {{name}}?",
+  "This action cannot be undone.": "Это действие не может быть отменено"
 }
