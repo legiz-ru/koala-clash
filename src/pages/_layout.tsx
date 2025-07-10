@@ -49,6 +49,7 @@ const handleNoticeMessage = (
 
   switch (status) {
     case "import_sub_url::ok":
+      mutate("getProfiles");
       navigate("/profile", { state: { current: msg } });
       showNotice("success", t("Import Subscription Successful"));
       break;
