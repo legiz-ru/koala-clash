@@ -593,5 +593,9 @@
   "Disconnecting...": "Отключение...",
   "Add New Profile": "Добавить новый профиль",
   "Delete Profile": "Удалить профиль {{name}}?",
-  "This action cannot be undone.": "Это действие не может быть отменено"
+  "This action cannot be undone.": "Это действие не может быть отменено",
+  "Update via proxy": "Обновить через прокси",
+  "Default": "По умолчанию",
+  "sort by ping": "Сортировка по пингу",
+  "sort by name": "Сортировка по имени"
 }

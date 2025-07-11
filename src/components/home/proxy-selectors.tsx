@@ -237,11 +237,23 @@ export const ProxySelectors: React.FC = () => {
         <div className="flex flex-col items-start gap-2">
           <div className="flex justify-between items-center w-100">
             <label className="text-sm font-medium text-muted-foreground">{t("Proxy")}</label>
-            <Button variant="ghost" size="sm" onClick={handleSortChange} disabled={isDirectMode}>
-              {sortType === 'default' && <ChevronsUpDown className="h-4 w-4" />}
-              {sortType === 'delay' && <Timer className="h-4 w-4" />}
-              {sortType === 'name' && <WholeWord className="h-4 w-4" />}
-            </Button>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="truncate">
+                    <Button variant="ghost" size="sm" onClick={handleSortChange} disabled={isDirectMode}>
+                      {sortType === 'default' && <ChevronsUpDown className="h-4 w-4" />}
+                      {sortType === 'delay' && <Timer className="h-4 w-4" />}
+                      {sortType === 'name' && <WholeWord className="h-4 w-4" />}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {sortType === 'default' && <p>{t("Default")}</p>}
+                  {sortType === 'delay' && <p>{t("sort by ping")}</p>}
+                  {sortType === 'name' && <p>{t("sort by name")}</p>}
+                </TooltipContent>
+              </Tooltip>
+
           </div>
           <Select value={selectedProxy} onValueChange={handleProxyChange} disabled={isDirectMode}>
             <SelectTrigger className="w-100">
