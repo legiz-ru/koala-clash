@@ -29,6 +29,7 @@ interface IProxyGroup {
   name: string;
   type: string;
   now: string;
+  hidden: boolean;
   all: (string | { name: string })[];
 }
 
@@ -37,7 +38,7 @@ function getDelayBadgeVariant(delayValue: number): 'default' | 'secondary' | 'de
   if (delayValue < 0) return 'secondary';
   if (delayValue >= 10000) return 'destructive';
   if (delayValue >= 500) return 'destructive';
-  if (delayValue >= 200) return 'outline';
+  if (delayValue >= 150) return 'destructive';
   return 'default';
 }
 
@@ -74,7 +75,7 @@ const ProxySelectItem = ({ proxyName, groupName }: { proxyName: string, groupNam
             isJustUpdated && "bg-primary/20 border-primary/50"
           )}
         >
-          {delay < 0 ? '---' : delay}
+          {(delay < 0) || (delay > 10000) ? '---' : delay}
         </Badge>
       </div>
     </SelectItem>
@@ -172,8 +173,15 @@ export const ProxySelectors: React.FC = () => {
 
   const selectorGroups = useMemo(() => {
     if (!proxies?.groups) return [];
-    return proxies.groups.filter((g: IProxyGroup) => g.type === 'Selector');
+
+    const allowedTypes = ["Selector", "URLTest", "Fallback"];
+
+    return proxies.groups.filter((g: IProxyGroup) =>
+      allowedTypes.includes(g.type) &&
+      !g.hidden
+    );
   }, [proxies]);
+
 
   const proxyOptions = useMemo(() => {
     let options: { name: string }[] = [];
@@ -202,11 +210,11 @@ export const ProxySelectors: React.FC = () => {
 
   return (
     <TooltipProvider>
-      <div className="flex justify-center flex-col md:flex-row gap-2 md:items-end">
+      <div className="flex justify-center flex-col gap-2 md:items-end">
         <div className="flex flex-col items-start gap-2">
           <label className="text-sm font-medium text-muted-foreground">{t("Group")}</label>
           <Select value={selectedGroup} onValueChange={handleGroupChange} disabled={isGlobalMode || isDirectMode}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-100">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="truncate">
@@ -227,7 +235,7 @@ export const ProxySelectors: React.FC = () => {
         </div>
 
         <div className="flex flex-col items-start gap-2">
-          <div className="flex justify-between items-center w-48">
+          <div className="flex justify-between items-center w-100">
             <label className="text-sm font-medium text-muted-foreground">{t("Proxy")}</label>
             <Button variant="ghost" size="sm" onClick={handleSortChange} disabled={isDirectMode}>
               {sortType === 'default' && <ChevronsUpDown className="h-4 w-4" />}
@@ -236,7 +244,7 @@ export const ProxySelectors: React.FC = () => {
             </Button>
           </div>
           <Select value={selectedProxy} onValueChange={handleProxyChange} disabled={isDirectMode}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-100">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="truncate">
