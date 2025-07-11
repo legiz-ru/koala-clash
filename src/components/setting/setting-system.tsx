@@ -47,14 +47,11 @@ const SettingSystem = ({ onError }: Props) => {
   const { verge, patchVerge, mutateVerge } = useVerge();
   const { installServiceAndRestartCore } = useServiceInstaller();
 
-  // --- НАЧАЛО ИСПРАВЛЕНИЯ ---
-  // Используем синтаксис переименования: `actualState` становится `systemProxyActualState`
   const {
     actualState: systemProxyActualState,
     indicator: systemProxyIndicator,
     toggleSystemProxy,
   } = useSystemProxyState();
-  // --- КОНЕЦ ИСПРАВЛЕНИЯ ---
 
   const { isAdminMode, isServiceMode, mutateRunningMode } = useSystemState();
   const isTunAvailable = isServiceMode || isAdminMode;
