@@ -595,7 +595,14 @@
   "Delete Profile": "Удалить профиль {{name}}?",
   "This action cannot be undone.": "Это действие не может быть отменено",
   "Update via proxy": "Обновить через прокси",
-  "Default": "По умолчанию",
-  "sort by ping": "Сортировка по пингу",
-  "sort by name": "Сортировка по имени"
+  "Check Group Latency": "Проверка задержки в группе",
+  "Locate Current Proxy": "Найти текущий прокси",
+  "Show Basic Info": "Показать основную информацию",
+  "Show Detailed Info": "Показать подробную информацию",
+  "Update failed, retrying with Clash proxy...": "Обновление не удалось, пробую повторно с помощью прокси Clash...",
+  "Update failed even with Clash proxy": "Обновление не удалось даже с помощью прокси Clash",
+  "Update with Clash proxy successfully": "Обновление с помощью прокси Clash прошло успешно",
+  "Proxy Count": "Число прокси",
+  "Set Latency Test URL": "Установить URL-адрес тестирования задержки",
+  "Filter by Name": "Фильтр по имени"
 }

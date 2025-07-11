@@ -110,7 +110,7 @@ export const ProxyItem = (props: Props) => {
             onClick={handleDelayClick}
             className={`font-medium ${getDelayColorClass(delay)} ${!proxy.provider ? "hover:opacity-70" : "cursor-default"}`}
           >
-            {delayManager.formatDelay(delay, timeout)} ms
+            {delayManager.formatDelay(delay, timeout)}
           </div>
         ) : (
           // Состояние по умолчанию (до проверки)

@@ -75,7 +75,7 @@ const LetterItem = memo(
         <Tooltip>
           <TooltipTrigger asChild>
             <div
-              className="flex items-center justify-center w-6 h-6 text-xs rounded-md cursor-pointer text-muted-foreground transition-transform hover:bg-accent hover:text-accent-foreground hover:scale-125"
+              className="flex items-center justify-center w-6 h-6 text-xs rounded-md border shadow-sm cursor-pointer text-muted-foreground transition-transform hover:bg-accent hover:text-accent-foreground hover:scale-125"
               onClick={() => onClick(name)}
             >
               {getFirstChar(name)}
@@ -240,7 +240,6 @@ export const ProxyGroups = memo((props: Props) => {
         error,
       );
     }
-    onProxies();
   });
 
   const handleLocation = (group: IProxyGroupItem) => {

@@ -645,7 +645,10 @@
   "Add New Profile": "Add New Profile",
   "Delete Profile": "Delete Profile {{name}}?",
   "This action cannot be undone.": "This action cannot be undone.",
-  "Default": "Default",
-  "sort by ping": "Sort by ping",
-  "sort by name": "Sort by name"
+  "Check Group Latency": "Check Group Latency",
+  "Locate Current Proxy": "Locate Current Proxy",
+  "Show Basic Info": "Show Basic Info",
+  "Show Detailed Info": "Show Detailed Info",
+  "Set Latency Test URL": "Set Latency Test URL",
+  "Filter by Name": "Filter by Name"
 }

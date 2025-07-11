@@ -130,7 +130,6 @@ export const ProxyHead = (props: Props) => {
             </TooltipContent>
           </Tooltip>
 
-          {/* --- НАЧАЛО ИЗМЕНЕНИЙ --- */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -139,7 +138,6 @@ export const ProxyHead = (props: Props) => {
                 onClick={() => onHeadState({ showType: !showType })}
                 className="h-8 w-8"
               >
-                {/* Теперь цвет иконки меняется в зависимости от состояния showType */}
                 <Eye className={cn("h-5 w-5", showType && "text-primary")} />
               </Button>
             </TooltipTrigger>
@@ -147,7 +145,6 @@ export const ProxyHead = (props: Props) => {
               <p>{showType ? t("Show Basic Info") : t("Show Detailed Info")}</p>
             </TooltipContent>
           </Tooltip>
-          {/* --- КОНЕЦ ИЗМЕНЕНИЙ --- */}
         </div>
 
         <div className="flex items-center gap-1">

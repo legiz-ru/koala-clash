@@ -248,9 +248,9 @@ export const ProxySelectors: React.FC = () => {
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {sortType === 'default' && <p>{t("Default")}</p>}
-                  {sortType === 'delay' && <p>{t("sort by ping")}</p>}
-                  {sortType === 'name' && <p>{t("sort by name")}</p>}
+                  {sortType === 'default' && <p>{t("Sort by default")}</p>}
+                  {sortType === 'delay' && <p>{t("Sort by delay")}</p>}
+                  {sortType === 'name' && <p>{t("Sort by name")}</p>}
                 </TooltipContent>
               </Tooltip>
 
