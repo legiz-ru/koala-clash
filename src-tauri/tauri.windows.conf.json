@@ -14,7 +14,7 @@
       "nsis": {
         "displayLanguageSelector": true,
         "installerIcon": "icons/icon.ico",
-        "languages": ["SimpChinese", "English"],
+        "languages": ["Russian", "English"],
         "installMode": "perMachine",
         "template": "./packages/windows/installer.nsi"
       }
