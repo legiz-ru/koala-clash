@@ -656,5 +656,7 @@
   "Expires in": "Expires in {{duration}}",
   "Expired": "Expired",
   "Get Started": "Get Started",
-  "You don't have any profiles yet. Add your first one to begin.": "You don't have any profiles yet.\nAdd your first one to begin."
+  "You don't have any profiles yet. Add your first one to begin.": "You don't have any profiles yet.\nAdd your first one to begin.",
+  "Show Advanced Settings": "Show Advanced Settings",
+  "Hide Advanced Settings": "Hide Advanced Settings"
 }

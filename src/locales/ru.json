@@ -608,5 +608,7 @@
   "Expires in": "Истекает через {{duration}}",
   "Expired": "Истекло",
   "Get Started": "Приступить к работе",
-  "You don't have any profiles yet. Add your first one to begin.": "У вас еще нет профилей.\nДобавьте свой первый профиль, чтобы начать."
+  "You don't have any profiles yet. Add your first one to begin.": "У вас еще нет профилей.\nДобавьте свой первый профиль, чтобы начать.",
+  "Show Advanced Settings": "Показать дополнительные настройки",
+  "Hide Advanced Settings": "Скрыть дополнительные настройки"
 }
