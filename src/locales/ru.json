@@ -591,7 +591,7 @@
   "Proxy disabled": "Прокси выключено",
   "Connecting...": "Подключение...",
   "Disconnecting...": "Отключение...",
-  "Add New Profile": "Добавить новый профиль",
+  "Add Profile": "Добавить профиль",
   "Delete Profile": "Удалить профиль {{name}}?",
   "This action cannot be undone.": "Это действие не может быть отменено",
   "Update via proxy": "Обновить через прокси",
@@ -604,5 +604,9 @@
   "Update with Clash proxy successfully": "Обновление с помощью прокси Clash прошло успешно",
   "Proxy Count": "Число прокси",
   "Set Latency Test URL": "Установить URL-адрес тестирования задержки",
-  "Filter by Name": "Фильтр по имени"
+  "Filter by Name": "Фильтр по имени",
+  "Expires in": "Истекает через {{duration}}",
+  "Expired": "Истекло",
+  "Get Started": "Приступить к работе",
+  "You don't have any profiles yet. Add your first one to begin.": "У вас еще нет профилей.\nДобавьте свой первый профиль, чтобы начать."
 }

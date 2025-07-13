@@ -641,8 +641,10 @@
   "Invalid Profile URL": "Invalid profile URL. Please enter a URL starting with http:// or https://",
   "Saved Successfully": "Saved successfully",
   "Connected": "Connected",
+  "Disconnected": "Disconnected",
+  "Attention Required": "Attention Required",
   "Menu": "Menu",
-  "Add New Profile": "Add New Profile",
+  "Add Profile": "Add Profile",
   "Delete Profile": "Delete Profile {{name}}?",
   "This action cannot be undone.": "This action cannot be undone.",
   "Check Group Latency": "Check Group Latency",
@@ -650,5 +652,9 @@
   "Show Basic Info": "Show Basic Info",
   "Show Detailed Info": "Show Detailed Info",
   "Set Latency Test URL": "Set Latency Test URL",
-  "Filter by Name": "Filter by Name"
+  "Filter by Name": "Filter by Name",
+  "Expires in": "Expires in {{duration}}",
+  "Expired": "Expired",
+  "Get Started": "Get Started",
+  "You don't have any profiles yet. Add your first one to begin.": "You don't have any profiles yet.\nAdd your first one to begin."
 }

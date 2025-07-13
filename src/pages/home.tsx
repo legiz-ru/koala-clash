@@ -95,31 +95,33 @@ const MinimalHomePage: React.FC = () => {
       <header className="absolute top-0 left-0 right-0 p-5 flex items-center justify-between z-20">
         <div className="w-10"></div>
 
-        <div className="flex-shrink-0">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full max-w-[250px] sm:max-w-xs">
-                <span className="truncate">{currentProfileName}</span>
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
-              <DropdownMenuLabel>{t("Profiles")}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {profileItems.map((p) => (
-                <DropdownMenuItem key={p.uid} onSelect={() => handleProfileChange(p.uid)}>
-                  <span className="flex-1 truncate">{p.name}</span>
-                  {profiles?.current === p.uid && <Check className="ml-4 h-4 w-4" />}
+        {profileItems.length > 0 && (
+          <div className="flex-shrink-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full max-w-[250px] sm:max-w-xs">
+                  <span className="truncate">{currentProfileName}</span>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                <DropdownMenuLabel>{t("Profiles")}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {profileItems.map((p) => (
+                  <DropdownMenuItem key={p.uid} onSelect={() => handleProfileChange(p.uid)}>
+                    <span className="flex-1 truncate">{p.name}</span>
+                    {profiles?.current === p.uid && <Check className="ml-4 h-4 w-4" />}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => viewerRef.current?.create()}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  <span>{t("Add New Profile")}</span>
                 </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => viewerRef.current?.create()}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                <span>{t("Add New Profile")}</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
 
         <div className="w-10">
             <DropdownMenu>
@@ -180,8 +182,21 @@ const MinimalHomePage: React.FC = () => {
             </div>
           )}
 
-          <div className="w-full">
+          <div className="w-full mt-4 flex justify-center">
+            {profileItems.length > 0 ? (
               <ProxySelectors />
+            ) : (
+              <Alert className="flex flex-col items-center gap-2 text-center">
+                <PlusCircle className="h-4 w-4" />
+                <AlertTitle>{t("Get Started")}</AlertTitle>
+                <AlertDescription className="whitespace-pre-wrap">
+                  {t("You don't have any profiles yet. Add your first one to begin.")}
+                </AlertDescription>
+                <Button className="mt-2" onClick={() => viewerRef.current?.create()}>
+                  {t("Add Profile")}
+                </Button>
+              </Alert>
+            )}
           </div>
 
         </div>
