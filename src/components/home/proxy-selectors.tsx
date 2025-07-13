@@ -24,6 +24,7 @@ import { updateProxy, deleteConnection } from '@/services/api';
 // --- Типы и константы ---
 const STORAGE_KEY_GROUP = 'clash-verge-selected-proxy-group';
 const STORAGE_KEY_SORT_TYPE = 'clash-verge-proxy-sort-type';
+const presetList = ["DIRECT", "REJECT", "REJECT-DROP", "PASS", "COMPATIBLE"];
 type ProxySortType = 'default' | 'delay' | 'name';
 interface IProxyGroup {
   name: string;
@@ -36,8 +37,6 @@ interface IProxyGroup {
 // --- Вспомогательная функция для цвета задержки ---
 function getDelayBadgeVariant(delayValue: number): 'default' | 'secondary' | 'destructive' | 'outline' {
   if (delayValue < 0) return 'secondary';
-  if (delayValue >= 10000) return 'destructive';
-  if (delayValue >= 500) return 'destructive';
   if (delayValue >= 150) return 'destructive';
   return 'default';
 }
@@ -128,14 +127,26 @@ export const ProxySelectors: React.FC = () => {
     }
   }, [selectedGroup, proxies, isGlobalMode, isDirectMode]);
 
-  useEffect(() => {
-    if (!selectedGroup || !proxies?.groups || isGlobalMode || isDirectMode) return;
+  const handleProxyListOpen = useCallback((isOpen: boolean) => {
+    if (!isOpen || isDirectMode) return;
 
-    const group = proxies.groups.find((g: IProxyGroup) => g.name === selectedGroup);
-    if (group && group.all) {
+    const timeout = verge?.default_latency_timeout || 5000;
+
+    if (isGlobalMode) {
+      const proxyList = proxies?.global?.all;
+      if (proxyList) {
+        const proxyNames = proxyList
+          .map((p: any) => (typeof p === 'string' ? p : p.name))
+          .filter((name: string) => name && !presetList.includes(name));
+
+        delayManager.checkListDelay(proxyNames, 'GLOBAL', timeout);
+      }
+    } else {
+      const group = proxies?.groups?.find((g: IProxyGroup) => g.name === selectedGroup);
+      if (group && group.all) {
         const proxyNames = group.all.map((p: any) => typeof p === 'string' ? p : p.name).filter(Boolean);
-        const timeout = verge?.default_latency_timeout || 5000;
         delayManager.checkListDelay(proxyNames, selectedGroup, timeout);
+      }
     }
   }, [selectedGroup, proxies, isGlobalMode, isDirectMode, verge]);
 
@@ -255,7 +266,7 @@ export const ProxySelectors: React.FC = () => {
               </Tooltip>
 
           </div>
-          <Select value={selectedProxy} onValueChange={handleProxyChange} disabled={isDirectMode}>
+          <Select value={selectedProxy} onValueChange={handleProxyChange} disabled={isDirectMode} onOpenChange={handleProxyListOpen}>
             <SelectTrigger className="w-100">
               <Tooltip>
                 <TooltipTrigger asChild>
