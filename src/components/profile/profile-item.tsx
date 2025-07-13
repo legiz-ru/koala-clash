@@ -65,7 +65,10 @@ import {
   ListFilter,
   ListTree,
   CheckCircle,
+  Infinity,
+  RefreshCw
 } from "lucide-react";
+import {t} from "i18next";
 
 // Активируем плагин для dayjs
 dayjs.extend(relativeTime);
@@ -89,8 +92,8 @@ const parseExpire = (expire?: number | string): string | null => {
   const expireDate = dayjs(expireTimestamp * 1000);
   if (!expireDate.isValid()) return null;
   const now = dayjs();
-  if (expireDate.isBefore(now)) return "Expired";
-  return `Expires in ${expireDate.fromNow(true)}`;
+  if (expireDate.isBefore(now)) return t("Expired");
+  return t('Expires in', { duration: expireDate.fromNow(true) });
 };
 
 type MenuItemAction = {
@@ -307,6 +310,7 @@ export const ProfileItem = (props: Props) => {
                   <p className="text-sm font-semibold truncate" title={name}>
                     {name}
                   </p>
+                  {expireInfo === t("Expired") ? <Badge variant="destructive" className="text-xs bg-red-500 text-white dark:bg-red-500">{t(expireInfo)}</Badge> : null}
                 </div>
                 <div className="flex items-center flex-shrink-0">
                   <Badge
@@ -330,6 +334,14 @@ export const ProfileItem = (props: Props) => {
                   <div className="flex items-center">
                     <Clock className="h-3 w-3 inline mr-1.5" />
                     <span>
+                      {expireInfo === null ? <Infinity className="h-3 w-3 inline mr-1.5"/>: expireInfo}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <RefreshCw className="h-3 w-3 inline mr-1.5" />
+                    <span>
                       {updated > 0
                         ? dayjs(updated * 1000).fromNow()
                         : t("Never")}
@@ -338,18 +350,8 @@ export const ProfileItem = (props: Props) => {
                       <Loader2 className="h-3 w-3 ml-1.5 animate-spin" />
                     )}
                   </div>
-                  {expireInfo && (
-                    <Badge
-                      variant={
-                        expireInfo === "Expired" ? "destructive" : "outline"
-                      }
-                      className="text-xs"
-                    >
-                      <AlertTriangle className="h-3 w-3 inline mr-1.5" />
-                      {expireInfo}
-                    </Badge>
-                  )}
                 </div>
+
               </div>
             </div>
 
