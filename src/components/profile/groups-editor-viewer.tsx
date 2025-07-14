@@ -358,7 +358,7 @@ export const GroupsEditorViewer = (props: Props) => {
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="min-w-6xl h-[90vh] flex flex-col">
+            <DialogContent className="lg:min-w-5xl h-[90vh] flex flex-col">
                 <DialogHeader>
                     <div className="flex justify-between items-center pr-8">
                         <DialogTitle>{t("Edit Groups")}</DialogTitle>

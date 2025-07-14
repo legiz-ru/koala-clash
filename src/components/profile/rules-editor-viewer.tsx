@@ -188,7 +188,7 @@ const rules: {
 ];
 const builtinProxyPolicies = ["DIRECT", "REJECT", "REJECT-DROP", "PASS"];
 
-// --- Компонент Combobox для замены Autocomplete ---
+
 const Combobox = ({
   options,
   value,
@@ -202,7 +202,7 @@ const Combobox = ({
 }) => {
   const [open, setOpen] = useState(false);
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -223,11 +223,8 @@ const Combobox = ({
               <CommandItem
                 key={option}
                 value={option}
-                onSelect={(currentValue) => {
-                  onSelect(
-                    options.find((opt) => opt.toLowerCase() === currentValue) ||
-                      "",
-                  );
+                onSelect={() => {
+                  onSelect(option);
                   setOpen(false);
                 }}
               >
@@ -517,7 +514,7 @@ export const RulesEditorViewer = (props: Props) => {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="min-w-5xl h-[80vh] flex flex-col">
+      <DialogContent className="w-[95vw] lg:min-w-5xl h-[80vh] flex flex-col">
         <DialogHeader>
           <div className="flex justify-between items-center pr-8">
             <DialogTitle>{t("Edit Rules")}</DialogTitle>
@@ -533,8 +530,8 @@ export const RulesEditorViewer = (props: Props) => {
 
         <div className="flex-1 min-h-0 mt-4">
           {visualization ? (
-            <div className="h-full flex gap-4">
-              <div className="w-1/3 flex flex-col gap-4 p-1">
+            <div className="h-full flex flex-col lg:flex-row gap-4">
+              <div className="w-full lg:w-1/3 flex flex-col gap-4 p-1">
                 <div className="space-y-2">
                   <Label>{t("Rule Type")}</Label>
                   <Combobox
@@ -621,8 +618,8 @@ export const RulesEditorViewer = (props: Props) => {
                   </Button>
                 </div>
               </div>
-              <Separator orientation="vertical" />
-              <div className="w-2/3 flex flex-col">
+              <Separator orientation="vertical" className="hidden lg:flex" />
+              <div className="w-full lg:w-2/3 flex flex-col min-w-0 flex-1">
                 <BaseSearchBox
                   onSearch={(matcher) => setMatch(() => matcher)}
                 />
