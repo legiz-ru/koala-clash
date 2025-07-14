@@ -2,7 +2,7 @@ import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } f
 import { useLockFn } from "ahooks";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
-import { createProfile, patchProfile, importProfile } from "@/services/cmds";
+import { createProfile, patchProfile, importProfile, enhanceProfiles } from "@/services/cmds";
 import { useProfiles } from "@/hooks/use-profiles";
 import { showNotice } from "@/services/noticeService";
 import { version } from "@root/package.json";
@@ -132,6 +132,7 @@ export const ProfileViewer = forwardRef<ProfileViewerRef, Props>((props, ref) =>
       await importProfile(importUrl);
       showNotice("success", t("Profile Imported Successfully"));
       props.onChange();
+      await enhanceProfiles();
       setOpen(false);
     } catch (err) {
       showNotice("info", t("Import failed, retrying with Clash proxy..."));
@@ -139,6 +140,7 @@ export const ProfileViewer = forwardRef<ProfileViewerRef, Props>((props, ref) =>
         await importProfile(importUrl, { with_proxy: false, self_proxy: true });
         showNotice("success", t("Profile Imported with Clash proxy"));
         props.onChange();
+        await enhanceProfiles();
         setOpen(false);
       } catch (retryErr: any) {
         showNotice("error", `${t("Import failed even with Clash proxy")}: ${retryErr?.message || retryErr.toString()}`);
