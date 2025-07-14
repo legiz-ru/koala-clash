@@ -22,9 +22,16 @@ const typeStyles = {
 };
 
 // Вспомогательная функция для цвета политики прокси
-const PROXY_COLOR_CLASSES = ["text-sky-500", "text-violet-500", "text-amber-500", "text-lime-500", "text-emerald-500"];
+const PROXY_COLOR_CLASSES = [
+  "text-sky-500",
+  "text-violet-500",
+  "text-amber-500",
+  "text-lime-500",
+  "text-emerald-500",
+];
 const getProxyColorClass = (proxyName: string): string => {
-  if (proxyName === "REJECT" || proxyName === "REJECT-DROP") return "text-destructive";
+  if (proxyName === "REJECT" || proxyName === "REJECT-DROP")
+    return "text-destructive";
   if (proxyName === "DIRECT") return "text-primary";
   let sum = 0;
   for (let i = 0; i < proxyName.length; i++) sum += proxyName.charCodeAt(i);
@@ -66,21 +73,27 @@ export const RuleItem = (props: Props) => {
       className={cn(
         "flex items-center p-2 mb-1 rounded-lg transition-shadow",
         typeStyles[type],
-        isDragging && "shadow-lg"
+        isDragging && "shadow-lg",
       )}
     >
       {/* Ручка для перетаскивания */}
       <div
         {...attributes}
         {...listeners}
-        className={cn("p-1 text-muted-foreground rounded-sm", isSortable ? "cursor-move hover:bg-accent" : "cursor-default")}
+        className={cn(
+          "p-1 text-muted-foreground rounded-sm",
+          isSortable ? "cursor-move hover:bg-accent" : "cursor-default",
+        )}
       >
         <GripVertical className="h-5 w-5" />
       </div>
 
       {/* Основной контент */}
       <div className="flex-1 min-w-0 ml-2">
-        <p className="text-sm font-semibold truncate" title={ruleContent || "-"}>
+        <p
+          className="text-sm font-semibold truncate"
+          title={ruleContent || "-"}
+        >
           {ruleContent || "-"}
         </p>
         <div className="flex items-center justify-between text-xs mt-1">
@@ -92,7 +105,12 @@ export const RuleItem = (props: Props) => {
       </div>
 
       {/* Кнопка действия */}
-      <Button variant="ghost" size="icon" className="h-8 w-8 ml-2" onClick={onDelete}>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 ml-2"
+        onClick={onDelete}
+      >
         {type === "delete" ? (
           <Undo2 className="h-4 w-4" />
         ) : (

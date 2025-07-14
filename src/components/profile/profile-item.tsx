@@ -66,9 +66,9 @@ import {
   ListTree,
   CheckCircle,
   Infinity,
-  RefreshCw
+  RefreshCw,
 } from "lucide-react";
-import {t} from "i18next";
+import { t } from "i18next";
 
 // Активируем плагин для dayjs
 dayjs.extend(relativeTime);
@@ -93,7 +93,7 @@ const parseExpire = (expire?: number | string): string | null => {
   if (!expireDate.isValid()) return null;
   const now = dayjs();
   if (expireDate.isBefore(now)) return t("Expired");
-  return t('Expires in', { duration: expireDate.fromNow(true) });
+  return t("Expires in", { duration: expireDate.fromNow(true) });
 };
 
 type MenuItemAction = {
@@ -262,7 +262,9 @@ export const ProfileItem = (props: Props) => {
     zIndex: isDragging ? 100 : undefined,
   };
 
-  const homeMenuItem: MenuItemAction[] = hasHome ? [{ label: "Home", handler: onOpenHome, icon: ExternalLink }] : [];
+  const homeMenuItem: MenuItemAction[] = hasHome
+    ? [{ label: "Home", handler: onOpenHome, icon: ExternalLink }]
+    : [];
 
   const mainMenuItems: MenuItemAction[] = [
     { label: "Select", handler: onForceSelect, icon: CheckCircle },
@@ -272,12 +274,32 @@ export const ProfileItem = (props: Props) => {
   ];
 
   const editMenuItems: MenuItemAction[] = [
-    { label: "Edit Rules", handler: onEditRules, disabled: !option?.rules, icon: ListChecks },
-    { label: "Edit Proxies", handler: onEditProxies, disabled: !option?.proxies, icon: ListFilter },
-    { label: "Edit Groups", handler: onEditGroups, disabled: !option?.groups, icon: ListTree },
+    {
+      label: "Edit Rules",
+      handler: onEditRules,
+      disabled: !option?.rules,
+      icon: ListChecks,
+    },
+    {
+      label: "Edit Proxies",
+      handler: onEditProxies,
+      disabled: !option?.proxies,
+      icon: ListFilter,
+    },
+    {
+      label: "Edit Groups",
+      handler: onEditGroups,
+      disabled: !option?.groups,
+      icon: ListTree,
+    },
   ];
 
-  const deleteMenuItem: MenuItemAction = { label: "Delete", handler: () => setConfirmOpen(true), icon: Trash2, isDestructive: true };
+  const deleteMenuItem: MenuItemAction = {
+    label: "Delete",
+    handler: () => setConfirmOpen(true),
+    icon: Trash2,
+    isDestructive: true,
+  };
 
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
@@ -310,7 +332,14 @@ export const ProfileItem = (props: Props) => {
                   <p className="text-sm font-semibold truncate" title={name}>
                     {name}
                   </p>
-                  {expireInfo === t("Expired") ? <Badge variant="destructive" className="text-xs bg-red-500 text-white dark:bg-red-500">{t(expireInfo)}</Badge> : null}
+                  {expireInfo === t("Expired") ? (
+                    <Badge
+                      variant="destructive"
+                      className="text-xs bg-red-500 text-white dark:bg-red-500"
+                    >
+                      {t(expireInfo)}
+                    </Badge>
+                  ) : null}
                 </div>
                 <div className="flex items-center flex-shrink-0">
                   <Badge
@@ -334,7 +363,11 @@ export const ProfileItem = (props: Props) => {
                   <div className="flex items-center">
                     <Clock className="h-3 w-3 inline mr-1.5" />
                     <span>
-                      {expireInfo === null ? <Infinity className="h-3 w-3 inline mr-1.5"/>: expireInfo}
+                      {expireInfo === null ? (
+                        <Infinity className="h-3 w-3 inline mr-1.5" />
+                      ) : (
+                        expireInfo
+                      )}
                     </span>
                   </div>
                 </div>
@@ -351,7 +384,6 @@ export const ProfileItem = (props: Props) => {
                     )}
                   </div>
                 </div>
-
               </div>
             </div>
 
@@ -369,36 +401,78 @@ export const ProfileItem = (props: Props) => {
           </Card>
         </ContextMenuTrigger>
 
-        <ContextMenuContent className="w-56" onClick={e => e.stopPropagation()}>
+        <ContextMenuContent
+          className="w-56"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Объединяем все части меню */}
-          {[...homeMenuItem, ...mainMenuItems].map(item => (
-            <ContextMenuItem key={item.label} onSelect={item.handler} disabled={item.disabled}>
-              <item.icon className="mr-2 h-4 w-4" /><span>{t(item.label)}</span>
+          {[...homeMenuItem, ...mainMenuItems].map((item) => (
+            <ContextMenuItem
+              key={item.label}
+              onSelect={item.handler}
+              disabled={item.disabled}
+            >
+              <item.icon className="mr-2 h-4 w-4" />
+              <span>{t(item.label)}</span>
             </ContextMenuItem>
           ))}
           <ContextMenuSeparator />
           <ContextMenuSub>
-            <ContextMenuSubTrigger disabled={!hasUrl || isLoading}><DownloadCloud className="mr-2 h-4 w-4" /><span>{t("Update")}</span></ContextMenuSubTrigger>
-            <ContextMenuPortal><ContextMenuSubContent>
-              <ContextMenuItem onSelect={() => onUpdate(0)}>{t("Update")}</ContextMenuItem>
-              <ContextMenuItem onSelect={() => onUpdate(2)}>{t("Update via proxy")}</ContextMenuItem>
-            </ContextMenuSubContent></ContextMenuPortal>
+            <ContextMenuSubTrigger disabled={!hasUrl || isLoading}>
+              <DownloadCloud className="mr-2 h-4 w-4" />
+              <span>{t("Update")}</span>
+            </ContextMenuSubTrigger>
+            <ContextMenuPortal>
+              <ContextMenuSubContent>
+                <ContextMenuItem onSelect={() => onUpdate(0)}>
+                  {t("Update")}
+                </ContextMenuItem>
+                <ContextMenuItem onSelect={() => onUpdate(2)}>
+                  {t("Update via proxy")}
+                </ContextMenuItem>
+              </ContextMenuSubContent>
+            </ContextMenuPortal>
           </ContextMenuSub>
           <ContextMenuSeparator />
-          {editMenuItems.map(item => (
-             <ContextMenuItem key={item.label} onSelect={item.handler} disabled={item.disabled}>
-               <item.icon className="mr-2 h-4 w-4" /><span>{t(item.label)}</span>
+          {editMenuItems.map((item) => (
+            <ContextMenuItem
+              key={item.label}
+              onSelect={item.handler}
+              disabled={item.disabled}
+            >
+              <item.icon className="mr-2 h-4 w-4" />
+              <span>{t(item.label)}</span>
             </ContextMenuItem>
           ))}
           <ContextMenuSeparator />
-          <ContextMenuItem onSelect={deleteMenuItem.handler} className={cn(deleteMenuItem.isDestructive && "text-destructive focus:text-destructive focus:bg-destructive/10")}>
-            <deleteMenuItem.icon className="mr-2 h-4 w-4" /><span>{t(deleteMenuItem.label)}</span>
+          <ContextMenuItem
+            onSelect={deleteMenuItem.handler}
+            className={cn(
+              deleteMenuItem.isDestructive &&
+                "text-destructive focus:text-destructive focus:bg-destructive/10",
+            )}
+          >
+            <deleteMenuItem.icon className="mr-2 h-4 w-4" />
+            <span>{t(deleteMenuItem.label)}</span>
           </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
 
       {/* Модальные окна для редактирования */}
-      {fileOpen && <EditorViewer open={true} title={`${t("Edit File")}: ${name}`} onClose={() => setFileOpen(false)} initialData={readProfileFile(uid)} language="yaml" schema="clash" onSave={async (p, c) => { await saveProfileFile(uid, c || ""); onSave?.(p, c); }} />}
+      {fileOpen && (
+        <EditorViewer
+          open={true}
+          title={`${t("Edit File")}: ${name}`}
+          onClose={() => setFileOpen(false)}
+          initialData={readProfileFile(uid)}
+          language="yaml"
+          schema="clash"
+          onSave={async (p, c) => {
+            await saveProfileFile(uid, c || "");
+            onSave?.(p, c);
+          }}
+        />
+      )}
 
       {rulesOpen && (
         <RulesEditorViewer
@@ -407,7 +481,7 @@ export const ProfileItem = (props: Props) => {
           profileUid={uid} // <-- Был 'uid', стал 'profileUid'
           property={option?.rules ?? ""}
           groupsUid={option?.groups ?? ""} // <-- Добавлен недостающий пропс
-          mergeUid={option?.merge ?? ""}   // <-- Добавлен недостающий пропс
+          mergeUid={option?.merge ?? ""} // <-- Добавлен недостающий пропс
           onSave={onSave}
         />
       )}
@@ -429,7 +503,7 @@ export const ProfileItem = (props: Props) => {
           profileUid={uid} // <-- Был 'uid', стал 'profileUid'
           property={option?.groups ?? ""}
           proxiesUid={option?.proxies ?? ""} // <-- Добавлен недостающий пропс
-          mergeUid={option?.merge ?? ""}     // <-- Добавлен недостающий пропс
+          mergeUid={option?.merge ?? ""} // <-- Добавлен недостающий пропс
           onSave={onSave}
         />
       )}
@@ -438,7 +512,7 @@ export const ProfileItem = (props: Props) => {
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         onConfirm={onDelete}
-        title={t('Delete Profile', { name })}
+        title={t("Delete Profile", { name })}
         description={t("This action cannot be undone.")}
       />
     </div>

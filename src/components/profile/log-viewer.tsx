@@ -27,7 +27,9 @@ export const LogViewer = (props: Props) => {
 
   // Вспомогательная функция для определения варианта Badge
   const getLogLevelVariant = (level: string): "destructive" | "secondary" => {
-    return level === "error" || level === "exception" ? "destructive" : "secondary";
+    return level === "error" || level === "exception"
+      ? "destructive"
+      : "secondary";
   };
 
   return (
@@ -41,7 +43,10 @@ export const LogViewer = (props: Props) => {
         <div className="h-[300px] overflow-y-auto space-y-2 p-1">
           {logInfo.length > 0 ? (
             logInfo.map(([level, log], index) => (
-              <div key={index} className="pb-2 border-b border-border last:border-b-0">
+              <div
+                key={index}
+                className="pb-2 border-b border-border last:border-b-0"
+              >
                 <div className="flex items-start gap-3">
                   <Badge variant={getLogLevelVariant(level)} className="mt-0.5">
                     {level}
@@ -60,7 +65,9 @@ export const LogViewer = (props: Props) => {
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline">{t("Close")}</Button>
+            <Button type="button" variant="outline">
+              {t("Close")}
+            </Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>

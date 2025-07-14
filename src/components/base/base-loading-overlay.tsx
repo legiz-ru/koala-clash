@@ -18,7 +18,7 @@ export const BaseLoadingOverlay: React.FC<BaseLoadingOverlayProps> = ({
     <div
       className={cn(
         "absolute inset-0 z-50 flex items-center justify-center bg-background/70 backdrop-blur-sm",
-        className
+        className,
       )}
     >
       {/* 3. Используем наш BaseLoading и делаем его немного больше */}

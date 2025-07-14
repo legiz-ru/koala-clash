@@ -8,7 +8,10 @@ function ErrorFallback({ error }: FallbackProps) {
   const { t } = useTranslation();
 
   return (
-    <div role="alert" className="m-4 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive">
+    <div
+      role="alert"
+      className="m-4 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive"
+    >
       <div className="flex items-center gap-2">
         <AlertTriangle className="h-5 w-5" />
         <h3 className="font-semibold">{t("Something went wrong")}</h3>

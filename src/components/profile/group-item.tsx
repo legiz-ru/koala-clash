@@ -45,13 +45,16 @@ export const GroupItem = (props: Props) => {
 
   async function initIconCachePath() {
     if (group.icon && group.icon.trim().startsWith("http")) {
-      const fileName = group.name.replaceAll(" ", "") + "-" + getFileName(group.icon);
+      const fileName =
+        group.name.replaceAll(" ", "") + "-" + getFileName(group.icon);
       const iconPath = await downloadIconCache(group.icon, fileName);
       setIconCachePath(convertFileSrc(iconPath));
     }
   }
 
-  useEffect(() => { initIconCachePath(); }, [group.icon, group.name]);
+  useEffect(() => {
+    initIconCachePath();
+  }, [group.icon, group.name]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -67,14 +70,17 @@ export const GroupItem = (props: Props) => {
       className={cn(
         "flex items-center p-2 mb-1 rounded-lg transition-shadow",
         typeStyles[type],
-        isDragging && "shadow-lg"
+        isDragging && "shadow-lg",
       )}
     >
       {/* Ручка для перетаскивания */}
       <div
         {...attributes}
         {...listeners}
-        className={cn("p-1 text-muted-foreground rounded-sm", isSortable ? "cursor-move hover:bg-accent" : "cursor-default")}
+        className={cn(
+          "p-1 text-muted-foreground rounded-sm",
+          isSortable ? "cursor-move hover:bg-accent" : "cursor-default",
+        )}
       >
         <GripVertical className="h-5 w-5" />
       </div>
@@ -82,7 +88,13 @@ export const GroupItem = (props: Props) => {
       {/* Иконка группы */}
       {group.icon && (
         <img
-          src={group.icon.startsWith('data') ? group.icon : group.icon.startsWith('<svg') ? `data:image/svg+xml;base64,${btoa(group.icon ?? "")}` : (iconCachePath || group.icon)}
+          src={
+            group.icon.startsWith("data")
+              ? group.icon
+              : group.icon.startsWith("<svg")
+                ? `data:image/svg+xml;base64,${btoa(group.icon ?? "")}`
+                : iconCachePath || group.icon
+          }
           className="w-8 h-8 mx-2 rounded-md"
           alt={group.name}
         />
@@ -97,7 +109,12 @@ export const GroupItem = (props: Props) => {
       </div>
 
       {/* Кнопка действия */}
-      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onDelete}>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        onClick={onDelete}
+      >
         {type === "delete" ? (
           <Undo2 className="h-4 w-4" />
         ) : (

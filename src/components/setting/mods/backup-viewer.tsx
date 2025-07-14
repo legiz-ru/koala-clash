@@ -1,4 +1,10 @@
-import { forwardRef, useImperativeHandle, useState, useCallback, useEffect } from "react";
+import {
+  forwardRef,
+  useImperativeHandle,
+  useState,
+  useCallback,
+  useEffect,
+} from "react";
 import { useTranslation } from "react-i18next";
 import dayjs, { Dayjs } from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
@@ -6,11 +12,22 @@ import { useLockFn } from "ahooks";
 
 // Новые импорты
 import { listWebDavBackup } from "@/services/cmds";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { BaseLoadingOverlay } from "@/components/base"; // Наш рефакторенный компонент
-import { BackupTableViewer, BackupFile, DEFAULT_ROWS_PER_PAGE } from "./backup-table-viewer"; // Наш рефакторенный компонент
+import {
+  BackupTableViewer,
+  BackupFile,
+  DEFAULT_ROWS_PER_PAGE,
+} from "./backup-table-viewer"; // Наш рефакторенный компонент
 import { BackupConfigViewer } from "./backup-config-viewer"; // Наш рефакторенный компонент
 
 dayjs.extend(customParseFormat);
@@ -118,7 +135,9 @@ export const BackupViewer = forwardRef<DialogRef>((props, ref) => {
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline">{t("Close")}</Button>
+            <Button type="button" variant="outline">
+              {t("Close")}
+            </Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>

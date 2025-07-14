@@ -28,14 +28,14 @@ export const ProfileBox = React.forwardRef<HTMLDivElement, ProfileBoxProps>(
           "data-[selected=true]:text-card-foreground",
 
           // --- Дополнительные классы от пользователя ---
-          className
+          className,
         )}
         {...props}
       >
         {children}
       </div>
     );
-  }
+  },
 );
 
 ProfileBox.displayName = "ProfileBox";

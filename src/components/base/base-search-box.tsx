@@ -5,7 +5,12 @@ import { cn } from "@root/lib/utils";
 // Новые импорты
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { CaseSensitive, WholeWord, Regex } from "lucide-react"; // Иконки из lucide-react
 
 export type SearchState = {
@@ -40,7 +45,7 @@ export const BaseSearchBox = (props: SearchProps) => {
             return new RegExp(searchText, flags).test(content);
           }
 
-          let pattern = searchText.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); // Экранируем спецсимволы
+          let pattern = searchText.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"); // Экранируем спецсимволы
           if (matchWholeWord) {
             pattern = `\\b${pattern}\\b`;
           }
@@ -55,16 +60,27 @@ export const BaseSearchBox = (props: SearchProps) => {
   }, [matchCase, matchWholeWord, useRegularExpression]);
 
   useEffect(() => {
-    props.onSearch(createMatcher(text), { text, matchCase, matchWholeWord, useRegularExpression });
+    props.onSearch(createMatcher(text), {
+      text,
+      matchCase,
+      matchWholeWord,
+      useRegularExpression,
+    });
   }, [matchCase, matchWholeWord, useRegularExpression, createMatcher]); // Убрали text из зависимостей
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setText(value);
-    props.onSearch(createMatcher(value), { text: value, matchCase, matchWholeWord, useRegularExpression });
+    props.onSearch(createMatcher(value), {
+      text: value,
+      matchCase,
+      matchWholeWord,
+      useRegularExpression,
+    });
   };
 
-  const getToggleVariant = (isActive: boolean) => (isActive ? "secondary" : "ghost");
+  const getToggleVariant = (isActive: boolean) =>
+    isActive ? "secondary" : "ghost";
 
   return (
     <div className="w-full">
@@ -81,33 +97,56 @@ export const BaseSearchBox = (props: SearchProps) => {
           <TooltipProvider delayDuration={100}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant={getToggleVariant(matchCase)} size="icon" className="h-7 w-7" onClick={() => setMatchCase(!matchCase)}>
+                <Button
+                  variant={getToggleVariant(matchCase)}
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setMatchCase(!matchCase)}
+                >
                   <CaseSensitive className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent><p>{t("Match Case")}</p></TooltipContent>
+              <TooltipContent>
+                <p>{t("Match Case")}</p>
+              </TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant={getToggleVariant(matchWholeWord)} size="icon" className="h-7 w-7" onClick={() => setMatchWholeWord(!matchWholeWord)}>
+                <Button
+                  variant={getToggleVariant(matchWholeWord)}
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setMatchWholeWord(!matchWholeWord)}
+                >
                   <WholeWord className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent><p>{t("Match Whole Word")}</p></TooltipContent>
+              <TooltipContent>
+                <p>{t("Match Whole Word")}</p>
+              </TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant={getToggleVariant(useRegularExpression)} size="icon" className="h-7 w-7" onClick={() => setUseRegularExpression(!useRegularExpression)}>
+                <Button
+                  variant={getToggleVariant(useRegularExpression)}
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setUseRegularExpression(!useRegularExpression)}
+                >
                   <Regex className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent><p>{t("Use Regular Expression")}</p></TooltipContent>
+              <TooltipContent>
+                <p>{t("Use Regular Expression")}</p>
+              </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
       </div>
       {/* Отображение ошибки под полем ввода */}
-      {errorMessage && <p className="mt-1 text-xs text-destructive">{errorMessage}</p>}
+      {errorMessage && (
+        <p className="mt-1 text-xs text-destructive">{errorMessage}</p>
+      )}
     </div>
   );
 };

@@ -47,7 +47,10 @@ export const HotkeyViewer = forwardRef<DialogRef>((props, ref) => {
       verge?.hotkeys?.forEach((text) => {
         const [func, key] = text.split(",").map((e) => e.trim());
         if (!func || !key) return;
-        map[func] = key.split("+").map((e) => e.trim()).map((k) => (k === "PLUS" ? "+" : k));
+        map[func] = key
+          .split("+")
+          .map((e) => e.trim())
+          .map((k) => (k === "PLUS" ? "+" : k));
       });
       setHotkeyMap(map);
     },
@@ -58,7 +61,11 @@ export const HotkeyViewer = forwardRef<DialogRef>((props, ref) => {
     const hotkeys = Object.entries(hotkeyMap)
       .map(([func, keys]) => {
         if (!func || !keys?.length) return "";
-        const key = keys.map((k) => k.trim()).filter(Boolean).map((k) => (k === "+" ? "PLUS" : k)).join("+");
+        const key = keys
+          .map((k) => k.trim())
+          .filter(Boolean)
+          .map((k) => (k === "+" ? "PLUS" : k))
+          .join("+");
         if (!key) return "";
         return `${func},${key}`;
       })
@@ -110,9 +117,13 @@ export const HotkeyViewer = forwardRef<DialogRef>((props, ref) => {
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline">{t("Cancel")}</Button>
+            <Button type="button" variant="outline">
+              {t("Cancel")}
+            </Button>
           </DialogClose>
-          <Button type="button" onClick={onSave}>{t("Save")}</Button>
+          <Button type="button" onClick={onSave}>
+            {t("Save")}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

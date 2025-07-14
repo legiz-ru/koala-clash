@@ -76,13 +76,39 @@ export const ProxyItemMini = (props: Props) => {
                 {proxy.now}
               </span>
             )}
-            {!!proxy.provider && (<Badge variant="outline" className="flex-shrink-0">{proxy.provider}</Badge>)}
-            <Badge variant="outline" className="flex-shrink-0">{proxy.type}</Badge>
-            {proxy.udp && (<Badge variant="outline" className="flex-shrink-0">UDP</Badge>)}
-            {proxy.xudp && <Badge variant="outline" className="flex-shrink-0">XUDP</Badge>}
-            {proxy.tfo && <Badge variant="outline" className="flex-shrink-0">TFO</Badge>}
-            {proxy.mptcp && <Badge variant="outline" className="flex-shrink-0">MPTCP</Badge>}
-            {proxy.smux && <Badge variant="outline" className="flex-shrink-0">SMUX</Badge>}
+            {!!proxy.provider && (
+              <Badge variant="outline" className="flex-shrink-0">
+                {proxy.provider}
+              </Badge>
+            )}
+            <Badge variant="outline" className="flex-shrink-0">
+              {proxy.type}
+            </Badge>
+            {proxy.udp && (
+              <Badge variant="outline" className="flex-shrink-0">
+                UDP
+              </Badge>
+            )}
+            {proxy.xudp && (
+              <Badge variant="outline" className="flex-shrink-0">
+                XUDP
+              </Badge>
+            )}
+            {proxy.tfo && (
+              <Badge variant="outline" className="flex-shrink-0">
+                TFO
+              </Badge>
+            )}
+            {proxy.mptcp && (
+              <Badge variant="outline" className="flex-shrink-0">
+                MPTCP
+              </Badge>
+            )}
+            {proxy.smux && (
+              <Badge variant="outline" className="flex-shrink-0">
+                SMUX
+              </Badge>
+            )}
           </div>
         )}
       </div>

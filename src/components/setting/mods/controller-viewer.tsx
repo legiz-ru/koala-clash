@@ -17,9 +17,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Copy, Loader2 } from "lucide-react";
-
 
 export const ControllerViewer = forwardRef<DialogRef>((props, ref) => {
   const { t } = useTranslation();
@@ -55,24 +59,31 @@ export const ControllerViewer = forwardRef<DialogRef>((props, ref) => {
       showNotice("success", t("Configuration saved successfully"));
       setOpen(false);
     } catch (err: any) {
-      showNotice("error", err.message || t("Failed to save configuration"), 4000);
+      showNotice(
+        "error",
+        err.message || t("Failed to save configuration"),
+        4000,
+      );
     } finally {
       setIsSaving(false);
     }
   });
 
-  const handleCopyToClipboard = useLockFn(async (text: string, type: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      // --- ИЗМЕНЕНИЕ: Используем showNotice вместо Snackbar ---
-      const message = type === "controller"
-        ? t("Controller address copied to clipboard")
-        : t("Secret copied to clipboard");
-      showNotice("success", message);
-    } catch (err) {
-      showNotice("error", t("Failed to copy"));
-    }
-  });
+  const handleCopyToClipboard = useLockFn(
+    async (text: string, type: string) => {
+      try {
+        await navigator.clipboard.writeText(text);
+        // --- ИЗМЕНЕНИЕ: Используем showNotice вместо Snackbar ---
+        const message =
+          type === "controller"
+            ? t("Controller address copied to clipboard")
+            : t("Secret copied to clipboard");
+        showNotice("success", message);
+      } catch (err) {
+        showNotice("error", t("Failed to copy"));
+      }
+    },
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -83,7 +94,9 @@ export const ControllerViewer = forwardRef<DialogRef>((props, ref) => {
 
         <div className="space-y-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="controller-address">{t("External Controller")}</Label>
+            <Label htmlFor="controller-address">
+              {t("External Controller")}
+            </Label>
             <div className="flex items-center gap-2">
               <Input
                 id="controller-address"
@@ -95,11 +108,20 @@ export const ControllerViewer = forwardRef<DialogRef>((props, ref) => {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={() => handleCopyToClipboard(controller, "controller")} disabled={isSaving}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() =>
+                        handleCopyToClipboard(controller, "controller")
+                      }
+                      disabled={isSaving}
+                    >
                       <Copy className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent><p>{t("Copy to clipboard")}</p></TooltipContent>
+                  <TooltipContent>
+                    <p>{t("Copy to clipboard")}</p>
+                  </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
@@ -118,11 +140,18 @@ export const ControllerViewer = forwardRef<DialogRef>((props, ref) => {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={() => handleCopyToClipboard(secret, "secret")} disabled={isSaving}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleCopyToClipboard(secret, "secret")}
+                      disabled={isSaving}
+                    >
                       <Copy className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent><p>{t("Copy to clipboard")}</p></TooltipContent>
+                  <TooltipContent>
+                    <p>{t("Copy to clipboard")}</p>
+                  </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
@@ -131,7 +160,9 @@ export const ControllerViewer = forwardRef<DialogRef>((props, ref) => {
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline">{t("Cancel")}</Button>
+            <Button type="button" variant="outline">
+              {t("Cancel")}
+            </Button>
           </DialogClose>
           <Button type="button" onClick={onSave} disabled={isSaving}>
             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

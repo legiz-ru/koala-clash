@@ -10,10 +10,16 @@ import { saveWebdavConfig, createWebdavBackup } from "@/services/cmds";
 import { showNotice } from "@/services/noticeService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Eye, EyeOff } from "lucide-react";
 import { cn } from "@root/lib/utils";
-
 
 export interface BackupConfigViewerProps {
   onBackupSuccess: () => Promise<void>;
@@ -24,23 +30,29 @@ export interface BackupConfigViewerProps {
 }
 
 export const BackupConfigViewer = memo(
-  ({ onBackupSuccess, onSaveSuccess, onRefresh, onInit, setLoading }: BackupConfigViewerProps) => {
+  ({
+    onBackupSuccess,
+    onSaveSuccess,
+    onRefresh,
+    onInit,
+    setLoading,
+  }: BackupConfigViewerProps) => {
     const { t } = useTranslation();
     const { verge } = useVerge();
     const { webdav_url, webdav_username, webdav_password } = verge || {};
     const [showPassword, setShowPassword] = useState(false);
 
     const form = useForm<IWebDavConfig>({
-      defaultValues: { url: '', username: '', password: '' },
+      defaultValues: { url: "", username: "", password: "" },
     });
 
     // Синхронизируем форму с данными из verge
     useEffect(() => {
-        form.reset({
-            url: webdav_url,
-            username: webdav_username,
-            password: webdav_password
-        });
+      form.reset({
+        url: webdav_url,
+        username: webdav_username,
+        password: webdav_password,
+      });
     }, [webdav_url, webdav_username, webdav_password, form.reset]);
 
     const { register, handleSubmit, watch, getValues } = form;
@@ -48,47 +60,77 @@ export const BackupConfigViewer = memo(
     const username = watch("username");
     const password = watch("password");
 
-    const webdavChanged = webdav_url !== url || webdav_username !== username || webdav_password !== password;
+    const webdavChanged =
+      webdav_url !== url ||
+      webdav_username !== username ||
+      webdav_password !== password;
 
     const checkForm = () => {
-        const values = getValues();
-        if (!values.url) { showNotice("error", t("WebDAV URL Required")); throw new Error("URL Required"); }
-        if (!isValidUrl(values.url)) { showNotice("error", t("Invalid WebDAV URL")); throw new Error("Invalid URL"); }
-        if (!values.username) { showNotice("error", t("Username Required")); throw new Error("Username Required"); }
-        if (!values.password) { showNotice("error", t("Password Required")); throw new Error("Password Required"); }
+      const values = getValues();
+      if (!values.url) {
+        showNotice("error", t("WebDAV URL Required"));
+        throw new Error("URL Required");
+      }
+      if (!isValidUrl(values.url)) {
+        showNotice("error", t("Invalid WebDAV URL"));
+        throw new Error("Invalid URL");
+      }
+      if (!values.username) {
+        showNotice("error", t("Username Required"));
+        throw new Error("Username Required");
+      }
+      if (!values.password) {
+        showNotice("error", t("Password Required"));
+        throw new Error("Password Required");
+      }
     };
 
     const save = useLockFn(async (data: IWebDavConfig) => {
-        try { checkForm(); } catch { return; }
-        try {
-            setLoading(true);
-            await saveWebdavConfig(data.url.trim(), data.username.trim(), data.password);
-            showNotice("success", t("WebDAV Config Saved"));
-            await onSaveSuccess();
-        } catch (error) {
-            showNotice("error", t("WebDAV Config Save Failed", { error }), 3000);
-        } finally {
-            setLoading(false);
-        }
+      try {
+        checkForm();
+      } catch {
+        return;
+      }
+      try {
+        setLoading(true);
+        await saveWebdavConfig(
+          data.url.trim(),
+          data.username.trim(),
+          data.password,
+        );
+        showNotice("success", t("WebDAV Config Saved"));
+        await onSaveSuccess();
+      } catch (error) {
+        showNotice("error", t("WebDAV Config Save Failed", { error }), 3000);
+      } finally {
+        setLoading(false);
+      }
     });
 
     const handleBackup = useLockFn(async () => {
-        try { checkForm(); } catch { return; }
-        try {
-            setLoading(true);
-            await createWebdavBackup();
-            showNotice("success", t("Backup Created"));
-            await onBackupSuccess();
-        } catch (error) {
-            showNotice("error", t("Backup Failed", { error }));
-        } finally {
-            setLoading(false);
-        }
+      try {
+        checkForm();
+      } catch {
+        return;
+      }
+      try {
+        setLoading(true);
+        await createWebdavBackup();
+        showNotice("success", t("Backup Created"));
+        await onBackupSuccess();
+      } catch (error) {
+        showNotice("error", t("Backup Failed", { error }));
+      } finally {
+        setLoading(false);
+      }
     });
 
     return (
       <Form {...form}>
-        <form onSubmit={e => e.preventDefault()} className="flex flex-col sm:flex-row gap-4">
+        <form
+          onSubmit={(e) => e.preventDefault()}
+          className="flex flex-col sm:flex-row gap-4"
+        >
           {/* Левая часть: поля ввода */}
           <div className="flex-1 space-y-4">
             <FormField
@@ -97,7 +139,9 @@ export const BackupConfigViewer = memo(
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("WebDAV Server URL")}</FormLabel>
-                  <FormControl><Input {...field} /></FormControl>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -109,7 +153,9 @@ export const BackupConfigViewer = memo(
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("Username")}</FormLabel>
-                    <FormControl><Input {...field} /></FormControl>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -122,7 +168,11 @@ export const BackupConfigViewer = memo(
                     <FormLabel>{t("Password")}</FormLabel>
                     <div className="relative">
                       <FormControl>
-                        <Input type={showPassword ? "text" : "password"} {...field} className="pr-10" />
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          {...field}
+                          className="pr-10"
+                        />
                       </FormControl>
                       <Button
                         type="button"
@@ -131,7 +181,11 @@ export const BackupConfigViewer = memo(
                         className="absolute top-0 right-0 h-full px-3"
                         onClick={() => setShowPassword(!showPassword)}
                       >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                     <FormMessage />
@@ -144,7 +198,11 @@ export const BackupConfigViewer = memo(
           {/* Правая часть: кнопки действий */}
           <div className="flex sm:flex-col gap-2">
             {webdavChanged || !webdav_url ? (
-              <Button type="button" className="w-full h-full" onClick={handleSubmit(save)}>
+              <Button
+                type="button"
+                className="w-full h-full"
+                onClick={handleSubmit(save)}
+              >
                 {t("Save")}
               </Button>
             ) : (
@@ -152,7 +210,12 @@ export const BackupConfigViewer = memo(
                 <Button type="button" className="w-full" onClick={handleBackup}>
                   {t("Backup")}
                 </Button>
-                <Button type="button" variant="outline" className="w-full" onClick={onRefresh}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={onRefresh}
+                >
                   {t("Refresh")}
                 </Button>
               </>
@@ -161,5 +224,5 @@ export const BackupConfigViewer = memo(
         </form>
       </Form>
     );
-  }
+  },
 );

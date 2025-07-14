@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 
-
 export const WebUIViewer = forwardRef<DialogRef>((props, ref) => {
   const { t } = useTranslation();
   const { clashInfo } = useClashInfo();
@@ -71,9 +70,14 @@ export const WebUIViewer = forwardRef<DialogRef>((props, ref) => {
         if (!clashInfo.server?.includes(":")) {
           throw new Error(`failed to parse the server "${clashInfo.server}"`);
         }
-        const port = clashInfo.server.slice(clashInfo.server.indexOf(":") + 1).trim();
+        const port = clashInfo.server
+          .slice(clashInfo.server.indexOf(":") + 1)
+          .trim();
         url = url.replaceAll("%port", port || "9097");
-        url = url.replaceAll("%secret", encodeURIComponent(clashInfo.secret || ""));
+        url = url.replaceAll(
+          "%secret",
+          encodeURIComponent(clashInfo.secret || ""),
+        );
       }
       await openWebUrl(url);
     } catch (e: any) {
@@ -87,7 +91,11 @@ export const WebUIViewer = forwardRef<DialogRef>((props, ref) => {
         <DialogHeader className="pr-7">
           <div className="flex justify-between items-center">
             <DialogTitle>{t("Web UI")}</DialogTitle>
-            <Button size="sm" disabled={editing} onClick={() => setEditing(true)}>
+            <Button
+              size="sm"
+              disabled={editing}
+              onClick={() => setEditing(true)}
+            >
               <Plus className="mr-2 h-4 w-4" />
               {t("New")}
             </Button>
@@ -96,7 +104,9 @@ export const WebUIViewer = forwardRef<DialogRef>((props, ref) => {
 
         <div className="max-h-[60vh] overflow-y-auto -mx-6 px-6">
           {!editing && webUIList.length === 0 ? (
-            <div className="h-40"> {/* Задаем высоту для центрирования */}
+            <div className="h-40">
+              {" "}
+              {/* Задаем высоту для центрирования */}
               <BaseEmpty
                 extra={
                   <p className="mt-2 text-xs text-center">
@@ -130,9 +140,11 @@ export const WebUIViewer = forwardRef<DialogRef>((props, ref) => {
         </div>
 
         <DialogFooter>
-            <DialogClose asChild>
-                <Button type="button" variant="outline">{t("Close")}</Button>
-            </DialogClose>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              {t("Close")}
+            </Button>
+          </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -450,7 +450,7 @@ const Layout = () => {
       <NoticeManager />
       <div className="h-screen w-screen bg-background text-foreground overflow-hidden">
         <div className="h-full w-full relative">
-            {React.cloneElement(routersEles, { key: location.pathname })}
+          {React.cloneElement(routersEles, { key: location.pathname })}
         </div>
       </div>
     </SWRConfig>

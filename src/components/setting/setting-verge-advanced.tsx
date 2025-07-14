@@ -46,7 +46,6 @@ import { UpdateViewer } from "./mods/update-viewer";
 import { BackupViewer } from "./mods/backup-viewer";
 import { LiteModeViewer } from "./mods/lite-mode-viewer";
 
-
 interface Props {
   onError?: (err: Error) => void;
 }
@@ -63,21 +62,18 @@ const SettingRow = ({
   children?: React.ReactNode;
   onClick?: () => void;
 }) => (
-    <div
-      className={`flex items-center justify-between py-3 border-b border-border last:border-b-0 ${onClick ? 'cursor-pointer hover:bg-accent/50 -mx-3 px-3 rounded-md' : ''}`}
-      onClick={onClick}
-    >
-        <div className="flex items-center gap-2">
-            {/* Мы ожидаем, что label теперь может быть сложным компонентом */}
-            <div className="text-sm font-medium">{label}</div>
-            {extra && <div className="text-muted-foreground">{extra}</div>}
-        </div>
-        <div>
-            {children}
-        </div>
+  <div
+    className={`flex items-center justify-between py-3 border-b border-border last:border-b-0 ${onClick ? "cursor-pointer hover:bg-accent/50 -mx-3 px-3 rounded-md" : ""}`}
+    onClick={onClick}
+  >
+    <div className="flex items-center gap-2">
+      {/* Мы ожидаем, что label теперь может быть сложным компонентом */}
+      <div className="text-sm font-medium">{label}</div>
+      {extra && <div className="text-muted-foreground">{extra}</div>}
     </div>
+    <div>{children}</div>
+  </div>
 );
-
 
 const SettingVergeAdvanced = ({ onError }: Props) => {
   const { t } = useTranslation();
@@ -110,7 +106,13 @@ const SettingVergeAdvanced = ({ onError }: Props) => {
   }, []);
 
   // Вспомогательная функция для создания лейбла с иконкой
-  const LabelWithIcon = ({ icon, text }: { icon: React.ElementType, text: string }) => {
+  const LabelWithIcon = ({
+    icon,
+    text,
+  }: {
+    icon: React.ElementType;
+    text: string;
+  }) => {
     const Icon = icon;
     return (
       <span className="flex items-center gap-3">
@@ -122,7 +124,9 @@ const SettingVergeAdvanced = ({ onError }: Props) => {
 
   return (
     <div>
-      <h3 className="text-lg font-medium mb-4">{t("Verge Advanced Setting")}</h3>
+      <h3 className="text-lg font-medium mb-4">
+        {t("Verge Advanced Setting")}
+      </h3>
       <div className="space-y-1">
         <ThemeViewer ref={themeRef} />
         <ConfigViewer ref={configRef} />
@@ -134,21 +138,71 @@ const SettingVergeAdvanced = ({ onError }: Props) => {
         <LiteModeViewer ref={liteModeRef} />
 
         {/* --- НАЧАЛО ИЗМЕНЕНИЙ 2: Добавляем иконки к каждому пункту --- */}
-        <SettingRow onClick={() => backupRef.current?.open()} label={<LabelWithIcon icon={Archive} text={t("Backup Setting")} />} extra={<TooltipIcon tooltip={t("Backup Setting Info")} />} />
-        <SettingRow onClick={() => configRef.current?.open()} label={<LabelWithIcon icon={FileCode} text={t("Runtime Config")} />} />
-        <SettingRow onClick={openAppDir} label={<LabelWithIcon icon={Folder} text={t("Open Conf Dir")} />} extra={<TooltipIcon tooltip={t("Open Conf Dir Info")} />} />
-        <SettingRow onClick={openCoreDir} label={<LabelWithIcon icon={FolderCog} text={t("Open Core Dir")} />} />
-        <SettingRow onClick={openLogsDir} label={<LabelWithIcon icon={FolderClock} text={t("Open Logs Dir")} />} />
-        <SettingRow onClick={onCheckUpdate} label={<LabelWithIcon icon={RefreshCw} text={t("Check for Updates")} />} />
-        <SettingRow onClick={openDevTools} label={<LabelWithIcon icon={Terminal} text={t("Open Dev Tools")} />} />
-        <SettingRow label={<LabelWithIcon icon={Feather} text={t("LightWeight Mode Settings")} />} extra={<TooltipIcon tooltip={t("LightWeight Mode Info")} />} onClick={() => liteModeRef.current?.open()} />
-        <SettingRow onClick={exitApp} label={<LabelWithIcon icon={LogOut} text={t("Exit")} />} />
+        <SettingRow
+          onClick={() => backupRef.current?.open()}
+          label={<LabelWithIcon icon={Archive} text={t("Backup Setting")} />}
+          extra={<TooltipIcon tooltip={t("Backup Setting Info")} />}
+        />
+        <SettingRow
+          onClick={() => configRef.current?.open()}
+          label={<LabelWithIcon icon={FileCode} text={t("Runtime Config")} />}
+        />
+        <SettingRow
+          onClick={openAppDir}
+          label={<LabelWithIcon icon={Folder} text={t("Open Conf Dir")} />}
+          extra={<TooltipIcon tooltip={t("Open Conf Dir Info")} />}
+        />
+        <SettingRow
+          onClick={openCoreDir}
+          label={<LabelWithIcon icon={FolderCog} text={t("Open Core Dir")} />}
+        />
+        <SettingRow
+          onClick={openLogsDir}
+          label={<LabelWithIcon icon={FolderClock} text={t("Open Logs Dir")} />}
+        />
+        <SettingRow
+          onClick={onCheckUpdate}
+          label={
+            <LabelWithIcon icon={RefreshCw} text={t("Check for Updates")} />
+          }
+        />
+        <SettingRow
+          onClick={openDevTools}
+          label={<LabelWithIcon icon={Terminal} text={t("Open Dev Tools")} />}
+        />
+        <SettingRow
+          label={
+            <LabelWithIcon
+              icon={Feather}
+              text={t("LightWeight Mode Settings")}
+            />
+          }
+          extra={<TooltipIcon tooltip={t("LightWeight Mode Info")} />}
+          onClick={() => liteModeRef.current?.open()}
+        />
+        <SettingRow
+          onClick={exitApp}
+          label={<LabelWithIcon icon={LogOut} text={t("Exit")} />}
+        />
 
-        <SettingRow label={<LabelWithIcon icon={ClipboardList} text={t("Export Diagnostic Info")} />}>
-            <TooltipIcon tooltip={t("Copy")} icon={<Copy className="h-4 w-4"/>} onClick={onExportDiagnosticInfo} />
+        <SettingRow
+          label={
+            <LabelWithIcon
+              icon={ClipboardList}
+              text={t("Export Diagnostic Info")}
+            />
+          }
+        >
+          <TooltipIcon
+            tooltip={t("Copy")}
+            icon={<Copy className="h-4 w-4" />}
+            onClick={onExportDiagnosticInfo}
+          />
         </SettingRow>
 
-        <SettingRow label={<LabelWithIcon icon={Info} text={t("Verge Version")} />}>
+        <SettingRow
+          label={<LabelWithIcon icon={Info} text={t("Verge Version")} />}
+        >
           <p className="text-sm font-medium pr-2 font-mono">v{version}</p>
         </SettingRow>
         {/* --- КОНЕЦ ИЗМЕНЕНИЙ 2 --- */}

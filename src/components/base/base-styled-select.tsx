@@ -26,7 +26,7 @@ export const BaseStyledSelect: React.FC<BaseStyledSelectProps> = (props) => {
       <SelectTrigger
         className={cn(
           "h-9 w-[180px]", // Задаем стандартные размеры, как у других селектов
-          className
+          className,
         )}
       >
         <SelectValue placeholder={placeholder} />

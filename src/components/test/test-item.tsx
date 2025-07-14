@@ -15,7 +15,12 @@ import { cmdTestDelay, downloadIconCache } from "@/services/cmds";
 import { BaseLoading } from "@/components/base";
 import { TestBox } from "./test-box"; // Наш рефакторенный компонент
 import { Separator } from "@/components/ui/separator";
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { Languages } from "lucide-react"; // Новая иконка
 
 // Вспомогательная функция для цвета задержки
@@ -35,7 +40,14 @@ interface Props {
 
 export const TestItem = (props: Props) => {
   const { itemData, onEdit, onDelete: onDeleteItem } = props;
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: props.id });
   const { t } = useTranslation();
 
   const [delay, setDelay] = useState(-1);
@@ -59,7 +71,9 @@ export const TestItem = (props: Props) => {
     }
   }
 
-  useEffect(() => { initIconCachePath(); }, [icon]);
+  useEffect(() => {
+    initIconCachePath();
+  }, [icon]);
 
   const onDelete = useLockFn(async () => {
     try {
@@ -81,7 +95,9 @@ export const TestItem = (props: Props) => {
       unlistenFn = await addListener("verge://test-all", onDelay);
     };
     setupListener();
-    return () => { unlistenFn?.(); };
+    return () => {
+      unlistenFn?.();
+    };
   }, [url, addListener, onDelay]);
 
   const style = {
@@ -96,32 +112,53 @@ export const TestItem = (props: Props) => {
         <ContextMenuTrigger>
           <TestBox>
             {/* Мы применяем `listeners` к иконке, чтобы за нее можно было таскать */}
-            <div {...listeners} className="flex h-12 cursor-move items-center justify-center">
+            <div
+              {...listeners}
+              className="flex h-12 cursor-move items-center justify-center"
+            >
               {icon ? (
-                 <img
-                    src={icon.startsWith('data') ? icon : icon.startsWith('<svg') ? `data:image/svg+xml;base64,${btoa(icon)}` : (iconCachePath || icon)}
-                    className="h-10"
-                    alt={name}
-                  />
+                <img
+                  src={
+                    icon.startsWith("data")
+                      ? icon
+                      : icon.startsWith("<svg")
+                        ? `data:image/svg+xml;base64,${btoa(icon)}`
+                        : iconCachePath || icon
+                  }
+                  className="h-10"
+                  alt={name}
+                />
               ) : (
                 <Languages className="h-10 w-10 text-muted-foreground" />
               )}
             </div>
 
-            <p className="mt-1 text-center text-sm font-semibold truncate" title={name}>{name}</p>
+            <p
+              className="mt-1 text-center text-sm font-semibold truncate"
+              title={name}
+            >
+              {name}
+            </p>
 
             <Separator className="my-2" />
 
             <div
               className="flex h-6 items-center justify-center text-sm font-medium"
-              onClick={(e) => { e.stopPropagation(); onDelay(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelay();
+              }}
             >
               {delay === -2 ? (
                 <BaseLoading className="h-4 w-4" />
               ) : delay === -1 ? (
-                <span className="cursor-pointer rounded-md px-2 py-0.5 hover:bg-accent">{t("Test")}</span>
+                <span className="cursor-pointer rounded-md px-2 py-0.5 hover:bg-accent">
+                  {t("Test")}
+                </span>
               ) : (
-                <span className={`cursor-pointer rounded-md px-2 py-0.5 hover:bg-accent ${getDelayColorClass(delay)}`}>
+                <span
+                  className={`cursor-pointer rounded-md px-2 py-0.5 hover:bg-accent ${getDelayColorClass(delay)}`}
+                >
                   {delayManager.formatDelay(delay)} ms
                 </span>
               )}
@@ -131,7 +168,11 @@ export const TestItem = (props: Props) => {
 
         <ContextMenuContent>
           {menu.map((item) => (
-            <ContextMenuItem key={item.label} onClick={item.handler} className={item.isDestructive ? "text-destructive" : ""}>
+            <ContextMenuItem
+              key={item.label}
+              onClick={item.handler}
+              className={item.isDestructive ? "text-destructive" : ""}
+            >
               {t(item.label)}
             </ContextMenuItem>
           ))}

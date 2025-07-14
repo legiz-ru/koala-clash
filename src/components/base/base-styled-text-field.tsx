@@ -19,7 +19,7 @@ export const BaseStyledTextField = React.forwardRef<
       ref={ref}
       className={cn(
         "h-9", // Задаем стандартную компактную высоту
-        className
+        className,
       )}
       placeholder={props.placeholder ?? t("Filter conditions")}
       autoComplete="off"

@@ -22,21 +22,49 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RotateCcw, Layers, Laptop, Route, RouteOff, Network, Dna, Gauge } from "lucide-react";
+import {
+  RotateCcw,
+  Layers,
+  Laptop,
+  Route,
+  RouteOff,
+  Network,
+  Dna,
+  Gauge,
+} from "lucide-react";
 
 const OS = getSystem();
 type StackMode = "mixed" | "gvisor" | "system";
 
 // Компоненты-хелперы
-const SettingRow = ({ label, children }: { label: React.ReactNode; children?: React.ReactNode; }) => (
-    <div className="flex items-center justify-between py-3 border-b border-border last:border-b-0">
-        <div className="flex items-center gap-2"><div className="text-sm font-medium">{label}</div></div>
-        <div>{children}</div>
+const SettingRow = ({
+  label,
+  children,
+}: {
+  label: React.ReactNode;
+  children?: React.ReactNode;
+}) => (
+  <div className="flex items-center justify-between py-3 border-b border-border last:border-b-0">
+    <div className="flex items-center gap-2">
+      <div className="text-sm font-medium">{label}</div>
     </div>
+    <div>{children}</div>
+  </div>
 );
-const LabelWithIcon = ({ icon, text }: { icon: React.ElementType, text: string }) => {
-    const Icon = icon;
-    return ( <span className="flex items-center gap-3"><Icon className="h-4 w-4 text-muted-foreground" />{text}</span> );
+const LabelWithIcon = ({
+  icon,
+  text,
+}: {
+  icon: React.ElementType;
+  text: string;
+}) => {
+  const Icon = icon;
+  return (
+    <span className="flex items-center gap-3">
+      <Icon className="h-4 w-4 text-muted-foreground" />
+      {text}
+    </span>
+  );
 };
 
 export const TunViewer = forwardRef<DialogRef>((props, ref) => {
@@ -89,7 +117,12 @@ export const TunViewer = forwardRef<DialogRef>((props, ref) => {
     try {
       const tun = {
         stack: values.stack,
-        device: values.device === "" ? (OS === "macos" ? "utun1024" : "Mihomo") : values.device,
+        device:
+          values.device === ""
+            ? OS === "macos"
+              ? "utun1024"
+              : "Mihomo"
+            : values.device,
         "auto-route": values.autoRoute,
         "auto-detect-interface": values.autoDetectInterface,
         "dns-hijack": values.dnsHijack[0] === "" ? [] : values.dnsHijack,
@@ -130,29 +163,90 @@ export const TunViewer = forwardRef<DialogRef>((props, ref) => {
               onChange={(value) => setValues((v) => ({ ...v, stack: value }))}
             />
           </SettingRow>
-          <SettingRow label={<LabelWithIcon icon={Laptop} text={t("Device")} />}>
-            <Input className="h-8 w-40" value={values.device} placeholder="Mihomo" onChange={(e) => setValues((v) => ({ ...v, device: e.target.value }))} />
+          <SettingRow
+            label={<LabelWithIcon icon={Laptop} text={t("Device")} />}
+          >
+            <Input
+              className="h-8 w-40"
+              value={values.device}
+              placeholder="Mihomo"
+              onChange={(e) =>
+                setValues((v) => ({ ...v, device: e.target.value }))
+              }
+            />
           </SettingRow>
-          <SettingRow label={<LabelWithIcon icon={Route} text={t("Auto Route")} />}>
-            <Switch checked={values.autoRoute} onCheckedChange={(c) => setValues((v) => ({ ...v, autoRoute: c }))} />
+          <SettingRow
+            label={<LabelWithIcon icon={Route} text={t("Auto Route")} />}
+          >
+            <Switch
+              checked={values.autoRoute}
+              onCheckedChange={(c) =>
+                setValues((v) => ({ ...v, autoRoute: c }))
+              }
+            />
           </SettingRow>
-          <SettingRow label={<LabelWithIcon icon={RouteOff} text={t("Strict Route")} />}>
-            <Switch checked={values.strictRoute} onCheckedChange={(c) => setValues((v) => ({ ...v, strictRoute: c }))} />
+          <SettingRow
+            label={<LabelWithIcon icon={RouteOff} text={t("Strict Route")} />}
+          >
+            <Switch
+              checked={values.strictRoute}
+              onCheckedChange={(c) =>
+                setValues((v) => ({ ...v, strictRoute: c }))
+              }
+            />
           </SettingRow>
-          <SettingRow label={<LabelWithIcon icon={Network} text={t("Auto Detect Interface")} />}>
-            <Switch checked={values.autoDetectInterface} onCheckedChange={(c) => setValues((v) => ({ ...v, autoDetectInterface: c }))} />
+          <SettingRow
+            label={
+              <LabelWithIcon icon={Network} text={t("Auto Detect Interface")} />
+            }
+          >
+            <Switch
+              checked={values.autoDetectInterface}
+              onCheckedChange={(c) =>
+                setValues((v) => ({ ...v, autoDetectInterface: c }))
+              }
+            />
           </SettingRow>
-          <SettingRow label={<LabelWithIcon icon={Dna} text={t("DNS Hijack")} />}>
-            <Input className="h-8 w-40" value={values.dnsHijack.join(",")} placeholder="any:53" onChange={(e) => setValues((v) => ({ ...v, dnsHijack: e.target.value.split(",") }))} />
+          <SettingRow
+            label={<LabelWithIcon icon={Dna} text={t("DNS Hijack")} />}
+          >
+            <Input
+              className="h-8 w-40"
+              value={values.dnsHijack.join(",")}
+              placeholder="any:53"
+              onChange={(e) =>
+                setValues((v) => ({
+                  ...v,
+                  dnsHijack: e.target.value.split(","),
+                }))
+              }
+            />
           </SettingRow>
           <SettingRow label={<LabelWithIcon icon={Gauge} text={t("MTU")} />}>
-            <Input type="number" className="h-8 w-40" value={values.mtu} placeholder="1500" onChange={(e) => setValues((v) => ({ ...v, mtu: parseInt(e.target.value, 10) || 0 }))} />
+            <Input
+              type="number"
+              className="h-8 w-40"
+              value={values.mtu}
+              placeholder="1500"
+              onChange={(e) =>
+                setValues((v) => ({
+                  ...v,
+                  mtu: parseInt(e.target.value, 10) || 0,
+                }))
+              }
+            />
           </SettingRow>
         </div>
 
         <DialogFooter>
-          <DialogClose asChild><Button type="button" variant="outline">{t("Cancel")}</Button></DialogClose>
-          <Button type="button" onClick={onSave}>{t("Save")}</Button>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              {t("Cancel")}
+            </Button>
+          </DialogClose>
+          <Button type="button" onClick={onSave}>
+            {t("Save")}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

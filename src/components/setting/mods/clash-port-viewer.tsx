@@ -18,7 +18,12 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Shuffle, Loader2 } from "lucide-react";
 
 const OS = getSystem();
@@ -28,7 +33,8 @@ interface ClashPortViewerRef {
   close: () => void;
 }
 
-const generateRandomPort = () => Math.floor(Math.random() * (65535 - 1025 + 1)) + 1025;
+const generateRandomPort = () =>
+  Math.floor(Math.random() * (65535 - 1025 + 1)) + 1025;
 
 // Компонент для одной строки настроек порта
 const PortSettingRow = ({
@@ -85,7 +91,9 @@ const PortSettingRow = ({
                 <Shuffle className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent><p>{t("Random Port")}</p></TooltipContent>
+            <TooltipContent>
+              <p>{t("Random Port")}</p>
+            </TooltipContent>
           </Tooltip>
         </TooltipProvider>
         <Switch
@@ -97,7 +105,6 @@ const PortSettingRow = ({
     </div>
   );
 };
-
 
 export const ClashPortViewer = forwardRef<ClashPortViewerRef>((props, ref) => {
   const { t } = useTranslation();
@@ -171,7 +178,7 @@ export const ClashPortViewer = forwardRef<ClashPortViewerRef>((props, ref) => {
     const clashConfig = {
       "mixed-port": mixedPort,
       "socks-port": socksEnabled ? socksPort : 0,
-      "port": httpEnabled ? httpPort : 0,
+      port: httpEnabled ? httpPort : 0,
       "redir-port": redirEnabled ? redirPort : 0,
       "tproxy-port": tproxyEnabled ? tproxyPort : 0,
     };
@@ -199,19 +206,53 @@ export const ClashPortViewer = forwardRef<ClashPortViewerRef>((props, ref) => {
         </DialogHeader>
 
         <div className="py-4 space-y-1">
-          <PortSettingRow label={t("Mixed Port")} port={mixedPort} setPort={setMixedPort} isEnabled={true} isFixed={true} />
-          <PortSettingRow label={t("Socks Port")} port={socksPort} setPort={setSocksPort} isEnabled={socksEnabled} setIsEnabled={setSocksEnabled} />
-          <PortSettingRow label={t("Http Port")} port={httpPort} setPort={setHttpPort} isEnabled={httpEnabled} setIsEnabled={setHttpEnabled} />
+          <PortSettingRow
+            label={t("Mixed Port")}
+            port={mixedPort}
+            setPort={setMixedPort}
+            isEnabled={true}
+            isFixed={true}
+          />
+          <PortSettingRow
+            label={t("Socks Port")}
+            port={socksPort}
+            setPort={setSocksPort}
+            isEnabled={socksEnabled}
+            setIsEnabled={setSocksEnabled}
+          />
+          <PortSettingRow
+            label={t("Http Port")}
+            port={httpPort}
+            setPort={setHttpPort}
+            isEnabled={httpEnabled}
+            setIsEnabled={setHttpEnabled}
+          />
           {OS !== "windows" && (
-            <PortSettingRow label={t("Redir Port")} port={redirPort} setPort={setRedirPort} isEnabled={redirEnabled} setIsEnabled={setRedirEnabled} />
+            <PortSettingRow
+              label={t("Redir Port")}
+              port={redirPort}
+              setPort={setRedirPort}
+              isEnabled={redirEnabled}
+              setIsEnabled={setRedirEnabled}
+            />
           )}
           {OS === "linux" && (
-            <PortSettingRow label={t("Tproxy Port")} port={tproxyPort} setPort={setTproxyPort} isEnabled={tproxyEnabled} setIsEnabled={setTproxyEnabled} />
+            <PortSettingRow
+              label={t("Tproxy Port")}
+              port={tproxyPort}
+              setPort={setTproxyPort}
+              isEnabled={tproxyEnabled}
+              setIsEnabled={setTproxyEnabled}
+            />
           )}
         </div>
 
         <DialogFooter>
-          <DialogClose asChild><Button type="button" variant="outline">{t("Cancel")}</Button></DialogClose>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              {t("Cancel")}
+            </Button>
+          </DialogClose>
           <Button type="button" onClick={onSave} disabled={loading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {t("Save")}

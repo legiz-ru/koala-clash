@@ -51,7 +51,9 @@ export const TestViewer = forwardRef<TestViewerRef, Props>((props, ref) => {
   const { control, handleSubmit, reset, setValue } = form;
 
   const patchTestList = async (uid: string, patch: Partial<IVergeTestItem>) => {
-    const newList = testList.map((x) => (x.uid === uid ? { ...x, ...patch } : x));
+    const newList = testList.map((x) =>
+      x.uid === uid ? { ...x, ...patch } : x,
+    );
     await patchVerge({ test_list: newList });
   };
 
@@ -81,7 +83,10 @@ export const TestViewer = forwardRef<TestViewerRef, Props>((props, ref) => {
           formData.icon = formData.icon.replace(/<!--[\s\S]*?-->/g, "");
           // --- КОНЕЦ ИСПРАВЛЕНИЯ ---
 
-          const doc = new DOMParser().parseFromString(formData.icon, "image/svg+xml");
+          const doc = new DOMParser().parseFromString(
+            formData.icon,
+            "image/svg+xml",
+          );
           if (doc.querySelector("parsererror")) {
             throw new Error("`Icon`svg format error");
           }
@@ -112,7 +117,9 @@ export const TestViewer = forwardRef<TestViewerRef, Props>((props, ref) => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{openType === "new" ? t("Create Test") : t("Edit Test")}</DialogTitle>
+          <DialogTitle>
+            {openType === "new" ? t("Create Test") : t("Edit Test")}
+          </DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -124,7 +131,9 @@ export const TestViewer = forwardRef<TestViewerRef, Props>((props, ref) => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("Name")}</FormLabel>
-                  <FormControl><Input {...field} /></FormControl>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -135,7 +144,13 @@ export const TestViewer = forwardRef<TestViewerRef, Props>((props, ref) => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("Icon")}</FormLabel>
-                  <FormControl><Textarea {...field} rows={4} placeholder="<svg>...</svg> or http(s)://..." /></FormControl>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      rows={4}
+                      placeholder="<svg>...</svg> or http(s)://..."
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -147,7 +162,13 @@ export const TestViewer = forwardRef<TestViewerRef, Props>((props, ref) => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("Test URL")}</FormLabel>
-                  <FormControl><Textarea {...field} rows={3} placeholder="https://www.google.com" /></FormControl>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      rows={3}
+                      placeholder="https://www.google.com"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -157,11 +178,15 @@ export const TestViewer = forwardRef<TestViewerRef, Props>((props, ref) => {
         </Form>
 
         <DialogFooter>
-            <DialogClose asChild><Button type="button" variant="outline">{t("Cancel")}</Button></DialogClose>
-            <Button type="button" onClick={handleOk} disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {t("Save")}
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              {t("Cancel")}
             </Button>
+          </DialogClose>
+          <Button type="button" onClick={handleOk} disabled={loading}>
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {t("Save")}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

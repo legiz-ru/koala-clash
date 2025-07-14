@@ -28,14 +28,14 @@ export const TestBox = React.forwardRef<HTMLDivElement, TestBoxProps>(
           "data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary data-[selected=true]:shadow-lg",
 
           // --- Дополнительные классы от пользователя ---
-          className
+          className,
         )}
         {...props}
       >
         {children}
       </div>
     );
-  }
+  },
 );
 
 TestBox.displayName = "TestBox";

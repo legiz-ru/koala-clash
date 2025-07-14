@@ -1,5 +1,11 @@
 import useSWR from "swr";
-import { forwardRef, useImperativeHandle, useState, useMemo, useEffect } from "react";
+import {
+  forwardRef,
+  useImperativeHandle,
+  useState,
+  useMemo,
+  useEffect,
+} from "react";
 import { useLockFn } from "ahooks";
 import { useTranslation } from "react-i18next";
 import { relaunch } from "@tauri-apps/plugin-process";
@@ -15,17 +21,24 @@ import { portableFlag } from "@/pages/_layout";
 import { useListen } from "@/hooks/use-listen";
 import { showNotice } from "@/services/noticeService";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, ExternalLink } from "lucide-react";
-
 
 export const UpdateViewer = forwardRef<DialogRef>((props, ref) => {
   const { t } = useTranslation();
 
   const [open, setOpen] = useState(false);
-  const [currentProgressListener, setCurrentProgressListener] = useState<UnlistenFn | null>(null);
+  const [currentProgressListener, setCurrentProgressListener] =
+    useState<UnlistenFn | null>(null);
 
   const updateState = useUpdateState();
   const setUpdateState = useSetUpdateState();
@@ -55,9 +68,15 @@ export const UpdateViewer = forwardRef<DialogRef>((props, ref) => {
   }, [updateInfo]);
 
   const onUpdate = useLockFn(async () => {
-    if (portableFlag) { showNotice("error", t("Portable Updater Error")); return; }
+    if (portableFlag) {
+      showNotice("error", t("Portable Updater Error"));
+      return;
+    }
     if (!updateInfo?.body) return;
-    if (breakChangeFlag) { showNotice("error", t("Break Change Update Error")); return; }
+    if (breakChangeFlag) {
+      showNotice("error", t("Break Change Update Error"));
+      return;
+    }
     if (updateState) return;
 
     setUpdateState(true);
@@ -66,7 +85,9 @@ export const UpdateViewer = forwardRef<DialogRef>((props, ref) => {
 
     if (currentProgressListener) currentProgressListener();
 
-    const progressListener = await addListener("tauri://update-download-progress", (e: Event<any>) => {
+    const progressListener = await addListener(
+      "tauri://update-download-progress",
+      (e: Event<any>) => {
         setTotal(e.payload.contentLength);
         setDownloaded((prev) => prev + e.payload.chunkLength);
       },
@@ -86,7 +107,9 @@ export const UpdateViewer = forwardRef<DialogRef>((props, ref) => {
   });
 
   useEffect(() => {
-    return () => { currentProgressListener?.(); };
+    return () => {
+      currentProgressListener?.();
+    };
   }, [currentProgressListener]);
 
   const downloadProgress = total > 0 ? (downloaded / total) * 100 : 0;
@@ -96,11 +119,17 @@ export const UpdateViewer = forwardRef<DialogRef>((props, ref) => {
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <div className="flex justify-between items-center">
-            <DialogTitle>{t("New Version")} v{updateInfo?.version}</DialogTitle>
+            <DialogTitle>
+              {t("New Version")} v{updateInfo?.version}
+            </DialogTitle>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => openUrl(`https://github.com/clash-verge-rev/clash-verge-rev/releases/tag/v${updateInfo?.version}`)}
+              onClick={() =>
+                openUrl(
+                  `https://github.com/clash-verge-rev/clash-verge-rev/releases/tag/v${updateInfo?.version}`,
+                )
+              }
             >
               <ExternalLink className="mr-2 h-4 w-4" />
               {t("Go to Release Page")}
@@ -110,16 +139,20 @@ export const UpdateViewer = forwardRef<DialogRef>((props, ref) => {
 
         <div className="max-h-[60vh] overflow-y-auto my-4 pr-6 -mr-6">
           {breakChangeFlag && (
-             <Alert variant="destructive" className="mb-4">
-               <AlertTriangle className="h-4 w-4" />
-               <AlertTitle>{t("Warning")}</AlertTitle>
-               <AlertDescription>{t("Break Change Warning")}</AlertDescription>
-             </Alert>
+            <Alert variant="destructive" className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>{t("Warning")}</AlertTitle>
+              <AlertDescription>{t("Break Change Warning")}</AlertDescription>
+            </Alert>
           )}
           {/* Оборачиваем ReactMarkdown для красивой стилизации */}
           <article className="prose prose-sm dark:prose-invert max-w-none">
             <ReactMarkdown
-              components={{ a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" /> }}
+              components={{
+                a: ({ node, ...props }) => (
+                  <a {...props} target="_blank" rel="noopener noreferrer" />
+                ),
+              }}
             >
               {markdownContent}
             </ReactMarkdown>
@@ -127,15 +160,25 @@ export const UpdateViewer = forwardRef<DialogRef>((props, ref) => {
         </div>
 
         {updateState && (
-            <div className="w-full space-y-1">
-                <Progress value={downloadProgress} />
-                <p className="text-xs text-muted-foreground text-right">{Math.round(downloadProgress)}%</p>
-            </div>
+          <div className="w-full space-y-1">
+            <Progress value={downloadProgress} />
+            <p className="text-xs text-muted-foreground text-right">
+              {Math.round(downloadProgress)}%
+            </p>
+          </div>
         )}
 
         <DialogFooter>
-          <DialogClose asChild><Button type="button" variant="outline">{t("Cancel")}</Button></DialogClose>
-          <Button type="button" onClick={onUpdate} disabled={updateState || breakChangeFlag}>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              {t("Cancel")}
+            </Button>
+          </DialogClose>
+          <Button
+            type="button"
+            onClick={onUpdate}
+            disabled={updateState || breakChangeFlag}
+          >
             {t("Update")}
           </Button>
         </DialogFooter>

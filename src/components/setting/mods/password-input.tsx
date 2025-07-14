@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
-
 interface Props {
   // Компонент теперь сам управляет своим состоянием,
   // но вызывает onConfirm при подтверждении
@@ -39,7 +38,9 @@ export const PasswordInput = (props: Props) => {
     <AlertDialog open={true}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{t("Please enter your root password")}</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t("Please enter your root password")}
+          </AlertDialogTitle>
           <AlertDialogDescription>
             {t("This action requires administrator privileges.")}
           </AlertDialogDescription>

@@ -6,12 +6,17 @@ import { viewProfile, readProfileFile, saveProfileFile } from "@/services/cmds";
 import { showNotice } from "@/services/noticeService";
 import { EditorViewer } from "@/components/profile/editor-viewer";
 import { ProfileBox } from "./profile-box"; // Наш рефакторенный компонент
-import { LogViewer } from "./log-viewer";   // Наш рефакторенный компонент
+import { LogViewer } from "./log-viewer"; // Наш рефакторенный компонент
 
 // Новые импорты
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import {
   Tooltip,
   TooltipContent,
@@ -60,7 +65,9 @@ export const ProfileMore = (props: Props) => {
           <ProfileBox onDoubleClick={onEditFile}>
             {/* Верхняя строка: Название и Бейдж */}
             <div className="flex justify-between items-center mb-2">
-              <p className="font-semibold text-base truncate">{t(`Global ${id}`)}</p>
+              <p className="font-semibold text-base truncate">
+                {t(`Global ${id}`)}
+              </p>
               <Badge variant="secondary">{id}</Badge>
             </div>
 

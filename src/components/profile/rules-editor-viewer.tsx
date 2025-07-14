@@ -188,7 +188,6 @@ const rules: {
 ];
 const builtinProxyPolicies = ["DIRECT", "REJECT", "REJECT-DROP", "PASS"];
 
-
 const Combobox = ({
   options,
   value,

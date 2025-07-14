@@ -20,33 +20,35 @@ export const FileInput: React.FC<Props> = (props) => {
   const [fileName, setFileName] = useState("");
 
   // Вся ваша логика для чтения файла остается без изменений
-  const onFileInput = useLockFn(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const onFileInput = useLockFn(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
 
-    setFileName(file.name);
-    setLoading(true);
+      setFileName(file.name);
+      setLoading(true);
 
-    try {
-      const value = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          resolve(event.target?.result as string);
-        };
-        reader.onerror = (err) => reject(err);
-        reader.readAsText(file);
-      });
-      onChange(file, value);
-    } catch (error) {
-      console.error("File reading error:", error);
-    } finally {
-      setLoading(false);
-      // Очищаем value у input, чтобы можно было выбрать тот же файл еще раз
-      if (inputRef.current) {
-        inputRef.current.value = "";
+      try {
+        const value = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            resolve(event.target?.result as string);
+          };
+          reader.onerror = (err) => reject(err);
+          reader.readAsText(file);
+        });
+        onChange(file, value);
+      } catch (error) {
+        console.error("File reading error:", error);
+      } finally {
+        setLoading(false);
+        // Очищаем value у input, чтобы можно было выбрать тот же файл еще раз
+        if (inputRef.current) {
+          inputRef.current.value = "";
+        }
       }
-    }
-  });
+    },
+  );
 
   return (
     // Заменяем Box на div с flex и gap для отступов

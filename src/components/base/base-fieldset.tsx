@@ -15,7 +15,7 @@ export const BaseFieldset: React.FC<Props> = (props) => {
     <fieldset
       className={cn(
         "relative rounded-md border border-border p-4", // Базовые стили
-        className // Дополнительные классы от пользователя
+        className, // Дополнительные классы от пользователя
       )}
     >
       {/* 2. Используем legend. Он абсолютно спозиционирован относительно fieldset. */}

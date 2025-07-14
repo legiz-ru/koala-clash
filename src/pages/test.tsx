@@ -82,14 +82,34 @@ const TestPage = () => {
   // Список тестов
   const testList = verge?.test_list ?? [
     { uid: nanoid(), name: "Apple", url: "https://www.apple.com", icon: apple },
-    { uid: nanoid(), name: "GitHub", url: "https://www.github.com", icon: github },
-    { uid: nanoid(), name: "Google", url: "https://www.google.com", icon: google },
-    { uid: nanoid(), name: "Youtube", url: "https://www.youtube.com", icon: youtube },
+    {
+      uid: nanoid(),
+      name: "GitHub",
+      url: "https://www.github.com",
+      icon: github,
+    },
+    {
+      uid: nanoid(),
+      name: "Google",
+      url: "https://www.google.com",
+      icon: google,
+    },
+    {
+      uid: nanoid(),
+      name: "Youtube",
+      url: "https://www.youtube.com",
+      icon: youtube,
+    },
   ];
 
-  const onTestListItemChange = (uid: string, patch?: Partial<IVergeTestItem>) => {
+  const onTestListItemChange = (
+    uid: string,
+    patch?: Partial<IVergeTestItem>,
+  ) => {
     if (patch) {
-      const newList = testList.map((x) => (x.uid === uid ? { ...x, ...patch } : x));
+      const newList = testList.map((x) =>
+        x.uid === uid ? { ...x, ...patch } : x,
+      );
       mutateVerge({ ...verge, test_list: newList }, false);
     } else {
       mutateVerge();
@@ -134,7 +154,12 @@ const TestPage = () => {
 
   return (
     <div className="h-full w-full relative">
-      <div className={cn("absolute top-0 left-0 right-0 z-10 p-4 transition-all duration-200", { "bg-background/80 backdrop-blur-sm shadow-sm": isScrolled })}>
+      <div
+        className={cn(
+          "absolute top-0 left-0 right-0 z-10 p-4 transition-all duration-200",
+          { "bg-background/80 backdrop-blur-sm shadow-sm": isScrolled },
+        )}
+      >
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-semibold tracking-tight">{t("Test")}</h2>
           <div className="flex items-center gap-2">
@@ -142,7 +167,11 @@ const TestPage = () => {
               <Play className="mr-2 h-4 w-4" />
               {t("Test All")}
             </Button>
-            <Button size="sm" variant="secondary" onClick={() => viewerRef.current?.create()}>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => viewerRef.current?.create()}
+            >
               <Plus className="mr-2 h-4 w-4" />
               {t("New")}
             </Button>
@@ -156,7 +185,11 @@ const TestPage = () => {
                 <DropdownMenuLabel>{t("Menu")}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {menuItems.map((item) => (
-                  <DropdownMenuItem key={item.path} onSelect={() => navigate(item.path)} disabled={location.pathname === item.path}>
+                  <DropdownMenuItem
+                    key={item.path}
+                    onSelect={() => navigate(item.path)}
+                    disabled={location.pathname === item.path}
+                  >
                     {item.label}
                   </DropdownMenuItem>
                 ))}
@@ -166,8 +199,15 @@ const TestPage = () => {
         </div>
       </div>
 
-      <div ref={scrollerRef} className="absolute top-0 left-0 right-0 bottom-0 pt-20 overflow-y-auto">
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+      <div
+        ref={scrollerRef}
+        className="absolute top-0 left-0 right-0 bottom-0 pt-20 overflow-y-auto"
+      >
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={onDragEnd}
+        >
           <div className="p-4">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4">
               <SortableContext items={testList.map((x) => x.uid)}>

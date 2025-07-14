@@ -16,9 +16,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Trash2, History } from "lucide-react";
-
 
 export type BackupFile = IWebDavFile & {
   platform: string;
@@ -31,7 +35,10 @@ export const DEFAULT_ROWS_PER_PAGE = 5;
 export interface BackupTableViewerProps {
   datasource: BackupFile[];
   page: number;
-  onPageChange: (event: React.MouseEvent<HTMLButtonElement> | null, page: number) => void;
+  onPageChange: (
+    event: React.MouseEvent<HTMLButtonElement> | null,
+    page: number,
+  ) => void;
   total: number;
   onRefresh: () => Promise<void>;
 }
@@ -118,9 +125,14 @@ function MacIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-
 export const BackupTableViewer = memo(
-  ({ datasource, page, onPageChange, total, onRefresh }: BackupTableViewerProps) => {
+  ({
+    datasource,
+    page,
+    onPageChange,
+    total,
+    onRefresh,
+  }: BackupTableViewerProps) => {
     const { t } = useTranslation();
 
     const handleDelete = useLockFn(async (filename: string) => {
@@ -151,50 +163,66 @@ export const BackupTableViewer = memo(
                 <TableRow key={index}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
-                        {file.platform === "windows" ? ( <WindowsIcon className="h-5 w-5" />
-                        ) : file.platform === "linux" ? ( <LinuxIcon className="h-5 w-5" />
-                        ) : ( <MacIcon className="h-5 w-5" /> )}
-                        <span>{file.filename}</span>
+                      {file.platform === "windows" ? (
+                        <WindowsIcon className="h-5 w-5" />
+                      ) : file.platform === "linux" ? (
+                        <LinuxIcon className="h-5 w-5" />
+                      ) : (
+                        <MacIcon className="h-5 w-5" />
+                      )}
+                      <span>{file.filename}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-center">{file.backup_time.fromNow()}</TableCell>
+                  <TableCell className="text-center">
+                    {file.backup_time.fromNow()}
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-2">
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 text-destructive hover:text-destructive"
-                                        onClick={async () => {
-                                            const confirmed = window.confirm(t("Confirm to delete this backup file?"));
-                                            if (confirmed) await handleDelete(file.filename);
-                                        }}
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>{t("Delete Backup")}</p></TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                     <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8"
-                                        disabled={!file.allow_apply}
-                                        onClick={async () => {
-                                            const confirmed = window.confirm(t("Confirm to restore this backup file?"));
-                                            if (confirmed) await handleRestore(file.filename);
-                                        }}
-                                    >
-                                        <History className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>{t("Restore Backup")}</p></TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              onClick={async () => {
+                                const confirmed = window.confirm(
+                                  t("Confirm to delete this backup file?"),
+                                );
+                                if (confirmed)
+                                  await handleDelete(file.filename);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{t("Delete Backup")}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              disabled={!file.allow_apply}
+                              onClick={async () => {
+                                const confirmed = window.confirm(
+                                  t("Confirm to restore this backup file?"),
+                                );
+                                if (confirmed)
+                                  await handleRestore(file.filename);
+                              }}
+                            >
+                              <History className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{t("Restore Backup")}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -210,27 +238,27 @@ export const BackupTableViewer = memo(
         </Table>
         {/* Новая кастомная пагинация */}
         <div className="flex items-center justify-end space-x-2 p-2 border-t border-border">
-            <div className="flex-1 text-sm text-muted-foreground">
-                {t("Total")} {total}
-            </div>
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => onPageChange(e, page - 1)}
-                disabled={page === 0}
-            >
-                {t("Previous")}
-            </Button>
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => onPageChange(e, page + 1)}
-                disabled={(page + 1) * DEFAULT_ROWS_PER_PAGE >= total}
-            >
-                {t("Next")}
-            </Button>
+          <div className="flex-1 text-sm text-muted-foreground">
+            {t("Total")} {total}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={(e) => onPageChange(e, page - 1)}
+            disabled={page === 0}
+          >
+            {t("Previous")}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={(e) => onPageChange(e, page + 1)}
+            disabled={(page + 1) * DEFAULT_ROWS_PER_PAGE >= total}
+          >
+            {t("Next")}
+          </Button>
         </div>
       </div>
     );
-  }
+  },
 );

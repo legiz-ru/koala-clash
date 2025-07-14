@@ -24,7 +24,6 @@ import { changeClashCore, restartCore } from "@/services/cmds";
 import { closeAllConnections, upgradeCore } from "@/services/api";
 import { showNotice } from "@/services/noticeService";
 
-
 // Константы и интерфейсы
 const VALID_CORE = [
   { name: "Mihomo", core: "verge-mihomo", chip: "Release Version" },
@@ -107,12 +106,28 @@ export const ClashCoreViewer = forwardRef<DialogRef>((props, ref) => {
           <div className="flex justify-between items-center">
             <DialogTitle>{t("Clash Core")}</DialogTitle>
             <div className="flex items-center gap-2">
-              <Button size="sm" disabled={restarting || changingCore !== null} onClick={onUpgrade}>
-                {upgrading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Replace className="mr-2 h-4 w-4" />}
+              <Button
+                size="sm"
+                disabled={restarting || changingCore !== null}
+                onClick={onUpgrade}
+              >
+                {upgrading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Replace className="mr-2 h-4 w-4" />
+                )}
                 {t("Upgrade")}
               </Button>
-              <Button size="sm" disabled={upgrading || changingCore !== null} onClick={onRestart}>
-                {restarting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCw className="mr-2 h-4 w-4" />}
+              <Button
+                size="sm"
+                disabled={upgrading || changingCore !== null}
+                onClick={onRestart}
+              >
+                {restarting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <RotateCw className="mr-2 h-4 w-4" />
+                )}
                 {t("Restart")}
               </Button>
             </div>
@@ -133,8 +148,10 @@ export const ClashCoreViewer = forwardRef<DialogRef>((props, ref) => {
                 onClick={() => !isDisabled && onCoreChange(each.core)}
                 className={cn(
                   "flex items-center justify-between p-3 rounded-md transition-colors",
-                  isDisabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-accent",
-                  isSelected && "bg-accent"
+                  isDisabled
+                    ? "cursor-not-allowed opacity-50"
+                    : "cursor-pointer hover:bg-accent",
+                  isSelected && "bg-accent",
                 )}
               >
                 <div>
@@ -145,7 +162,9 @@ export const ClashCoreViewer = forwardRef<DialogRef>((props, ref) => {
                   {isChanging ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
-                    <Badge variant={isSelected ? "default" : "secondary"}>{t(each.chip)}</Badge>
+                    <Badge variant={isSelected ? "default" : "secondary"}>
+                      {t(each.chip)}
+                    </Badge>
                   )}
                 </div>
               </div>
@@ -155,7 +174,9 @@ export const ClashCoreViewer = forwardRef<DialogRef>((props, ref) => {
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline">{t("Close")}</Button>
+            <Button type="button" variant="outline">
+              {t("Close")}
+            </Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>

@@ -8,33 +8,70 @@ import { DialogRef, Switch } from "@/components/base";
 import { TooltipIcon } from "@/components/base/base-tooltip-icon";
 import { showNotice } from "@/services/noticeService";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  FileText, Unplug, RefreshCw, Zap, Columns, ArchiveRestore, Link as LinkIcon, Timer
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  FileText,
+  Unplug,
+  RefreshCw,
+  Zap,
+  Columns,
+  ArchiveRestore,
+  Link as LinkIcon,
+  Timer,
 } from "lucide-react";
-
 
 interface Props {}
 
 // Наш переиспользуемый компонент для строки настроек
-const SettingRow = ({ label, extra, children }: { label: React.ReactNode; extra?: React.ReactNode; children?: React.ReactNode; }) => (
-    <div className="flex items-center justify-between py-3 border-b border-border last:border-b-0">
-        <div className="flex items-center gap-2">
-            <div className="text-sm font-medium">{label}</div>
-            {extra && <div className="text-muted-foreground">{extra}</div>}
-        </div>
-        <div>{children}</div>
+const SettingRow = ({
+  label,
+  extra,
+  children,
+}: {
+  label: React.ReactNode;
+  extra?: React.ReactNode;
+  children?: React.ReactNode;
+}) => (
+  <div className="flex items-center justify-between py-3 border-b border-border last:border-b-0">
+    <div className="flex items-center gap-2">
+      <div className="text-sm font-medium">{label}</div>
+      {extra && <div className="text-muted-foreground">{extra}</div>}
     </div>
+    <div>{children}</div>
+  </div>
 );
 
 // Вспомогательная функция для создания лейбла с иконкой
-const LabelWithIcon = ({ icon, text }: { icon: React.ElementType, text: string }) => {
-    const Icon = icon;
-    return ( <span className="flex items-center gap-3"><Icon className="h-4 w-4 text-muted-foreground" />{text}</span> );
+const LabelWithIcon = ({
+  icon,
+  text,
+}: {
+  icon: React.ElementType;
+  text: string;
+}) => {
+  const Icon = icon;
+  return (
+    <span className="flex items-center gap-3">
+      <Icon className="h-4 w-4 text-muted-foreground" />
+      {text}
+    </span>
+  );
 };
-
 
 export const MiscViewer = forwardRef<DialogRef>((props, ref) => {
   const { t } = useTranslation();
@@ -89,7 +126,7 @@ export const MiscViewer = forwardRef<DialogRef>((props, ref) => {
   });
 
   const handleValueChange = (key: keyof typeof values, value: any) => {
-    setValues(v => ({ ...v, [key]: value }));
+    setValues((v) => ({ ...v, [key]: value }));
   };
 
   return (
@@ -100,42 +137,106 @@ export const MiscViewer = forwardRef<DialogRef>((props, ref) => {
         </DialogHeader>
 
         <div className="max-h-[70vh] overflow-y-auto px-1 space-y-1">
-          <SettingRow label={<LabelWithIcon icon={FileText} text={t("App Log Level")} />}>
-            <Select value={values.appLogLevel} onValueChange={(v) => handleValueChange("appLogLevel", v)}>
-              <SelectTrigger className="w-28 h-8"><SelectValue /></SelectTrigger>
+          <SettingRow
+            label={<LabelWithIcon icon={FileText} text={t("App Log Level")} />}
+          >
+            <Select
+              value={values.appLogLevel}
+              onValueChange={(v) => handleValueChange("appLogLevel", v)}
+            >
+              <SelectTrigger className="w-28 h-8">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {["trace", "debug", "info", "warn", "error", "silent"].map((i) => (
-                  <SelectItem value={i} key={i}>{i[0].toUpperCase() + i.slice(1).toLowerCase()}</SelectItem>
+                {["trace", "debug", "info", "warn", "error", "silent"].map(
+                  (i) => (
+                    <SelectItem value={i} key={i}>
+                      {i[0].toUpperCase() + i.slice(1).toLowerCase()}
+                    </SelectItem>
+                  ),
+                )}
+              </SelectContent>
+            </Select>
+          </SettingRow>
+
+          <SettingRow
+            label={
+              <LabelWithIcon icon={Unplug} text={t("Auto Close Connections")} />
+            }
+            extra={<TooltipIcon tooltip={t("Auto Close Connections Info")} />}
+          >
+            <Switch
+              checked={values.autoCloseConnection}
+              onCheckedChange={(c) =>
+                handleValueChange("autoCloseConnection", c)
+              }
+            />
+          </SettingRow>
+
+          <SettingRow
+            label={
+              <LabelWithIcon icon={RefreshCw} text={t("Auto Check Update")} />
+            }
+          >
+            <Switch
+              checked={values.autoCheckUpdate}
+              onCheckedChange={(c) => handleValueChange("autoCheckUpdate", c)}
+            />
+          </SettingRow>
+
+          <SettingRow
+            label={
+              <LabelWithIcon icon={Zap} text={t("Enable Builtin Enhanced")} />
+            }
+            extra={<TooltipIcon tooltip={t("Enable Builtin Enhanced Info")} />}
+          >
+            <Switch
+              checked={values.enableBuiltinEnhanced}
+              onCheckedChange={(c) =>
+                handleValueChange("enableBuiltinEnhanced", c)
+              }
+            />
+          </SettingRow>
+
+          <SettingRow
+            label={
+              <LabelWithIcon icon={Columns} text={t("Proxy Layout Columns")} />
+            }
+          >
+            <Select
+              value={String(values.proxyLayoutColumn)}
+              onValueChange={(v) =>
+                handleValueChange("proxyLayoutColumn", Number(v))
+              }
+            >
+              <SelectTrigger className="w-36 h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="6">{t("Auto Columns")}</SelectItem>
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <SelectItem value={String(i)} key={i}>
+                    {i}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </SettingRow>
 
-          <SettingRow label={<LabelWithIcon icon={Unplug} text={t("Auto Close Connections")} />} extra={<TooltipIcon tooltip={t("Auto Close Connections Info")} />}>
-            <Switch checked={values.autoCloseConnection} onCheckedChange={(c) => handleValueChange("autoCloseConnection", c)} />
-          </SettingRow>
-
-          <SettingRow label={<LabelWithIcon icon={RefreshCw} text={t("Auto Check Update")} />}>
-            <Switch checked={values.autoCheckUpdate} onCheckedChange={(c) => handleValueChange("autoCheckUpdate", c)} />
-          </SettingRow>
-
-          <SettingRow label={<LabelWithIcon icon={Zap} text={t("Enable Builtin Enhanced")} />} extra={<TooltipIcon tooltip={t("Enable Builtin Enhanced Info")} />}>
-            <Switch checked={values.enableBuiltinEnhanced} onCheckedChange={(c) => handleValueChange("enableBuiltinEnhanced", c)} />
-          </SettingRow>
-
-          <SettingRow label={<LabelWithIcon icon={Columns} text={t("Proxy Layout Columns")} />}>
-            <Select value={String(values.proxyLayoutColumn)} onValueChange={(v) => handleValueChange("proxyLayoutColumn", Number(v))}>
-              <SelectTrigger className="w-36 h-8"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="6">{t("Auto Columns")}</SelectItem>
-                {[1, 2, 3, 4, 5].map((i) => (<SelectItem value={String(i)} key={i}>{i}</SelectItem>))}
-              </SelectContent>
-            </Select>
-          </SettingRow>
-
-          <SettingRow label={<LabelWithIcon icon={ArchiveRestore} text={t("Auto Log Clean")} />}>
-            <Select value={String(values.autoLogClean)} onValueChange={(v) => handleValueChange("autoLogClean", Number(v))}>
-              <SelectTrigger className="w-48 h-8"><SelectValue /></SelectTrigger>
+          <SettingRow
+            label={
+              <LabelWithIcon icon={ArchiveRestore} text={t("Auto Log Clean")} />
+            }
+          >
+            <Select
+              value={String(values.autoLogClean)}
+              onValueChange={(v) =>
+                handleValueChange("autoLogClean", Number(v))
+              }
+            >
+              <SelectTrigger className="w-48 h-8">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {[
                   { key: t("Never Clean"), value: 0 },
@@ -143,37 +244,65 @@ export const MiscViewer = forwardRef<DialogRef>((props, ref) => {
                   { key: t("Retain _n Days", { n: 7 }), value: 2 },
                   { key: t("Retain _n Days", { n: 30 }), value: 3 },
                   { key: t("Retain _n Days", { n: 90 }), value: 4 },
-                ].map((i) => (<SelectItem key={i.value} value={String(i.value)}>{i.key}</SelectItem>))}
+                ].map((i) => (
+                  <SelectItem key={i.value} value={String(i.value)}>
+                    {i.key}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </SettingRow>
 
-          <SettingRow label={<LabelWithIcon icon={LinkIcon} text={t("Default Latency Test")} />} extra={<TooltipIcon tooltip={t("Default Latency Test Info")} />}>
+          <SettingRow
+            label={
+              <LabelWithIcon icon={LinkIcon} text={t("Default Latency Test")} />
+            }
+            extra={<TooltipIcon tooltip={t("Default Latency Test Info")} />}
+          >
             <Input
               className="w-75 h-8"
               value={values.defaultLatencyTest}
               placeholder="https://www.google.com/generate_204"
-              onChange={(e) => handleValueChange("defaultLatencyTest", e.target.value)}
+              onChange={(e) =>
+                handleValueChange("defaultLatencyTest", e.target.value)
+              }
             />
           </SettingRow>
 
-          <SettingRow label={<LabelWithIcon icon={Timer} text={t("Default Latency Timeout")} />}>
-              <div className="flex items-center gap-2">
-                <Input
-                    type="number"
-                    className="w-24 h-8"
-                    value={values.defaultLatencyTimeout}
-                    placeholder="5000"
-                    onChange={(e) => handleValueChange("defaultLatencyTimeout", Number(e.target.value))}
-                />
-                <span className="text-sm text-muted-foreground">{t("millis")}</span>
-              </div>
+          <SettingRow
+            label={
+              <LabelWithIcon icon={Timer} text={t("Default Latency Timeout")} />
+            }
+          >
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                className="w-24 h-8"
+                value={values.defaultLatencyTimeout}
+                placeholder="5000"
+                onChange={(e) =>
+                  handleValueChange(
+                    "defaultLatencyTimeout",
+                    Number(e.target.value),
+                  )
+                }
+              />
+              <span className="text-sm text-muted-foreground">
+                {t("millis")}
+              </span>
+            </div>
           </SettingRow>
         </div>
 
         <DialogFooter>
-            <DialogClose asChild><Button type="button" variant="outline">{t("Cancel")}</Button></DialogClose>
-            <Button type="button" onClick={onSave}>{t("Save")}</Button>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              {t("Cancel")}
+            </Button>
+          </DialogClose>
+          <Button type="button" onClick={onSave}>
+            {t("Save")}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,4 +1,10 @@
-import { forwardRef, useImperativeHandle, useState, useEffect, useCallback } from "react";
+import {
+  forwardRef,
+  useImperativeHandle,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { useLockFn } from "ahooks";
 import { useTranslation } from "react-i18next";
 
@@ -8,18 +14,33 @@ import { DialogRef } from "@/components/base";
 import { EditorViewer } from "@/components/profile/editor-viewer";
 import { showNotice } from "@/services/noticeService";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Edit } from "lucide-react";
 import { useThemeMode } from "@/services/states"; // Наш хук для получения текущего режима
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {HexColorPicker} from "react-colorful";
-
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { HexColorPicker } from "react-colorful";
 
 interface Props {}
 
-const ColorSettingRow = ({ label, value, placeholder, onChange }: {
+const ColorSettingRow = ({
+  label,
+  value,
+  placeholder,
+  onChange,
+}: {
   label: string;
   value: string;
   placeholder: string;
@@ -41,7 +62,10 @@ const ColorSettingRow = ({ label, value, placeholder, onChange }: {
             />
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0 border-0">
-            <HexColorPicker color={color} onChange={(newColor) => onChange({ target: { value: newColor } })} />
+            <HexColorPicker
+              color={color}
+              onChange={(newColor) => onChange({ target: { value: newColor } })}
+            />
           </PopoverContent>
         </Popover>
         <Input
@@ -55,7 +79,6 @@ const ColorSettingRow = ({ label, value, placeholder, onChange }: {
   );
 };
 
-
 export const ThemeViewer = forwardRef<DialogRef>((props, ref) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -65,9 +88,12 @@ export const ThemeViewer = forwardRef<DialogRef>((props, ref) => {
   const [theme, setTheme] = useState(theme_setting || {});
 
   const mode = useThemeMode();
-  const resolvedMode = mode === 'system'
-    ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
-    : mode;
+  const resolvedMode =
+    mode === "system"
+      ? window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light"
+      : mode;
 
   useImperativeHandle(ref, () => ({
     open: () => {
@@ -77,9 +103,10 @@ export const ThemeViewer = forwardRef<DialogRef>((props, ref) => {
     close: () => setOpen(false),
   }));
 
-  const handleChange = (field: keyof typeof theme) => (e: { target: { value: string } }) => {
-    setTheme((t) => ({ ...t, [field]: e.target.value }));
-  };
+  const handleChange =
+    (field: keyof typeof theme) => (e: { target: { value: string } }) => {
+      setTheme((t) => ({ ...t, [field]: e.target.value }));
+    };
 
   const onSave = useLockFn(async () => {
     try {
@@ -91,7 +118,6 @@ export const ThemeViewer = forwardRef<DialogRef>((props, ref) => {
       showNotice("error", err.toString());
     }
   });
-
 
   const dt = resolvedMode === "light" ? defaultTheme : defaultDarkTheme;
   type ThemeKey = keyof typeof theme & keyof typeof defaultTheme;
@@ -128,23 +154,34 @@ export const ThemeViewer = forwardRef<DialogRef>((props, ref) => {
             <div className="flex items-center justify-between py-2">
               <Label>{t("Font Family")}</Label>
               <Input
-                  className="w-48 h-8"
-                  value={theme.font_family ?? ""}
-                  onChange={handleChange("font_family")}
+                className="w-48 h-8"
+                value={theme.font_family ?? ""}
+                onChange={handleChange("font_family")}
               />
             </div>
 
             <div className="flex items-center justify-between py-2">
               <Label>{t("CSS Injection")}</Label>
-              <Button variant="outline" size="sm" onClick={() => setEditorOpen(true)}>
-                <Edit className="mr-2 h-4 w-4" />{t("Edit")} CSS
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditorOpen(true)}
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                {t("Edit")} CSS
               </Button>
             </div>
           </div>
 
           <DialogFooter>
-            <DialogClose asChild><Button type="button" variant="outline">{t("Cancel")}</Button></DialogClose>
-            <Button type="button" onClick={onSave}>{t("Save")}</Button>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                {t("Cancel")}
+              </Button>
+            </DialogClose>
+            <Button type="button" onClick={onSave}>
+              {t("Save")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -156,7 +193,7 @@ export const ThemeViewer = forwardRef<DialogRef>((props, ref) => {
           initialData={Promise.resolve(theme.css_injection ?? "")}
           language="css"
           onSave={(_prev, curr) => {
-            setTheme(v => ({ ...v, css_injection: curr }));
+            setTheme((v) => ({ ...v, css_injection: curr }));
           }}
           onClose={() => setEditorOpen(false)}
         />

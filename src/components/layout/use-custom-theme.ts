@@ -13,20 +13,24 @@ export const useCustomTheme = () => {
   const setMode = useSetThemeMode();
 
   useEffect(() => {
-    setMode(theme_mode === "light" || theme_mode === "dark" ? theme_mode : "system");
+    setMode(
+      theme_mode === "light" || theme_mode === "dark" ? theme_mode : "system",
+    );
   }, [theme_mode, setMode]);
 
   useEffect(() => {
     const root = document.documentElement;
 
-    const activeTheme = mode === "system"
-      ? window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
-      : mode;
+    const activeTheme =
+      mode === "system"
+        ? window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light"
+        : mode;
 
     root.classList.remove("light", "dark");
     root.classList.add(activeTheme);
     appWindow.setTheme(activeTheme as Theme).catch(console.error);
-
   }, [mode, appWindow]);
 
   useEffect(() => {
@@ -34,7 +38,9 @@ export const useCustomTheme = () => {
     const unlistenPromise = appWindow.onThemeChanged(({ payload }) => {
       setMode(payload);
     });
-    return () => { unlistenPromise.then(f => f()); };
+    return () => {
+      unlistenPromise.then((f) => f());
+    };
   }, [theme_mode, appWindow, setMode]);
 
   return {};
