@@ -1,10 +1,10 @@
 [package]
 name = "clash-verge"
-version = "2.3.2"
+version = "0.2.0"
 description = "clash verge"
-authors = ["zzzgydi", "wonfen", "MystiPanda"]
+authors = ["zzzgydi", "wonfen", "MystiPanda", "coolcoala"]
 license = "GPL-3.0-only"
-repository = "https://github.com/clash-verge-rev/clash-verge-rev.git"
+repository = "https://github.com/coolcoala/clash-verge-rev-lite.git"
 default-run = "clash-verge"
 edition = "2021"
 build = "build.rs"
