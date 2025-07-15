@@ -8,6 +8,8 @@ use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_yaml::Mapping;
 use std::{fs, time::Duration};
+use base64::{engine::general_purpose::STANDARD, Engine as _};
+use url::Url;
 
 use super::Config;
 
@@ -52,6 +54,14 @@ pub struct PrfItem {
     /// profile web page url
     #[serde(skip_serializing_if = "Option::is_none")]
     pub home: Option<String>,
+
+    /// profile support url
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub support_url: Option<String>,
+
+    /// profile announce
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub announce: Option<String>,
 
     /// the file data
     #[serde(skip)]
@@ -234,6 +244,8 @@ impl PrfItem {
                 ..PrfOption::default()
             }),
             home: None,
+            support_url: None,
+            announce: None,
             updated: Some(chrono::Local::now().timestamp() as usize),
             file_data: Some(file_data.unwrap_or(tmpl::ITEM_LOCAL.into())),
         })
@@ -297,6 +309,21 @@ impl PrfItem {
 
         let header = resp.headers();
 
+        let mut final_url = url.to_string();
+
+        if let Some(new_domain_value) = header.get("new-sub-domain") {
+            if let Ok(new_domain) = new_domain_value.to_str() {
+                if !new_domain.is_empty() {
+                    if let Ok(mut parsed_url) = Url::parse(url) {
+                        if parsed_url.set_host(Some(new_domain)).is_ok() {
+                            final_url = parsed_url.to_string();
+                            log::info!(target: "app", "URL host updated to -> {}", final_url);
+                        }
+                    }
+                }
+            }
+        }
+
         // parse the Subscription UserInfo
         let extra = match header.get("Subscription-Userinfo") {
             Some(value) => {
@@ -354,9 +381,45 @@ impl PrfItem {
             None => None,
         };
 
+        let support_url = match header.get("support-url") {
+            Some(value) => {
+                let str_value = value.to_str().unwrap_or("");
+                Some(str_value.to_string())
+            }
+            None => None,
+        };
+
+        let announce = match header.get("announce") {
+            Some(value) => {
+                let str_value = value.to_str().unwrap_or("");
+                if let Some(b64_data) = str_value.strip_prefix("base64:") {
+                    STANDARD.decode(b64_data)
+                        .ok()
+                        .and_then(|bytes| String::from_utf8(bytes).ok())
+                } else {
+                    Some(str_value.to_string())
+                }
+            }
+            None => None,
+        };
+
+        let profile_title = match header.get("profile-title") {
+            Some(value) => {
+                let str_value = value.to_str().unwrap_or("");
+                if let Some(b64_data) = str_value.strip_prefix("base64:") {
+                    STANDARD.decode(b64_data)
+                        .ok()
+                        .and_then(|bytes| String::from_utf8(bytes).ok())
+                } else {
+                    Some(str_value.to_string())
+                }
+            }
+            None => None,
+        };
+
         let uid = help::get_uid("R");
         let file = format!("{uid}.yaml");
-        let name = name.unwrap_or(filename.unwrap_or("Remote File".into()));
+        let name = name.or(profile_title).unwrap_or(filename.unwrap_or("Remote File".into()));
         let data = resp.text_with_charset("utf-8").await?;
 
         // process the charset "UTF-8 with BOM"
@@ -404,7 +467,7 @@ impl PrfItem {
             name: Some(name),
             desc,
             file: Some(file),
-            url: Some(url.into()),
+            url: Some(final_url),
             selected: None,
             extra,
             option: Some(PrfOption {
@@ -417,6 +480,8 @@ impl PrfItem {
                 ..PrfOption::default()
             }),
             home,
+            support_url,
+            announce,
             updated: Some(chrono::Local::now().timestamp() as usize),
             file_data: Some(data.into()),
         })
@@ -444,6 +509,8 @@ impl PrfItem {
             extra: None,
             option: None,
             home: None,
+            support_url: None,
+            announce: None,
             updated: Some(chrono::Local::now().timestamp() as usize),
             file_data: Some(template),
         })
@@ -466,6 +533,8 @@ impl PrfItem {
             file: Some(file),
             url: None,
             home: None,
+            support_url: None,
+            announce: None,
             selected: None,
             extra: None,
             option: None,
@@ -487,6 +556,8 @@ impl PrfItem {
             file: Some(file),
             url: None,
             home: None,
+            support_url: None,
+            announce: None,
             selected: None,
             extra: None,
             option: None,
@@ -508,6 +579,8 @@ impl PrfItem {
             file: Some(file),
             url: None,
             home: None,
+            support_url: None,
+            announce: None,
             selected: None,
             extra: None,
             option: None,
@@ -529,6 +602,8 @@ impl PrfItem {
             file: Some(file),
             url: None,
             home: None,
+            support_url: None,
+            announce: None,
             selected: None,
             extra: None,
             option: None,

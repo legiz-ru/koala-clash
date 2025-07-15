@@ -16,6 +16,7 @@ identifier = "io.github.clash-verge-rev.clash-verge-rev"
 tauri-build = { version = "2.3.0", features = [] }
 
 [dependencies]
+url = "2.5.4"
 os_info = "3.0"
 machine-uid = "0.2"
 warp = "0.3.7"

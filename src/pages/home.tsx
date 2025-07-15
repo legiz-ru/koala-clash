@@ -26,6 +26,8 @@ import {
   Wrench,
   AlertTriangle,
   Loader2,
+  Globe,
+  Send,
 } from "lucide-react";
 import { useVerge } from "@/hooks/use-verge";
 import { useSystemState } from "@/hooks/use-system-state";
@@ -34,6 +36,7 @@ import { Switch } from "@/components/ui/switch";
 import { ProxySelectors } from "@/components/home/proxy-selectors";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { closeAllConnections } from "@/services/api";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const MinimalHomePage: React.FC = () => {
   const { t } = useTranslation();
@@ -50,12 +53,12 @@ const MinimalHomePage: React.FC = () => {
     return items.filter((i: any) => i && allowedTypes.includes(i.type!));
   }, [profiles]);
 
-  const currentProfileName = useMemo(() => {
-    return (
-      profileItems.find((p) => p.uid === profiles?.current)?.name ||
-      profiles?.current
-    );
+  const currentProfile = useMemo(() => {
+    return profileItems.find(p => p.uid === profiles?.current);
   }, [profileItems, profiles?.current]);
+  console.log(currentProfile);
+  const currentProfileName = currentProfile?.name || profiles?.current;
+
   const activateProfile = useCallback(
     async (uid: string, notifySuccess: boolean) => {
       try {
@@ -200,6 +203,11 @@ const MinimalHomePage: React.FC = () => {
 
       <div className="flex items-center justify-center flex-grow w-full">
         <div className="flex flex-col items-center gap-8 pt-10">
+          {currentProfile?.announce && (
+            <p className="relative -translate-y-15 text-xl font-semibold text-foreground max-w-lg text-center">
+              {currentProfile.announce}
+            </p>
+          )}
           <div className="text-center">
             <h1
               className="text-4xl mb-2 font-semibold"
@@ -270,7 +278,29 @@ const MinimalHomePage: React.FC = () => {
           </div>
         </div>
       </div>
-
+      <footer className="flex justify-center p-4 flex-shrink-0">
+        {currentProfile?.support_url && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>{t("Support")}:</span>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <a href={currentProfile.support_url} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-primary">
+                                {(currentProfile.support_url.includes('t.me') || currentProfile.support_url.includes('telegram')) ? (
+                                    <Send className="h-5 w-5" />
+                                ) : (
+                                    <Globe className="h-5 w-5" />
+                                )}
+                            </a>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>{currentProfile.support_url}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            </div>
+        )}
+      </footer>
       <ProfileViewer ref={viewerRef} onChange={() => mutateProfiles()} />
     </div>
   );

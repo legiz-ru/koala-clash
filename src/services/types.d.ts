@@ -181,6 +181,7 @@ interface IClashInfo {
 }
 
 interface IProfileItem {
+  currentProfile: any;
   uid: string;
   type?: "local" | "remote" | "merge" | "script";
   name?: string;
@@ -200,6 +201,8 @@ interface IProfileItem {
   };
   option?: IProfileOption;
   home?: string;
+  support_url?: string;
+  announce?: string;
 }
 
 interface IProfileOption {

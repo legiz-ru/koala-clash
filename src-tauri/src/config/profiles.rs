@@ -220,6 +220,10 @@ impl IProfiles {
                     each.extra = item.extra;
                     each.updated = item.updated;
                     each.home = item.home;
+                    each.announce = item.announce;
+                    each.support_url = item.support_url;
+                    each.name = item.name;
+                    each.url = item.url;
                     each.option = PrfOption::merge(each.option.clone(), item.option);
                     // save the file data
                     // move the field value after save
