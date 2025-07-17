@@ -1,3 +1,10 @@
+## v0.2.1
+
+- added headers "announce-url", "update-always"
+- added a check for the presence of a profile, if it already exists, an update will be performed
+- fixed processing of links for displaying telegram icon on the main page
+- added profile update button on the main page
+
 ## v0.2
 
 - added handlers for "Announe", "Support-Url", "New-Sub-Domain", "Profile-Title" headers:
