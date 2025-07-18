@@ -50,11 +50,11 @@ const handleNoticeMessage = (
   switch (status) {
     case "import_sub_url::ok":
       mutate("getProfiles");
-      navigate("/profile", { state: { current: msg } });
+      navigate("/", { state: { activateProfile: msg } });
       showNotice("success", t("Import Subscription Successful"));
+      window.dispatchEvent(new CustomEvent('activate-profile', { detail: msg }));
       break;
     case "import_sub_url::error":
-      navigate("/profile");
       showNotice("error", msg);
       break;
     case "set_config::error":

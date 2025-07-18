@@ -1,5 +1,5 @@
-import React, { useRef, useMemo, useCallback, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, {useRef, useMemo, useCallback, useState, useEffect} from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useLockFn } from "ahooks";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -27,7 +27,7 @@ import {
   AlertTriangle,
   Loader2,
   Globe,
-  Send,
+  Send, ExternalLink, RefreshCw,
 } from "lucide-react";
 import { useVerge } from "@/hooks/use-verge";
 import { useSystemState } from "@/hooks/use-system-state";
@@ -37,14 +37,17 @@ import { ProxySelectors } from "@/components/home/proxy-selectors";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { closeAllConnections } from "@/services/api";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { updateProfile } from "@/services/cmds";
 
 const MinimalHomePage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [isToggling, setIsToggling] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const { profiles, patchProfiles, activateSelected, mutateProfiles } =
     useProfiles();
   const viewerRef = useRef<ProfileViewerRef>(null);
+  const [uidToActivate, setUidToActivate] = useState<string | null>(null);
 
   const profileItems = useMemo(() => {
     const items =
@@ -56,7 +59,7 @@ const MinimalHomePage: React.FC = () => {
   const currentProfile = useMemo(() => {
     return profileItems.find(p => p.uid === profiles?.current);
   }, [profileItems, profiles?.current]);
-  console.log(currentProfile);
+  console.log("Current profile", currentProfile);
   const currentProfileName = currentProfile?.name || profiles?.current;
 
   const activateProfile = useCallback(
@@ -75,6 +78,28 @@ const MinimalHomePage: React.FC = () => {
     },
     [patchProfiles, activateSelected, mutateProfiles, t],
   );
+
+  useEffect(() => {
+    const handleActivationEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<string>;
+      const profileId = customEvent.detail;
+      if (profileId) {
+        setUidToActivate(profileId);
+      }
+    };
+
+    window.addEventListener('activate-profile', handleActivationEvent);
+    return () => {
+      window.removeEventListener('activate-profile', handleActivationEvent);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (uidToActivate && profileItems.some(p => p.uid === uidToActivate)) {
+      activateProfile(uidToActivate, false);
+      setUidToActivate(null);
+    }
+  }, [uidToActivate, profileItems, activateProfile]);
 
   const handleProfileChange = useLockFn(async (uid: string) => {
     if (profiles?.current === uid) return;
@@ -128,6 +153,20 @@ const MinimalHomePage: React.FC = () => {
     }
   });
 
+  const handleUpdateProfile = useLockFn(async () => {
+    if (!currentProfile?.uid || currentProfile.type !== 'remote') return;
+    setIsUpdating(true);
+    try {
+      await updateProfile(currentProfile.uid);
+      toast.success(t("Profile Updated Successfully"));
+      mutateProfiles(); // Обновляем данные в UI
+    } catch (err: any) {
+      toast.error(t("Failed to update profile"), { description: err.message });
+    } finally {
+      setIsUpdating(false);
+    }
+  });
+
   const navMenuItems = [
     { label: "Profiles", path: "/profile" },
     { label: "Settings", path: "/settings" },
@@ -141,42 +180,69 @@ const MinimalHomePage: React.FC = () => {
     <div className="flex flex-col h-screen p-5">
       <header className="absolute top-0 left-0 right-0 p-5 flex items-center justify-between z-20">
         <div className="w-10"></div>
-
-        {profileItems.length > 0 && (
-          <div className="flex-shrink-0">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full max-w-[250px] sm:max-w-xs"
-                >
-                  <span className="truncate">{currentProfileName}</span>
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
-                <DropdownMenuLabel>{t("Profiles")}</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {profileItems.map((p) => (
-                  <DropdownMenuItem
-                    key={p.uid}
-                    onSelect={() => handleProfileChange(p.uid)}
-                  >
-                    <span className="flex-1 truncate">{p.name}</span>
-                    {profiles?.current === p.uid && (
-                      <Check className="ml-4 h-4 w-4" />
-                    )}
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => viewerRef.current?.create()}>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  <span>{t("Add Profile")}</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex items-center gap-2">
+            {profileItems.length > 0 && (
+              <div className="flex-shrink-0">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full max-w-[250px] sm:max-w-xs"
+                    >
+                      <span className="truncate">{currentProfileName}</span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                    <DropdownMenuLabel>{t("Profiles")}</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {profileItems.map((p) => (
+                      <DropdownMenuItem
+                        key={p.uid}
+                        onSelect={() => handleProfileChange(p.uid)}
+                      >
+                        <span className="flex-1 truncate">{p.name}</span>
+                        {profiles?.current === p.uid && (
+                          <Check className="ml-4 h-4 w-4" />
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => viewerRef.current?.create()}>
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      <span>{t("Add Profile")}</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
+             {currentProfile?.type === 'remote' && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleUpdateProfile}
+                      disabled={isUpdating}
+                      className="flex-shrink-0"
+                    >
+                      {isUpdating ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-5 w-5" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t("Update")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
-        )}
+        </div>
 
         <div className="w-10">
           <DropdownMenu>
@@ -204,9 +270,24 @@ const MinimalHomePage: React.FC = () => {
       <div className="flex items-center justify-center flex-grow w-full">
         <div className="flex flex-col items-center gap-8 pt-10">
           {currentProfile?.announce && (
-            <p className="relative -translate-y-15 text-xl font-semibold text-foreground max-w-lg text-center">
-              {currentProfile.announce}
-            </p>
+            <div className="flex-shrink-0 flex justify-center text-center px-5">
+              {currentProfile.announce_url ? (
+                <a
+                  href={currentProfile.announce_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-base font-semibold text-foreground hover:underline hover:opacity-80 transition-all"
+                  title={currentProfile.announce_url}
+                >
+                  <span>{currentProfile.announce}</span>
+                  <ExternalLink className="h-4 w-4 flex-shrink-0" />
+                </a>
+              ) : (
+                <p className="text-base font-semibold text-foreground max-w-lg">
+                  {currentProfile.announce}
+                </p>
+              )}
+            </div>
           )}
           <div className="text-center">
             <h1
@@ -286,7 +367,7 @@ const MinimalHomePage: React.FC = () => {
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <a href={currentProfile.support_url} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-primary">
-                                {(currentProfile.support_url.includes('t.me') || currentProfile.support_url.includes('telegram')) ? (
+                                {(currentProfile.support_url.includes('t.me') || currentProfile.support_url.includes('telegram') || currentProfile.support_url.startsWith('tg://')) ? (
                                     <Send className="h-5 w-5" />
                                 ) : (
                                     <Globe className="h-5 w-5" />
