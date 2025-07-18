@@ -74,6 +74,8 @@ pub struct IVerge {
     /// enable dns settings - this controls whether dns_config.yaml is applied
     pub enable_dns_settings: Option<bool>,
 
+    pub enable_send_hwid: Option<bool>,
+
     pub primary_action: Option<String>,
 
     /// always use default bypass
@@ -403,6 +405,7 @@ impl IVerge {
             enable_auto_light_weight_mode: Some(false),
             auto_light_weight_minutes: Some(10),
             enable_dns_settings: Some(false),
+            enable_send_hwid: Some(true),
             primary_action: Some("tun-mode".into()),
             home_cards: None,
             service_state: None,
@@ -492,6 +495,7 @@ impl IVerge {
         patch!(enable_auto_light_weight_mode);
         patch!(auto_light_weight_minutes);
         patch!(enable_dns_settings);
+        patch!(enable_send_hwid);
         patch!(primary_action);
         patch!(home_cards);
         patch!(service_state);
@@ -588,6 +592,7 @@ pub struct IVergeResponse {
     pub enable_auto_light_weight_mode: Option<bool>,
     pub auto_light_weight_minutes: Option<u64>,
     pub enable_dns_settings: Option<bool>,
+    pub enable_send_hwid: Option<bool>,
     pub primary_action: Option<String>,
     pub home_cards: Option<serde_json::Value>,
     pub enable_hover_jump_navigator: Option<bool>,
@@ -661,6 +666,7 @@ impl From<IVerge> for IVergeResponse {
             enable_auto_light_weight_mode: verge.enable_auto_light_weight_mode,
             auto_light_weight_minutes: verge.auto_light_weight_minutes,
             enable_dns_settings: verge.enable_dns_settings,
+            enable_send_hwid: verge.enable_send_hwid,
             primary_action: verge.primary_action,
             home_cards: verge.home_cards,
             enable_hover_jump_navigator: verge.enable_hover_jump_navigator,

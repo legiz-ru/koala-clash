@@ -43,6 +43,7 @@ import {
   Power,
   BellOff,
   Repeat,
+  Fingerprint
 } from "lucide-react";
 
 // Модальные окна
@@ -388,6 +389,22 @@ const SettingSystem = ({ onError }: Props) => {
                 </SelectItem>
               </SelectContent>
             </Select>
+          </GuardState>
+        </SettingRow>
+
+        <SettingRow
+          label={<LabelWithIcon icon={Fingerprint} text={t("Send HWID")} />}
+        >
+          <GuardState
+            value={verge?.enable_send_hwid ?? true} // По умолчанию включено
+            valueProps="checked"
+            onChangeProps="onCheckedChange"
+            onFormat={onSwitchFormat}
+            onChange={(e) => onChangeData({ enable_send_hwid: e })}
+            onGuard={(e) => patchVerge({ enable_send_hwid: e })}
+            onCatch={onError}
+          >
+            <Switch />
           </GuardState>
         </SettingRow>
       </div>
