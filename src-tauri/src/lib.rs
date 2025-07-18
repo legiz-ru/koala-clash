@@ -216,6 +216,14 @@ pub fn run() {
             app.manage(Mutex::new(state::proxy::CmdProxyState::default()));
             app.manage(Mutex::new(state::lightweight::LightWeightState::default()));
 
+            tauri::async_runtime::spawn(async {
+                tokio::time::sleep(Duration::from_secs(5)).await;
+                logging!(info, Type::Cmd, true, "Running profile updates at startup...");
+                if let Err(e) = crate::cmd::update_profiles_on_startup().await {
+                    log::error!("Failed to update profiles on startup: {}", e);
+                }
+            });
+
             logging!(info, Type::Setup, true, "初始化完成，继续执行");
             Ok(())
         })
@@ -295,6 +303,7 @@ pub fn run() {
             cmd::read_profile_file,
             cmd::save_profile_file,
             cmd::get_next_update_time,
+            cmd::update_profiles_on_startup,
             // script validation
             cmd::script_validate_notice,
             cmd::validate_script_file,

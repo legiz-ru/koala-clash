@@ -63,6 +63,10 @@ pub struct PrfItem {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub announce: Option<String>,
 
+    /// profile announce url
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub announce_url: Option<String>,
+
     /// the file data
     #[serde(skip)]
     pub file_data: Option<String>,
@@ -126,6 +130,9 @@ pub struct PrfOption {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub use_hwid: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub update_always: Option<bool>,
 }
 
 impl PrfOption {
@@ -146,6 +153,7 @@ impl PrfOption {
                 a.groups = b.groups.or(a.groups);
                 a.timeout_seconds = b.timeout_seconds.or(a.timeout_seconds);
                 a.use_hwid = b.use_hwid.or(a.use_hwid);
+                a.update_always = b.update_always.or(a.update_always);
                 Some(a)
             }
             t => t.0.or(t.1),
@@ -246,6 +254,7 @@ impl PrfItem {
             home: None,
             support_url: None,
             announce: None,
+            announce_url: None,
             updated: Some(chrono::Local::now().timestamp() as usize),
             file_data: Some(file_data.unwrap_or(tmpl::ITEM_LOCAL.into())),
         })
@@ -267,7 +276,7 @@ impl PrfItem {
         let user_agent = opt_ref.and_then(|o| o.user_agent.clone());
         let update_interval = opt_ref.and_then(|o| o.update_interval);
         let timeout = opt_ref.and_then(|o| o.timeout_seconds).unwrap_or(20);
-        let use_hwid = opt_ref.is_some_and(|o| o.use_hwid.unwrap_or(true));
+        let use_hwid = Config::verge().latest().enable_send_hwid.unwrap_or(true);
         let mut merge = opt_ref.and_then(|o| o.merge.clone());
         let mut script = opt_ref.and_then(|o| o.script.clone());
         let mut rules = opt_ref.and_then(|o| o.rules.clone());
@@ -373,6 +382,11 @@ impl PrfItem {
             },
         };
 
+        let update_always = match header.get("update-always") {
+            Some(value) => value.to_str().unwrap_or("false").parse::<bool>().ok(),
+            None => None,
+        };
+
         let home = match header.get("profile-web-page-url") {
             Some(value) => {
                 let str_value = value.to_str().unwrap_or("");
@@ -399,6 +413,14 @@ impl PrfItem {
                 } else {
                     Some(str_value.to_string())
                 }
+            }
+            None => None,
+        };
+
+        let announce_url = match header.get("announce-url") {
+            Some(value) => {
+                let str_value = value.to_str().unwrap_or("");
+                Some(str_value.to_string())
             }
             None => None,
         };
@@ -472,6 +494,7 @@ impl PrfItem {
             extra,
             option: Some(PrfOption {
                 update_interval,
+                update_always,
                 merge,
                 script,
                 rules,
@@ -482,6 +505,7 @@ impl PrfItem {
             home,
             support_url,
             announce,
+            announce_url,
             updated: Some(chrono::Local::now().timestamp() as usize),
             file_data: Some(data.into()),
         })
@@ -511,6 +535,7 @@ impl PrfItem {
             home: None,
             support_url: None,
             announce: None,
+            announce_url: None,
             updated: Some(chrono::Local::now().timestamp() as usize),
             file_data: Some(template),
         })
@@ -535,6 +560,7 @@ impl PrfItem {
             home: None,
             support_url: None,
             announce: None,
+            announce_url: None,
             selected: None,
             extra: None,
             option: None,
@@ -558,6 +584,7 @@ impl PrfItem {
             home: None,
             support_url: None,
             announce: None,
+            announce_url: None,
             selected: None,
             extra: None,
             option: None,
@@ -581,6 +608,7 @@ impl PrfItem {
             home: None,
             support_url: None,
             announce: None,
+            announce_url: None,
             selected: None,
             extra: None,
             option: None,
@@ -604,6 +632,7 @@ impl PrfItem {
             home: None,
             support_url: None,
             announce: None,
+            announce_url: None,
             selected: None,
             extra: None,
             option: None,

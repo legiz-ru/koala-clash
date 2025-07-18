@@ -129,8 +129,24 @@ pub async fn enhance_profiles() -> CmdResult {
 /// 导入配置文件
 #[tauri::command]
 pub async fn import_profile(url: String, option: Option<PrfOption>) -> CmdResult {
-    let item = wrap_err!(PrfItem::from_url(&url, None, None, option).await)?;
-    wrap_err!(Config::profiles().data().append_item(item))
+    let existing_uid = {
+        let profiles = Config::profiles();
+        let profiles = profiles.latest();
+
+        profiles.items.as_ref()
+            .and_then(|items| items.iter().find(|item| item.url.as_deref() == Some(&url)))
+            .and_then(|item| item.uid.clone())
+    };
+
+    if let Some(uid) = existing_uid {
+        logging!(info, Type::Cmd, true, "The profile with URL {} already exists (UID: {}). Running the update...", url, uid);
+        update_profile(uid, option).await
+    } else {
+        logging!(info, Type::Cmd, true, "Profile with URL {} not found. Create a new one...", url);
+        let item = wrap_err!(PrfItem::from_url(&url, None, None, option).await)?;
+        wrap_err!(Config::profiles().data().append_item(item))
+    }
+
 }
 
 /// 重新排序配置文件
@@ -646,4 +662,49 @@ pub fn get_next_update_time(uid: String) -> CmdResult<Option<i64>> {
     let timer = Timer::global();
     let next_time = timer.get_next_update_time(&uid);
     Ok(next_time)
+}
+
+
+#[tauri::command]
+pub async fn update_profiles_on_startup() -> CmdResult {
+    logging!(info, Type::Cmd, true, "Checking profiles for updates at startup...");
+
+    let profiles_to_update = {
+        let profiles = Config::profiles();
+        let profiles = profiles.latest();
+
+        profiles.items.as_ref()
+            .map_or_else(
+                Vec::new,
+                |items| items.iter()
+                    .filter(|item| item.option.as_ref().is_some_and(|opt| opt.update_always == Some(true)))
+                    .filter_map(|item| item.uid.clone())
+                    .collect()
+            )
+    };
+
+    if profiles_to_update.is_empty() {
+        logging!(info, Type::Cmd, true, "No profiles to update immediately.");
+        return Ok(());
+    }
+
+    logging!(info, Type::Cmd, true, "Found profiles to update: {:?}", profiles_to_update);
+
+    let mut update_futures = Vec::new();
+    for uid in profiles_to_update {
+        update_futures.push(update_profile(uid, None));
+    }
+
+    let results = futures::future::join_all(update_futures).await;
+
+
+    if results.iter().any(|res| res.is_ok()) {
+        logging!(info, Type::Cmd, true, "The startup update is complete, restart the kernel...");
+        CoreManager::global().update_config().await.map_err(|e| e.to_string())?;
+        handle::Handle::refresh_clash();
+    } else {
+        logging!(warn, Type::Cmd, true, "All updates completed with errors on startup.");
+    }
+
+    Ok(())
 }

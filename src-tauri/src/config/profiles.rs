@@ -221,6 +221,7 @@ impl IProfiles {
                     each.updated = item.updated;
                     each.home = item.home;
                     each.announce = item.announce;
+                    each.announce_url = item.announce_url;
                     each.support_url = item.support_url;
                     each.name = item.name;
                     each.url = item.url;

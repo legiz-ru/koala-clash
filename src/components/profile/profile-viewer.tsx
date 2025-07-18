@@ -449,6 +449,21 @@ export const ProfileViewer = forwardRef<ProfileViewerRef, Props>(
                     />
                     <FormField
                       control={control}
+                      name="option.update_always"
+                      render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between">
+                              <FormLabel>{t("Update on Startup")}</FormLabel>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                          </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={control}
                       name="option.with_proxy"
                       render={({ field }) => (
                         <FormItem className="flex items-center justify-between">
