@@ -660,5 +660,7 @@
   "Show Advanced Settings": "Show Advanced Settings",
   "Hide Advanced Settings": "Hide Advanced Settings",
   "Main Toggle Action": "Main Toggle Action",
-  "Support": "Support"
+  "Support": "Support",
+  "Update on Startup": "Update on Startup",
+  "Send HWID": "Send HWID"
 }

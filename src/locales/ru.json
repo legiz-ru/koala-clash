@@ -612,5 +612,7 @@
   "Show Advanced Settings": "Показать дополнительные настройки",
   "Hide Advanced Settings": "Скрыть дополнительные настройки",
   "Main Toggle Action": "Действие главного переключателя",
-  "Support": "Поддержка"
+  "Support": "Поддержка",
+  "Update on Startup": "Обновлять при запуске",
+  "Send HWID": "Отправлять HWID"
 }
