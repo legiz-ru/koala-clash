@@ -49,9 +49,9 @@ async function resolvePortable() {
   zip.addLocalFolder(
     path.join(
       releaseDir,
-      `Microsoft.WebView2.FixedVersionRuntime.109.0.1518.78.${arch}`,
+      `Microsoft.WebView2.FixedVersionRuntime.133.0.3065.92.${arch}`,
     ),
-    `Microsoft.WebView2.FixedVersionRuntime.109.0.1518.78.${arch}`,
+    `Microsoft.WebView2.FixedVersionRuntime.133.0.3065.92.${arch}`,
   );
   zip.addLocalFolder(configDir, ".config");
 
