@@ -7,23 +7,14 @@ import SettingVergeAdvanced from "@/components/setting/setting-verge-advanced";
 import SettingClash from "@/components/setting/setting-clash";
 import SettingSystem from "@/components/setting/setting-system";
 import { showNotice } from "@/services/noticeService";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Menu, Github, HelpCircle, Send } from "lucide-react";
 import { cn } from "@root/lib/utils";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 const SettingPage = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -46,14 +37,6 @@ const SettingPage = () => {
   const toGithubRepo = useLockFn(() =>
     openWebUrl("https://github.com/coolcoala/clash-verge-rev-lite"),
   );
-  const menuItems = [
-    { label: t("Home"), path: "/home" },
-    { label: t("Profiles"), path: "/profile" },
-    { label: t("Logs"), path: "/logs" },
-    { label: t("Proxies"), path: "/proxies" },
-    { label: t("Connections"), path: "/connections" },
-    { label: t("Rules"), path: "/rules" },
-  ];
 
   return (
     <div className="h-full w-full relative">
@@ -63,9 +46,13 @@ const SettingPage = () => {
           { "bg-background/80 backdrop-blur-sm": isScrolled },
         )}
       >
+        <div className="w-10">
+          <SidebarTrigger />
+        </div>
         <h2 className="text-2xl font-semibold tracking-tight">
           {t("Settings")}
         </h2>
+
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
@@ -75,26 +62,6 @@ const SettingPage = () => {
           >
             <Github className="h-5 w-5" />
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" title={t("Menu")}>
-                <Menu className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{t("Menu")}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {menuItems.map((item) => (
-                <DropdownMenuItem
-                  key={item.path}
-                  onSelect={() => navigate(item.path)}
-                  disabled={location.pathname === item.path}
-                >
-                  {item.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
 

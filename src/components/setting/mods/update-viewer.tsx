@@ -118,7 +118,7 @@ export const UpdateViewer = forwardRef<DialogRef>((props, ref) => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center pr-5">
             <DialogTitle>
               {t("New Version")} v{updateInfo?.version}
             </DialogTitle>

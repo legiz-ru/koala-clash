@@ -662,5 +662,8 @@
   "Main Toggle Action": "Main Toggle Action",
   "Support": "Support",
   "Update on Startup": "Update on Startup",
-  "Send HWID": "Send HWID"
+  "Send HWID": "Send HWID",
+  "New Version is available": "New Version is available",
+  "New Version": "New Version",
+  "New update": "New update"
 }

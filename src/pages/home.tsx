@@ -1,5 +1,4 @@
 import React, {useRef, useMemo, useCallback, useState, useEffect} from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import { useLockFn } from "ahooks";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -22,7 +21,6 @@ import {
   ChevronsUpDown,
   Check,
   PlusCircle,
-  Menu,
   Wrench,
   AlertTriangle,
   Loader2,
@@ -38,10 +36,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { closeAllConnections } from "@/services/api";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { updateProfile } from "@/services/cmds";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 const MinimalHomePage: React.FC = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [isToggling, setIsToggling] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const { profiles, patchProfiles, activateSelected, mutateProfiles } =
@@ -167,29 +165,19 @@ const MinimalHomePage: React.FC = () => {
     }
   });
 
-  const navMenuItems = [
-    { label: "Profiles", path: "/profile" },
-    { label: "Settings", path: "/settings" },
-    { label: "Logs", path: "/logs" },
-    { label: "Proxies", path: "/proxies" },
-    { label: "Connections", path: "/connections" },
-    { label: "Rules", path: "/rules" },
-  ];
-
   return (
-    <div className="flex flex-col h-screen p-5">
-      <header className="absolute top-0 left-0 right-0 p-5 flex items-center justify-between z-20">
-        <div className="w-10"></div>
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex items-center gap-2">
+    <div className="h-full w-full flex flex-col">
+      <header className="flex-shrink-0 p-5 grid grid-cols-3 items-center z-10">
+        <div className="flex justify-start">
+          <SidebarTrigger />
+        </div>
+       <div className="justify-self-center flex flex-col items-center gap-2">
+          <div className="relative">
             {profileItems.length > 0 && (
               <div className="flex-shrink-0">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full max-w-[250px] sm:max-w-xs"
-                    >
+                    <Button variant="outline" className="w-full max-w-[250px] sm:max-w-xs">
                       <span className="truncate">{currentProfileName}</span>
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -218,59 +206,35 @@ const MinimalHomePage: React.FC = () => {
               </div>
             )}
              {currentProfile?.type === 'remote' && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleUpdateProfile}
-                      disabled={isUpdating}
-                      className="flex-shrink-0"
-                    >
-                      {isUpdating ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                      ) : (
-                        <RefreshCw className="h-5 w-5" />
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{t("Update")}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <div className="absolute top-1/2 -translate-y-1/2 left-full ml-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleUpdateProfile}
+                        disabled={isUpdating}
+                        className="flex-shrink-0"
+                      >
+                        {isUpdating ? <Loader2 className="h-5 w-5 animate-spin" /> : <RefreshCw className="h-5 w-5" />}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>{t("Update Profile")}</p></TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             )}
           </div>
         </div>
-
-        <div className="w-10">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{t("Menu")}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {navMenuItems.map((item) => (
-                <DropdownMenuItem
-                  key={item.path}
-                  onSelect={() => navigate(item.path)}
-                >
-                  {t(item.label)}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className="flex justify-end">
         </div>
       </header>
 
-      <div className="flex items-center justify-center flex-grow w-full">
-        <div className="flex flex-col items-center gap-8 pt-10">
+      <main className="flex-1 overflow-y-auto flex items-center justify-center">
+          <div className="relative flex flex-col items-center gap-8 py-10 w-full max-w-4xl px-4">
           {currentProfile?.announce && (
-            <div className="flex-shrink-0 flex justify-center text-center px-5">
+            <div className="absolute -top-15 w-full flex justify-center text-center max-w-lg">
               {currentProfile.announce_url ? (
                 <a
                   href={currentProfile.announce_url}
@@ -283,7 +247,7 @@ const MinimalHomePage: React.FC = () => {
                   <ExternalLink className="h-4 w-4 flex-shrink-0" />
                 </a>
               ) : (
-                <p className="text-base font-semibold text-foreground max-w-lg">
+                <p className="text-base font-semibold text-foreground">
                   {currentProfile.announce}
                 </p>
               )}
@@ -357,8 +321,8 @@ const MinimalHomePage: React.FC = () => {
               </Alert>
             )}
           </div>
-        </div>
       </div>
+      </main>
       <footer className="flex justify-center p-4 flex-shrink-0">
         {currentProfile?.support_url && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">

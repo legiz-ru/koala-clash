@@ -1,27 +1,17 @@
 import useSWR from "swr";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useLockFn } from "ahooks";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { closeAllConnections, getClashConfig } from "@/services/api";
 import { patchClashMode } from "@/services/cmds";
 import { useVerge } from "@/hooks/use-verge";
 import { ProxyGroups } from "@/components/proxy/proxy-groups";
 import { ProviderButton } from "@/components/proxy/provider-button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Menu } from "lucide-react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 const ProxyPage = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
 
   const { data: clashConfig, mutate: mutateClash } = useSWR(
     "getClashConfig",
@@ -50,18 +40,12 @@ const ProxyPage = () => {
     }
   }, [curMode]);
 
-  const menuItems = [
-    { label: t("Home"), path: "/home" },
-    { label: t("Profiles"), path: "/profile" },
-    { label: t("Settings"), path: "/settings" },
-    { label: t("Logs"), path: "/logs" },
-    { label: t("Connections"), path: "/connections" },
-    { label: t("Rules"), path: "/rules" },
-  ];
-
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 pb-2 flex justify-between items-center">
+        <div className="w-10">
+          <SidebarTrigger />
+        </div>
         <h2 className="text-2xl font-semibold tracking-tight">
           {t("Proxies")}
         </h2>
@@ -80,26 +64,6 @@ const ProxyPage = () => {
               </Button>
             ))}
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" title={t("Menu")}>
-                <Menu className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{t("Menu")}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {menuItems.map((item) => (
-                <DropdownMenuItem
-                  key={item.path}
-                  onSelect={() => navigate(item.path)}
-                  disabled={location.pathname === item.path}
-                >
-                  {item.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
 

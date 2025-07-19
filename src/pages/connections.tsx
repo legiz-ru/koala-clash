@@ -8,7 +8,6 @@ import React, {
 import { useLockFn } from "ahooks";
 import { Virtuoso } from "react-virtuoso";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import { useConnectionSetting } from "@/services/states";
 import { useVisibility } from "@/hooks/use-visibility";
 import { useAppData } from "@/providers/app-data-provider";
@@ -16,7 +15,6 @@ import { closeAllConnections } from "@/services/api";
 import parseTraffic from "@/utils/parse-traffic";
 import { cn } from "@root/lib/utils";
 
-// Компоненты
 import { BaseEmpty } from "@/components/base";
 import { ConnectionItem } from "@/components/connection/connection-item";
 import { ConnectionTable } from "@/components/connection/connection-table";
@@ -26,7 +24,6 @@ import {
 } from "@/components/connection/connection-detail";
 import {
   BaseSearchBox,
-  type SearchState,
 } from "@/components/base/base-search-box";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,14 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
@@ -52,7 +42,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-// Иконки
 import {
   List,
   Table2,
@@ -62,6 +51,7 @@ import {
   ArrowUp,
   Menu,
 } from "lucide-react";
+import {SidebarTrigger} from "@/components/ui/sidebar";
 
 const initConn: IConnections = {
   uploadTotal: 0,
@@ -73,7 +63,6 @@ type OrderFunc = (list: IConnectionsItem[]) => IConnectionsItem[];
 
 const ConnectionsPage = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const pageVisible = useVisibility();
   const [match, setMatch] = useState(() => (_: string) => true);
   const [curOrderOpt, setOrderOpt] = useState("Default");
@@ -166,15 +155,6 @@ const ConnectionsPage = () => {
     });
   }, [connections]);
 
-  const menuItems = [
-    { label: t("Home"), path: "/home" },
-    { label: t("Profiles"), path: "/profile" },
-    { label: t("Settings"), path: "/settings" },
-    { label: t("Logs"), path: "/logs" },
-    { label: t("Proxies"), path: "/proxies" },
-    { label: t("Rules"), path: "/rules" },
-  ];
-
   return (
     <div className="h-full w-full relative">
       <div
@@ -184,6 +164,9 @@ const ConnectionsPage = () => {
         )}
       >
         <div className="flex justify-between items-center">
+          <div className="w-10">
+            <SidebarTrigger />
+          </div>
           <h2 className="text-2xl font-semibold tracking-tight">
             {t("Connections")}
           </h2>
@@ -245,26 +228,6 @@ const ConnectionsPage = () => {
               <Button size="sm" variant="destructive" onClick={onCloseAll}>
                 {t("Close All")}
               </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" title={t("Menu")}>
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>{t("Menu")}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {menuItems.map((item) => (
-                    <DropdownMenuItem
-                      key={item.path}
-                      onSelect={() => navigate(item.path)}
-                      disabled={location.pathname === item.path}
-                    >
-                      {item.label}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           </TooltipProvider>
         </div>

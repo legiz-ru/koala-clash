@@ -5,23 +5,15 @@ import { SWRConfig, mutate } from "swr";
 import { useEffect, useCallback, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useRoutes, useNavigate } from "react-router-dom";
-import { List, Paper, ThemeProvider, SvgIcon } from "@mui/material";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { routers } from "./_routers";
 import { getAxios } from "@/services/api";
 import { useVerge } from "@/hooks/use-verge";
-import LogoSvg from "@/assets/image/logo.svg?react";
-import iconLight from "@/assets/image/icon_light.svg?react";
-import iconDark from "@/assets/image/icon_dark.svg?react";
 import { useThemeMode, useEnableLog } from "@/services/states";
-import { LayoutItem } from "@/components/layout/layout-item";
-import { LayoutTraffic } from "@/components/layout/layout-traffic";
-import { UpdateButton } from "@/components/layout/update-button";
 import { useCustomTheme } from "@/components/layout/use-custom-theme";
 import getSystem from "@/utils/get-system";
 import "dayjs/locale/ru";
 import "dayjs/locale/zh-cn";
-import { getPortableFlag } from "@/services/cmds";
 import React from "react";
 import { useListen } from "@/hooks/use-listen";
 import { listen } from "@tauri-apps/api/event";
@@ -30,6 +22,8 @@ import { initGlobalLogService } from "@/services/global-log-service";
 import { invoke } from "@tauri-apps/api/core";
 import { showNotice } from "@/services/noticeService";
 import { NoticeManager } from "@/components/base/NoticeManager";
+import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/layout/sidebar";
 
 const appWindow = getCurrentWebviewWindow();
 export let portableFlag = false;
@@ -442,17 +436,36 @@ const Layout = () => {
   }, [start_page]);
 
   if (!routersEles) {
-    return <div className="h-screen w-screen bg-background" />;
+      return <div className="h-screen w-screen bg-background" />;
   }
+
+  const AppLayout = () => {
+    const { state, isMobile } = useSidebar();
+    const location = useLocation();
+    const routersEles = useRoutes(routers);
+
+    return (
+        <>
+            <AppSidebar />
+            <main
+                className="h-screen w-full overflow-y-auto transition-[margin] duration-200 ease-linear"
+            >
+                <div className="h-full w-full relative">
+                    {routersEles && React.cloneElement(routersEles, { key: location.pathname })}
+                </div>
+            </main>
+        </>
+    );
+};
+
+
 
   return (
     <SWRConfig value={{ errorRetryCount: 3 }}>
       <NoticeManager />
-      <div className="h-screen w-screen bg-background text-foreground overflow-hidden">
-        <div className="h-full w-full relative">
-          {React.cloneElement(routersEles, { key: location.pathname })}
-        </div>
-      </div>
+      <SidebarProvider defaultOpen={false}>
+        <AppLayout />
+      </SidebarProvider>
     </SWRConfig>
   );
 };

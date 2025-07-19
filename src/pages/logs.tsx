@@ -1,5 +1,3 @@
-// LogPage.tsx
-
 import React, {
   useMemo,
   useState,
@@ -10,8 +8,7 @@ import React, {
 import { Virtuoso } from "react-virtuoso";
 import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "foxact/use-local-storage";
-import { useNavigate } from "react-router-dom";
-import { Play, Pause, Trash2, Menu } from "lucide-react";
+import { Play, Pause, Trash2 } from "lucide-react";
 import { LogLevel } from "@/hooks/use-log-data";
 import { useClashInfo } from "@/hooks/use-clash";
 import { useEnableLog } from "@/services/states";
@@ -34,18 +31,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import {SidebarTrigger} from "@/components/ui/sidebar";
 
 const LogPage = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [enableLog, setEnableLog] = useEnableLog();
   const { clashInfo } = useClashInfo();
   const [logLevel, setLogLevel] = useLocalStorage<LogLevel>(
@@ -104,28 +93,16 @@ const LogPage = () => {
     [],
   );
 
-  const menuItems = [
-    { label: t("Home"), path: "/home" },
-    { label: t("Profiles"), path: "/profile" },
-    { label: t("Settings"), path: "/settings" },
-    { label: t("Proxies"), path: "/proxies" },
-    { label: t("Connections"), path: "/connections" },
-    { label: t("Rules"), path: "/rules" },
-  ];
-
   return (
     <div className="h-full w-full relative">
-      {/* "Липкая" шапка */}
       <div
         className={cn(
           "absolute top-0 left-0 right-0 z-10 p-4 transition-all duration-200",
-          // --- НАЧАЛО ИЗМЕНЕНИЙ ---
-          // Вместо блюра делаем солидный фон с тенью при прокрутке
           { "bg-background shadow-md": isScrolled },
-          // --- КОНЕЦ ИЗМЕНЕНИЙ ---
         )}
       >
         <div className="flex justify-between items-center mb-4">
+          <SidebarTrigger />
           <h2 className="text-2xl font-semibold tracking-tight">{t("Logs")}</h2>
           <div className="flex items-center gap-2">
             <Button
@@ -146,26 +123,6 @@ const LogPage = () => {
                 {t("Clear")}
               </Button>
             )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" title={t("Menu")}>
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>{t("Menu")}</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {menuItems.map((item) => (
-                  <DropdownMenuItem
-                    key={item.path}
-                    onSelect={() => navigate(item.path)}
-                    disabled={location.pathname === item.path}
-                  >
-                    {item.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
         <div className="flex items-center space-x-2">
@@ -187,7 +144,6 @@ const LogPage = () => {
         </div>
       </div>
 
-      {/* Возвращаем Virtuoso на место */}
       <div
         ref={scrollContainerRef}
         className="absolute top-0 left-0 right-0 bottom-0 pt-32 overflow-y-auto"

@@ -41,14 +41,12 @@ import { ConfigViewer } from "@/components/setting/mods/config-viewer";
 import { throttle } from "lodash-es";
 import { readTextFile } from "@tauri-apps/plugin-fs";
 import { readText } from "@tauri-apps/plugin-clipboard-manager";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useListen } from "@/hooks/use-listen";
 import { listen, TauriEvent } from "@tauri-apps/api/event";
 import { showNotice } from "@/services/noticeService";
 import { cn } from "@root/lib/utils";
 
-// Компоненты shadcn/ui
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -56,31 +54,19 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
-// Иконки
 import {
-  ClipboardPaste,
-  X,
   PlusCircle,
   RefreshCw,
   Zap,
   FileText,
   Loader2,
-  Menu,
 } from "lucide-react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 const ProfilePage = () => {
   const { t } = useTranslation();
   const location = useLocation();
-  const navigate = useNavigate();
   const { addListener } = useListen();
   const [url, setUrl] = useState("");
   const [disabled, setDisabled] = useState(false);
@@ -89,7 +75,6 @@ const ProfilePage = () => {
   const [updateAllLoading, setUpdateAllLoading] = useState(false);
   const [enhanceLoading, setEnhanceLoading] = useState(false);
 
-  // Логика для "липкой" шапки
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -335,15 +320,6 @@ const ProfilePage = () => {
     };
   }, [mutateProfiles]);
 
-  const menuItems = [
-    { label: t("Home"), path: "/home" },
-    { label: t("Settings"), path: "/settings" },
-    { label: t("Logs"), path: "/logs" },
-    { label: t("Proxies"), path: "/proxies" },
-    { label: t("Connections"), path: "/connections" },
-    { label: t("Rules"), path: "/rules" },
-  ];
-
   return (
     <div className="h-full w-full relative">
       <div
@@ -353,6 +329,9 @@ const ProfilePage = () => {
         )}
       >
         <div className="flex justify-between items-center">
+          <div className="w-10">
+            <SidebarTrigger />
+          </div>
           <h2 className="text-2xl font-semibold tracking-tight">
             {t("Profiles")}
           </h2>
@@ -424,74 +403,14 @@ const ProfilePage = () => {
                   <p>{t("View Runtime Config")}</p>
                 </TooltipContent>
               </Tooltip>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" title={t("Menu")}>
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>{t("Menu")}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {menuItems.map((item) => (
-                    <DropdownMenuItem
-                      key={item.path}
-                      onSelect={() => navigate(item.path)}
-                      disabled={location.pathname === item.path}
-                    >
-                      {item.label}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           </TooltipProvider>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1 flex-grow sm:flex-grow-0">
-            <Input
-              type="text"
-              placeholder={t("Profile URL")}
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              className="h-9 min-w-[200px] flex-grow sm:w-80"
-            />
-            {url ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                title={t("Clear")}
-                onClick={() => setUrl("")}
-                className="h-9 w-9 flex-shrink-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="icon"
-                title={t("Paste")}
-                onClick={onCopyLink}
-                className="h-9 w-9 flex-shrink-0"
-              >
-                <ClipboardPaste className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          <Button
-            onClick={onImport}
-            disabled={!url || disabled || importLoading}
-            className="h-9"
-          >
-            {importLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {t("Import")}
-          </Button>
         </div>
       </div>
 
       <div
         ref={scrollerRef}
-        className="absolute top-0 left-0 right-0 bottom-0 pt-40 overflow-y-auto"
+        className="absolute top-0 left-0 right-0 bottom-0 pt-25 overflow-y-auto"
       >
         <DndContext
           sensors={sensors}

@@ -614,5 +614,8 @@
   "Main Toggle Action": "Действие главного переключателя",
   "Support": "Поддержка",
   "Update on Startup": "Обновлять при запуске",
-  "Send HWID": "Отправлять HWID"
+  "Send HWID": "Отправлять HWID",
+  "New Version is available": "Доступна новая версия",
+  "New Version": "Новая версия",
+  "New update": "Доступно обновление"
 }
