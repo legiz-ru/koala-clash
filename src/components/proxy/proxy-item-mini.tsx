@@ -66,7 +66,7 @@ export const ProxyItemMini = (props: Props) => {
       title={`${proxy.name}\n${proxy.now ?? ""}`}
       className="group relative flex h-16 cursor-pointer items-center justify-between rounded-lg border bg-card p-3 shadow-sm transition-colors duration-200 hover:bg-accent data-[selected=true]:ring-2 data-[selected=true]:ring-primary"
     >
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 w-0">
         <p className="truncate text-sm font-medium">{proxy.name}</p>
 
         {showType && (
