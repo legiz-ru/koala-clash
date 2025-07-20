@@ -240,14 +240,14 @@ const MinimalHomePage: React.FC = () => {
                   href={currentProfile.announce_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-base font-semibold text-foreground hover:underline hover:opacity-80 transition-all"
-                  title={currentProfile.announce_url}
+                  className="inline-flex items-center gap-2 text-base font-semibold text-foreground hover:underline hover:opacity-80 transition-all whitespace-pre-wrap"
+                  title={currentProfile.announce_url.replace(/\\n/g, '\n')}
                 >
-                  <span>{currentProfile.announce}</span>
+                  <span>{currentProfile.announce.replace(/\\n/g, '\n')}</span>
                   <ExternalLink className="h-4 w-4 flex-shrink-0" />
                 </a>
               ) : (
-                <p className="text-base font-semibold text-foreground">
+                <p className="text-base font-semibold text-foreground whitespace-pre-wrap">
                   {currentProfile.announce}
                 </p>
               )}
@@ -268,7 +268,7 @@ const MinimalHomePage: React.FC = () => {
 
           <div className="scale-[7] my-16">
             <Switch
-              disabled={showTunAlert || isToggling}
+              disabled={showTunAlert || isToggling || profileItems.length === 0}
               checked={!!isProxyEnabled}
               onCheckedChange={handleToggleProxy}
               aria-label={t("Toggle Proxy")}
