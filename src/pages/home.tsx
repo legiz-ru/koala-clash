@@ -78,26 +78,13 @@ const MinimalHomePage: React.FC = () => {
   );
 
   useEffect(() => {
-    const handleActivationEvent = (event: Event) => {
-      const customEvent = event as CustomEvent<string>;
-      const profileId = customEvent.detail;
-      if (profileId) {
-        setUidToActivate(profileId);
-      }
-    };
-
-    window.addEventListener('activate-profile', handleActivationEvent);
-    return () => {
-      window.removeEventListener('activate-profile', handleActivationEvent);
-    };
-  }, []);
-
-  useEffect(() => {
+    const uidToActivate = sessionStorage.getItem('activateProfile');
     if (uidToActivate && profileItems.some(p => p.uid === uidToActivate)) {
       activateProfile(uidToActivate, false);
-      setUidToActivate(null);
+      sessionStorage.removeItem('activateProfile');
     }
-  }, [uidToActivate, profileItems, activateProfile]);
+  }, [profileItems, activateProfile]);
+
 
   const handleProfileChange = useLockFn(async (uid: string) => {
     if (profiles?.current === uid) return;
