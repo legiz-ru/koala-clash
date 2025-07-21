@@ -424,7 +424,7 @@ jobs:
           <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_x64.dmg"><img src="https://img.shields.io/badge/DMG-default?style=flat&logo=apple&label=Intel"></a><br>
           > :warning: **Warning**
           If you get a notification that the application is corrupted when you run it on macOS, run this command:<br>
-          `sudo xattr -r -c /Applications/Clash\ Verge\ Rev\ Lite.app`
+          <code>sudo xattr -r -c /Applications/Clash\ Verge\ Rev\ Lite.app</code>
           
           ### Linux
           <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_amd64.deb"><img src="https://img.shields.io/badge/x64-default?style=flat&logo=debian&label=DEB"> </a><br>
