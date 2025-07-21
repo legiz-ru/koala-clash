@@ -32,14 +32,14 @@ dayjs.extend(relativeTime);
 
 const OS = getSystem();
 
-// 通知处理函数
+// Notification Handler
 const handleNoticeMessage = (
   status: string,
   msg: string,
   t: (key: string) => string,
   navigate: (path: string, options?: any) => void,
 ) => {
-  console.log("[通知监听 V2] 收到消息:", status, msg);
+  console.log("[Notification Listener V2] Receiving a message:", status, msg);
 
   switch (status) {
     case "import_sub_url::ok":
@@ -136,7 +136,7 @@ const handleNoticeMessage = (
       showNotice("error", `${t("Failed to Change Core")}: ${msg}`);
       break;
     default: // Optional: Log unhandled statuses
-      console.warn(`[通知监听 V2] 未处理的状态: ${status}`);
+      console.warn(`[Notification Listener V2] Unprocessed state: ${status}`);
       break;
   }
 };
@@ -163,14 +163,14 @@ const Layout = () => {
         try {
           handleNoticeMessage(status, msg, t, navigate);
         } catch (error) {
-          console.error("[Layout] 处理通知消息失败:", error);
+          console.error("[Layout] Failure to process a notification message:", error);
         }
       }, 0);
     },
     [t, navigate],
   );
 
-  // 初始化全局日志服务
+  // Initialize the global logging service
   useEffect(() => {
     if (clashInfo) {
       const { server = "", secret = "" } = clashInfo;
@@ -178,7 +178,7 @@ const Layout = () => {
     }
   }, [clashInfo, enableLog]);
 
-  // 设置监听器
+  // Setting up a listener
   useEffect(() => {
     const listeners = [
       addListener("verge://refresh-clash-config", async () => {
@@ -224,11 +224,11 @@ const Layout = () => {
                 try {
                   unlisten();
                 } catch (error) {
-                  console.error("[Layout] 清理事件监听器失败:", error);
+                  console.error("[Layout] Failed to clear event listener:", error);
                 }
               })
               .catch((error) => {
-                console.error("[Layout] 获取unlisten函数失败:", error);
+                console.error("[Layout] Failed to get unlisten function:", error);
               });
           }
         });
@@ -238,11 +238,11 @@ const Layout = () => {
             try {
               cleanup();
             } catch (error) {
-              console.error("[Layout] 清理窗口监听器失败:", error);
+              console.error("[Layout] Failed to clear window listener:", error);
             }
           })
           .catch((error) => {
-            console.error("[Layout] 获取cleanup函数失败:", error);
+            console.error("[Layout] Failed to get cleanup function:", error);
           });
       }, 0);
     };
@@ -250,10 +250,10 @@ const Layout = () => {
 
   useEffect(() => {
     if (initRef.current) {
-      console.log("[Layout] 初始化代码已执行过，跳过");
+      console.log("[Layout] Initialization code has already been executed, skip");
       return;
     }
-    console.log("[Layout] 开始执行初始化代码");
+    console.log("[Layout] Begin executing initialization code");
     initRef.current = true;
 
     let isInitialized = false;
@@ -263,27 +263,27 @@ const Layout = () => {
     const notifyBackend = async (action: string, stage?: string) => {
       try {
         if (stage) {
-          console.log(`[Layout] 通知后端 ${action}: ${stage}`);
+          console.log(`[Layout] Notification Backend ${action}: ${stage}`);
           await invoke("update_ui_stage", { stage });
         } else {
-          console.log(`[Layout] 通知后端 ${action}`);
+          console.log(`[Layout] Notification Backend ${action}`);
           await invoke("notify_ui_ready");
         }
       } catch (err) {
-        console.error(`[Layout] 通知失败 ${action}:`, err);
+        console.error(`[Layout] Notification failure ${action}:`, err);
       }
     };
 
     const removeLoadingOverlay = () => {
       const initialOverlay = document.getElementById("initial-loading-overlay");
       if (initialOverlay) {
-        console.log("[Layout] 移除加载指示器");
+        console.log("[Layout] Remove loading indicator");
         initialOverlay.style.opacity = "0";
         setTimeout(() => {
           try {
             initialOverlay.remove();
           } catch (e) {
-            console.log("[Layout] 加载指示器已被移除");
+            console.log("[Layout] Load indicator has been removed");
           }
         }, 300);
       }
@@ -291,23 +291,23 @@ const Layout = () => {
 
     const performInitialization = async () => {
       if (isInitialized) {
-        console.log("[Layout] 已经初始化过，跳过");
+        console.log("[Layout] Already initialized, skip");
         return;
       }
 
       initializationAttempts++;
-      console.log(`[Layout] 开始第 ${initializationAttempts} 次初始化尝试`);
+      console.log(`[Layout] Start ${initializationAttempts} for the first time`);
 
       try {
         removeLoadingOverlay();
 
-        await notifyBackend("加载阶段", "Loading");
+        await notifyBackend("Loading phase", "Loading");
 
         await new Promise<void>((resolve) => {
           const checkReactMount = () => {
             const rootElement = document.getElementById("root");
             if (rootElement && rootElement.children.length > 0) {
-              console.log("[Layout] React组件已挂载");
+              console.log("[Layout] React components are mounted");
               resolve();
             } else {
               setTimeout(checkReactMount, 50);
@@ -317,43 +317,43 @@ const Layout = () => {
           checkReactMount();
 
           setTimeout(() => {
-            console.log("[Layout] React组件挂载检查超时，继续执行");
+            console.log("[Layout] React components mount check timeout, continue execution");
             resolve();
           }, 2000);
         });
 
-        await notifyBackend("DOM就绪", "DomReady");
+        await notifyBackend("DOM ready", "DomReady");
 
         await new Promise<void>((resolve) => {
           requestAnimationFrame(() => resolve());
         });
 
-        await notifyBackend("资源加载完成", "ResourcesLoaded");
+        await notifyBackend("Resource loading completed", "ResourcesLoaded");
 
-        await notifyBackend("UI就绪");
+        await notifyBackend("UI ready");
 
         isInitialized = true;
-        console.log(`[Layout] 第 ${initializationAttempts} 次初始化完成`);
+        console.log(`[Layout] The ${initializationAttempts} initialization is complete`);
       } catch (error) {
         console.error(
-          `[Layout] 第 ${initializationAttempts} 次初始化失败:`,
+          `[Layout] Initialization failure at ${initializationAttempts}:`,
           error,
         );
 
         if (initializationAttempts < maxAttempts) {
           console.log(
-            `[Layout] 将在500ms后进行第 ${initializationAttempts + 1} 次重试`,
+            `[Layout] The first ${initializationAttempts + 1} retry will be made after 500ms`,
           );
           setTimeout(performInitialization, 500);
         } else {
-          console.error("[Layout] 所有初始化尝试都失败，执行紧急初始化");
+          console.error("[Layout] All initialization attempts fail, perform emergency initialization");
 
           removeLoadingOverlay();
           try {
-            await notifyBackend("UI就绪");
+            await notifyBackend("UI ready");
             isInitialized = true;
           } catch (e) {
-            console.error("[Layout] 紧急初始化也失败:", e);
+            console.error("[Layout] Emergency initialization also failed:", e);
           }
         }
       }
@@ -363,39 +363,39 @@ const Layout = () => {
 
     const setupEventListener = async () => {
       try {
-        console.log("[Layout] 开始监听启动完成事件");
+        console.log("[Layout] Start listening for startup completion events");
         const unlisten = await listen("verge://startup-completed", () => {
           if (!hasEventTriggered) {
-            console.log("[Layout] 收到启动完成事件，开始初始化");
+            console.log("[Layout] Receive startup completion event, start initialization");
             hasEventTriggered = true;
             performInitialization();
           }
         });
         return unlisten;
       } catch (err) {
-        console.error("[Layout] 监听启动完成事件失败:", err);
+        console.error("[Layout] Failed to listen for startup completion event:", err);
         return () => {};
       }
     };
 
     const checkImmediateInitialization = async () => {
       try {
-        console.log("[Layout] 检查后端是否已就绪");
+        console.log("[Layout] Check if the backend is ready");
         await invoke("update_ui_stage", { stage: "Loading" });
 
         if (!hasEventTriggered && !isInitialized) {
-          console.log("[Layout] 后端已就绪，立即开始初始化");
+          console.log("[Layout] Backend is ready, start initialization immediately");
           hasEventTriggered = true;
           performInitialization();
         }
       } catch (err) {
-        console.log("[Layout] 后端尚未就绪，等待启动完成事件");
+        console.log("[Layout] Backend not yet ready, waiting for startup completion event");
       }
     };
 
     const backupInitialization = setTimeout(() => {
       if (!hasEventTriggered && !isInitialized) {
-        console.warn("[Layout] 备用初始化触发：1.5秒内未开始初始化");
+        console.warn("[Layout] Standby initialization trigger: initialization not started within 1.5 seconds");
         hasEventTriggered = true;
         performInitialization();
       }
@@ -403,9 +403,9 @@ const Layout = () => {
 
     const emergencyInitialization = setTimeout(() => {
       if (!isInitialized) {
-        console.error("[Layout] 紧急初始化触发：5秒内未完成初始化");
+        console.error("[Layout] Emergency initialization trigger: initialization not completed within 5 seconds");
         removeLoadingOverlay();
-        notifyBackend("UI就绪").catch(() => {});
+        notifyBackend("UI ready").catch(() => {});
         isInitialized = true;
       }
     }, 5000);
@@ -421,10 +421,10 @@ const Layout = () => {
     };
   }, []);
 
-  // 语言和起始页设置
+  // Language and start page settings
   useEffect(() => {
     if (language) {
-      dayjs.locale(language === "zh" ? "zh-cn" : language);
+      dayjs.locale(language === "ru" ? "ru-ru" : language);
       i18next.changeLanguage(language);
     }
   }, [language]);
