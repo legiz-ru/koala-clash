@@ -1,3 +1,12 @@
+## v0.2.3
+
+- fixed problem with profile inactivation after adding via deeplink on windows
+- corrected layout on the proxy page, now all cards are the same size
+- corrected announe transposition by \n
+- corrected side menu in compressed window
+- added check at the main toggle switch, now it cannot be enabled if there are no profiles.
+
+
 ## v0.2.1
 
 - added headers "announce-url", "update-always"
