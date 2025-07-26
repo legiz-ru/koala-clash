@@ -69,7 +69,7 @@ const LogItem = ({ value, searchState }: Props) => {
           {renderHighlightText(value.type)}
         </span>
       </div>
-      <div className="text-gray-800 dark:text-gray-200 break-all whitespace-pre-wrap">
+      <div className="text-foreground break-all whitespace-pre-wrap">
         {renderHighlightText(value.payload)}
       </div>
     </div>
