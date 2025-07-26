@@ -40,9 +40,91 @@ jobs:
           fi
           echo "Tag and package.json version are consistent."
 
+  create_release_notes:
+    name: Create Release Notes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fetch UPDATE logs
+        id: fetch_update_logs
+        run: |
+          if [ -f "UPDATELOG.md" ]; then
+            UPDATE_LOGS=$(awk '/^## v/{if(flag) exit; flag=1} flag' UPDATELOG.md)
+            if [ -n "$UPDATE_LOGS" ]; then
+              echo "Found update logs"
+              echo "UPDATE_LOGS<<EOF" >> $GITHUB_ENV
+              echo "$UPDATE_LOGS" >> $GITHUB_ENV
+              echo "EOF" >> $GITHUB_ENV
+            else
+              echo "No update sections found in UPDATELOG.md"
+            fi
+          else
+            echo "UPDATELOG.md file not found"
+          fi
+        shell: bash
+
+      - name: Get Version
+        run: |
+          sudo apt-get update
+          sudo apt-get install jq
+          echo "VERSION=$(cat package.json | jq '.version' | tr -d '"')" >> $GITHUB_ENV
+          echo "BUILDTIME=$(TZ=Europe/Moscow date)" >> $GITHUB_ENV
+
+      - run: |
+          if [ -z "$UPDATE_LOGS" ]; then
+            echo "No update logs found, using default message"
+            UPDATE_LOGS="More new features are now supported. Check for detailed changelog soon."
+          else
+            echo "Using found update logs"
+          fi
+
+          cat > release.txt << EOF
+          $UPDATE_LOGS
+
+          ## Which version should I download?
+
+          ### macOS
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_aarch64.dmg"><img src="https://img.shields.io/badge/DMG-default?style=flat&logo=apple&label=Apple%20Silicon"></a><br>
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_x64.dmg"><img src="https://img.shields.io/badge/DMG-default?style=flat&logo=apple&label=Intel"></a><br>
+          > :warning: **Warning**
+          If you get a notification that the application is corrupted when you run it on macOS, run this command:<br>
+          <code>sudo xattr -r -c /Applications/Clash\ Verge\ Rev\ Lite.app</code>
+          
+          ### Linux
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_amd64.deb"><img src="https://img.shields.io/badge/x64-default?style=flat&logo=debian&label=DEB"> </a><br>
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite-${{ env.VERSION }}-1.x86_64.rpm"><img src="https://img.shields.io/badge/x64-default?style=flat&logo=fedora&label=RPM"> </a>
+          
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_arm64.deb"><img src="https://img.shields.io/badge/arm64-default?style=flat&logo=debian&label=DEB"> </a><br>
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite-${{ env.VERSION }}-1.aarch64.rpm"><img src="https://img.shields.io/badge/aarch64-default?style=flat&logo=fedora&label=RPM"> </a>
+          
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_armhf.deb"><img src="https://img.shields.io/badge/armhf-default?style=flat&logo=debian&label=DEB"> </a><br>
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite-${{ env.VERSION }}-1.armhfp.rpm"><img src="https://img.shields.io/badge/armhfp-default?style=flat&logo=fedora&label=RPM"> </a>
+          
+          ### Windows (Win7 is no longer supported)
+          #### Normal version (recommended)
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_x64-setup.exe"><img src="https://badgen.net/badge/icon/x64?icon=windows&label=exe"></a><br>
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_arm64-setup.exe"><img src="https://badgen.net/badge/icon/arm64?icon=windows&label=exe"></a>
+          #### Portable version is no longer available with many problems
+          #### Built-in Webview version 2 (large size, only used in enterprise version of the system or can not install webview2)
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_x64_fixed_webview2-setup.exe"><img src="https://badgen.net/badge/icon/x64?icon=windows&label=exe"></a><br>
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_arm64_fixed_webview2-setup.exe"><img src="https://badgen.net/badge/icon/arm64?icon=windows&label=exe"></a>
+
+          Created at ${{ env.BUILDTIME }}.
+          EOF
+
+      - name: Upload Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{env.VERSION}}
+          name: "Clash Verge Rev Lite v${{env.VERSION}}"
+          body_path: release.txt
+          token: ${{ secrets.GITHUB_TOKEN }}
+
   release:
     name: Release Build
-    needs: check_tag_version
+    needs: [check_tag_version, create_release_notes]
     strategy:
       fail-fast: false
       matrix:
@@ -97,6 +179,7 @@ jobs:
           pnpm run prebuild ${{ matrix.target }}
 
       - name: Tauri build
+        id: build
         uses: tauri-apps/tauri-action@v0
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
@@ -104,10 +187,42 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
         with:
-          tagName: v__VERSION__
-          releaseName: "Clash Verge Rev Lite v__VERSION__"
           tauriScript: pnpm
           args: --target ${{ matrix.target }}
+
+      - name: Rename Artifact (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = ${{steps.build.outputs.appVersion}}
+          $files = Get-ChildItem ".\src-tauri\target\${{ matrix.target }}\release\bundle\nsis\*-setup.exe"
+          foreach ($file in $files) {
+            $newName = $file.Name replace "_${version}_", "_" 
+            Rename-Item $file.FullName $newName
+          }
+
+      - name: Rename Artifact (Linux/macOS)
+        if: runner.os == 'Linux' || runner.os == 'macOS'
+        shell: bash
+        run: |
+          VERSION=${{steps.build.outputs.appVersion}}
+          old_path=$(find src-tauri/target/release/bundle -type f \(-o -name "*.dmg" -o -name "*.deb" -o -name "*.rpm" \) -print -quit)
+          
+          new_path=$(echo "$old_path" | sed -E "s/-${VERSION}-1//g" | sed -E "s/_${VERSION}_//g" | sed -E "s/-${VERSION}-//g")
+          
+          echo "Renaming '$old_path' to '$new_path'"
+          mv "$old_path" "$new_path"
+
+      - name: Upload Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{steps.build.outputs.appVersion}}
+          name: "Clash Verge Rev Lite v${{steps.build.outputs.appVersion}}"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
+            src-tauri/target/${{ matrix.target }}/release/bundle/rpm/*.rpm
+            src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*setup*
 
   release-for-linux-arm:
     name: Release Build for Linux ARM
@@ -374,9 +489,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  create_release_notes:
-    name: Create Release Notes
+  push-notify-to-telegram:
     runs-on: ubuntu-latest
+    needs: [release-update, release-update-for-fixed-webview2]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -413,45 +528,28 @@ jobs:
           else
             echo "Using found update logs"
           fi
-
+          
           cat > release.txt << EOF
+          Вышло обновление!
+          
           $UPDATE_LOGS
-
-          ## Which version should I download?
-
-          ### macOS
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_aarch64.dmg"><img src="https://img.shields.io/badge/DMG-default?style=flat&logo=apple&label=Apple%20Silicon"></a><br>
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_x64.dmg"><img src="https://img.shields.io/badge/DMG-default?style=flat&logo=apple&label=Intel"></a><br>
-          > :warning: **Warning**
-          If you get a notification that the application is corrupted when you run it on macOS, run this command:<br>
-          <code>sudo xattr -r -c /Applications/Clash\ Verge\ Rev\ Lite.app</code>
           
-          ### Linux
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_amd64.deb"><img src="https://img.shields.io/badge/x64-default?style=flat&logo=debian&label=DEB"> </a><br>
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite-${{ env.VERSION }}-1.x86_64.rpm"><img src="https://img.shields.io/badge/x64-default?style=flat&logo=fedora&label=RPM"> </a>
+          [Ссылка на релиз](https://github.com/coolcoala/clash-verge-rev-lite/releases/latest)
           
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_arm64.deb"><img src="https://img.shields.io/badge/arm64-default?style=flat&logo=debian&label=DEB"> </a><br>
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite-${{ env.VERSION }}-1.aarch64.rpm"><img src="https://img.shields.io/badge/aarch64-default?style=flat&logo=fedora&label=RPM"> </a>
-          
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_armhf.deb"><img src="https://img.shields.io/badge/armhf-default?style=flat&logo=debian&label=DEB"> </a><br>
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite-${{ env.VERSION }}-1.armhfp.rpm"><img src="https://img.shields.io/badge/armhfp-default?style=flat&logo=fedora&label=RPM"> </a>
-          
-          ### Windows (Win7 is no longer supported)
-          #### Normal version (recommended)
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_x64-setup.exe"><img src="https://badgen.net/badge/icon/x64?icon=windows&label=exe"></a><br>
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_arm64-setup.exe"><img src="https://badgen.net/badge/icon/arm64?icon=windows&label=exe"></a>
-          #### Portable version is no longer available with many problems
-          #### Built-in Webview version 2 (large size, only used in enterprise version of the system or can not install webview2)
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_x64_fixed_webview2-setup.exe"><img src="https://badgen.net/badge/icon/x64?icon=windows&label=exe"></a><br>
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_arm64_fixed_webview2-setup.exe"><img src="https://badgen.net/badge/icon/arm64?icon=windows&label=exe"></a>
-
-          Created at ${{ env.BUILDTIME }}.
           EOF
 
-      - name: Upload Release
-        uses: softprops/action-gh-release@v2
+      - name: notify to channel
+        uses: appleboy/telegram-action@master
         with:
-          tag_name: v${{env.VERSION}}
-          name: "Clash Verge Rev Lite v${{env.VERSION}}"
-          body_path: release.txt
-          token: ${{ secrets.GITHUB_TOKEN }}
+          to: ${{ secrets.TELEGRAM_TO_CHANNEL }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message_file: release.txt
+
+      - name: notify to group
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO_GROUP }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message_file: release.txt
+          format: markdown
+
