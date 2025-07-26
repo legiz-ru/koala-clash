@@ -23,14 +23,8 @@ import { ProxyRender } from "./proxy-render";
 import delayManager from "@/services/delay";
 import { useTranslation } from "react-i18next";
 import { ScrollTopButton } from "../layout/scroll-top-button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
-// Вспомогательная функция для плавного скролла (взята из вашего оригинального файла)
+
 function throttle<T extends (...args: any[]) => any>(
   func: T,
   wait: number,
@@ -59,36 +53,6 @@ function throttle<T extends (...args: any[]) => any>(
   };
 }
 
-// Компонент для одной буквы в навигаторе, переписанный на Tailwind и shadcn/ui
-const LetterItem = memo(
-  ({
-    name,
-    onClick,
-    getFirstChar,
-  }: {
-    name: string;
-    onClick: (name: string) => void;
-    getFirstChar: (str: string) => string;
-  }) => {
-    return (
-      <TooltipProvider delayDuration={100}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div
-              className="flex items-center justify-center w-6 h-6 text-xs rounded-md border shadow-sm cursor-pointer text-muted-foreground transition-transform hover:bg-accent hover:text-accent-foreground hover:scale-125"
-              onClick={() => onClick(name)}
-            >
-              {getFirstChar(name)}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="left">
-            <p>{name}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  },
-);
 
 interface Props {
   mode: string;
@@ -108,33 +72,6 @@ export const ProxyGroups = memo((props: Props) => {
   const scrollerRef = useRef<Element | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
-  // Мемоизация вычисления букв и индексов для навигатора
-  const { groupFirstLetters, letterIndexMap } = useMemo(() => {
-    const letters = new Set<string>();
-    const indexMap: Record<string, number> = {};
-    renderList.forEach((item, index) => {
-      if (item.type === 0) {
-        // type 0 - это заголовок группы
-        const fullName = item.group.name;
-        letters.add(fullName);
-        if (!(fullName in indexMap)) {
-          indexMap[fullName] = index;
-        }
-      }
-    });
-    return {
-      groupFirstLetters: Array.from(letters),
-      letterIndexMap: indexMap,
-    };
-  }, [renderList]);
-
-  // Мемоизация функции для получения первой буквы (поддерживает эмодзи)
-  const getFirstChar = useCallback((str: string) => {
-    const match = str.match(
-      /\p{Regional_Indicator}{2}|\p{Extended_Pictographic}|\p{L}|\p{N}|./u,
-    );
-    return match ? match[0] : str.charAt(0);
-  }, []);
 
   // Обработчик скролла для показа/скрытия кнопки "Наверх"
   const handleScroll = useCallback(
@@ -160,20 +97,6 @@ export const ProxyGroups = memo((props: Props) => {
   const scrollToTop = useCallback(() => {
     virtuosoRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
-
-  const handleLetterClick = useCallback(
-    (name: string) => {
-      const index = letterIndexMap[name];
-      if (index !== undefined) {
-        virtuosoRef.current?.scrollToIndex({
-          index,
-          align: "start",
-          behavior: "smooth",
-        });
-      }
-    },
-    [letterIndexMap],
-  );
 
   // Вся бизнес-логика из оригинального файла
   const handleChangeProxy = useLockFn(
@@ -288,18 +211,6 @@ export const ProxyGroups = memo((props: Props) => {
         )}
       />
       <ScrollTopButton show={showScrollTop} onClick={scrollToTop} />
-
-      {/* Алфавитный указатель */}
-      <div className="fixed top-1/2 right-4 z-50 flex -translate-y-1/2 flex-col gap-1 rounded-md bg-background/50 p-1 backdrop-blur-sm">
-        {groupFirstLetters.map((name) => (
-          <LetterItem
-            key={name}
-            name={name}
-            onClick={handleLetterClick}
-            getFirstChar={getFirstChar}
-          />
-        ))}
-      </div>
     </div>
   );
 });
