@@ -24,6 +24,7 @@ import { showNotice } from "@/services/noticeService";
 import { NoticeManager } from "@/components/base/NoticeManager";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/sidebar";
+import {useZoomControls} from "@/hooks/useZoomControls";
 
 const appWindow = getCurrentWebviewWindow();
 export let portableFlag = false;
@@ -143,6 +144,7 @@ const handleNoticeMessage = (
 
 const Layout = () => {
   const mode = useThemeMode();
+  useZoomControls();
   const isDark = mode === "light" ? false : true;
   const { t } = useTranslation();
   useCustomTheme();

@@ -18,6 +18,7 @@
     "autostart:allow-disable",
     "autostart:allow-is-enabled",
     "core:window:allow-set-theme",
-    "notification:default"
+    "notification:default",
+    "core:webview:allow-set-webview-zoom"
   ]
 }

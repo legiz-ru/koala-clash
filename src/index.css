@@ -125,3 +125,7 @@
     /* h-full уже применен выше к body */
   }
 }
+
+svg {
+  stroke-width: var(--icon-stroke-width, 2);
+}
