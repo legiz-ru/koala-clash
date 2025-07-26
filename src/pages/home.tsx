@@ -57,7 +57,6 @@ const MinimalHomePage: React.FC = () => {
   const currentProfile = useMemo(() => {
     return profileItems.find(p => p.uid === profiles?.current);
   }, [profileItems, profiles?.current]);
-  console.log("Current profile", currentProfile);
   const currentProfileName = currentProfile?.name || profiles?.current;
 
   const activateProfile = useCallback(
