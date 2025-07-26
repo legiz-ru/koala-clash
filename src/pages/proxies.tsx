@@ -23,7 +23,7 @@ const ProxyPage = () => {
   );
 
   const { verge } = useVerge();
-  const modeList = ["rule", "global", "direct"];
+  const modeList = ["rule", "global"];
   const curMode = clashConfig?.mode?.toLowerCase();
 
   const onChangeMode = useLockFn(async (mode: string) => {
@@ -58,7 +58,7 @@ const ProxyPage = () => {
                 variant={mode === curMode ? "default" : "ghost"}
                 size="sm"
                 onClick={() => onChangeMode(mode)}
-                className="capitalize px-3 py-1 h-auto"
+                className="px-3 py-1 h-auto"
               >
                 {t(mode)}
               </Button>
