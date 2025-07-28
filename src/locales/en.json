@@ -235,7 +235,7 @@
   "uninstall": "uninstalled",
   "active": "active",
   "unknown": "unknown",
-  "Information: Please make sure that the Clash Verge Service is installed and enabled": "Information: Please make sure that the Clash Verge Service is installed and enabled",
+  "Information: Please make sure that the Clash Verge Service is installed and enabled": "Information: Please make sure that the Koala Clash Service is installed and enabled",
   "Install": "Install",
   "Uninstall": "Uninstall",
   "Disable Service Mode": "Disable Service Mode",
@@ -511,7 +511,7 @@
   "Validate Merge File": "Validate Merge File",
   "Validation Success": "Validation Success",
   "Validation Failed": "Validation Failed",
-  "Service Administrator Prompt": "Clash Verge requires administrator privileges to reinstall the system service",
+  "Service Administrator Prompt": "Koala Clash requires administrator privileges to reinstall the system service",
   "DNS Settings": "DNS Settings",
   "DNS settings saved": "DNS settings saved",
   "DNS Overwrite": "DNS Overwrite",
@@ -665,5 +665,7 @@
   "Send HWID": "Send HWID",
   "New Version is available": "New Version is available",
   "New Version": "New Version",
-  "New update": "New update"
+  "New update": "New update",
+  "Device Limit Reached": "Device Limit Reached",
+  "Update Profile": "Update Profile"
 }

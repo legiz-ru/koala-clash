@@ -24,7 +24,9 @@ import { showNotice } from "@/services/noticeService";
 import { NoticeManager } from "@/components/base/NoticeManager";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/sidebar";
-import {useZoomControls} from "@/hooks/useZoomControls";
+import { useZoomControls } from "@/hooks/useZoomControls";
+import { HwidErrorDialog } from "@/components/profile/hwid-error-dialog";
+
 
 const appWindow = getCurrentWebviewWindow();
 export let portableFlag = false;
@@ -50,8 +52,13 @@ const handleNoticeMessage = (
       sessionStorage.setItem('activateProfile', msg);
       break;
     case "import_sub_url::error":
-      showNotice("error", msg);
-      break;
+        console.log(msg);
+       if (msg.toLowerCase().includes('device') || msg.toLowerCase().includes('устройств')) {
+        window.dispatchEvent(new CustomEvent('show-hwid-error', { detail: msg }));
+       } else {
+         showNotice("error", msg);
+       }
+       break;
     case "set_config::error":
       showNotice("error", msg);
       break;
@@ -456,6 +463,7 @@ const Layout = () => {
                     {routersEles && React.cloneElement(routersEles, { key: location.pathname })}
                 </div>
             </main>
+            <HwidErrorDialog />
         </>
     );
 };

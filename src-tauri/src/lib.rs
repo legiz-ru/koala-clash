@@ -304,6 +304,7 @@ pub fn run() {
             cmd::save_profile_file,
             cmd::get_next_update_time,
             cmd::update_profiles_on_startup,
+            cmd::create_profile_from_share_link,
             // script validation
             cmd::script_validate_notice,
             cmd::validate_script_file,

@@ -417,6 +417,13 @@ impl PrfItem {
             None => None,
         };
 
+        if let Some(announce_msg) = &announce {
+            let lower_msg = announce_msg.to_lowercase();
+            if lower_msg.contains("device") || lower_msg.contains("устройств") {
+                bail!(announce_msg.clone());
+            }
+        }
+        
         let announce_url = match header.get("announce-url") {
             Some(value) => {
                 let str_value = value.to_str().unwrap_or("");

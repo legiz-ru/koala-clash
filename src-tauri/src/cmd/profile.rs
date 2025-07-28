@@ -9,6 +9,10 @@ use crate::{
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 use tokio::sync::{Mutex, RwLock};
+use std::collections::BTreeMap;
+use url::Url;
+use serde_yaml::Value;
+use base64::{engine::general_purpose::STANDARD, Engine as _};
 
 // 全局互斥锁防止并发配置更新
 static PROFILE_UPDATE_MUTEX: Mutex<()> = Mutex::const_new(());
@@ -707,4 +711,466 @@ pub async fn update_profiles_on_startup() -> CmdResult {
     }
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn create_profile_from_share_link(link: String, template_name: String) -> CmdResult {
+
+    const DEFAULT_TEMPLATE: &str = r#"
+    mixed-port: 2080
+    allow-lan: true
+    tcp-concurrent: true
+    enable-process: true
+    find-process-mode: always
+    global-client-fingerprint: chrome
+    mode: rule
+    log-level: debug
+    ipv6: false
+    keep-alive-interval: 30
+    unified-delay: false
+    profile:
+      store-selected: true
+      store-fake-ip: true
+    sniffer:
+      enable: true
+      sniff:
+        HTTP:
+          ports: [80, 8080-8880]
+          override-destination: true
+        TLS:
+          ports: [443, 8443]
+        QUIC:
+          ports: [443, 8443]
+    tun:
+      enable: true
+      stack: mixed
+      dns-hijack: ['any:53']
+      auto-route: true
+      auto-detect-interface: true
+      strict-route: true
+    dns:
+      enable: true
+      listen: :1053
+      prefer-h3: false
+      ipv6: false
+      enhanced-mode: fake-ip
+      fake-ip-filter: ['+.lan', '+.local']
+      nameserver: ['https://doh.dns.sb/dns-query']
+    proxies:
+      - name: myproxy
+        type: vless
+        server: YOURDOMAIN
+        port: 443
+        uuid: YOURUUID
+        network: tcp
+        flow: xtls-rprx-vision
+        udp: true
+        tls: true
+        reality-opts:
+          public-key: YOURPUBLIC
+          short-id: YOURSHORTID
+        servername: YOURREALITYDEST
+        client-fingerprint: chrome
+    proxy-groups:
+      - name: PROXY
+        type: select
+        proxies:
+          - myproxy
+    rule-providers:
+      ru-bundle:
+        type: http
+        behavior: domain
+        format: mrs
+        url: https://github.com/legiz-ru/mihomo-rule-sets/raw/main/ru-bundle/rule.mrs
+        path: ./ru-bundle/rule.mrs
+        interval: 86400
+      refilter_domains:
+        type: http
+        behavior: domain
+        format: mrs
+        url: https://github.com/legiz-ru/mihomo-rule-sets/raw/main/re-filter/domain-rule.mrs
+        path: ./re-filter/domain-rule.mrs
+        interval: 86400
+      refilter_ipsum:
+        type: http
+        behavior: ipcidr
+        format: mrs
+        url: https://github.com/legiz-ru/mihomo-rule-sets/raw/main/re-filter/ip-rule.mrs
+        path: ./re-filter/ip-rule.mrs
+        interval: 86400
+      oisd_big:
+        type: http
+        behavior: domain
+        format: mrs
+        url: https://github.com/legiz-ru/mihomo-rule-sets/raw/main/oisd/big.mrs
+        path: ./oisd/big.mrs
+        interval: 86400
+    rules:
+      - OR,((DOMAIN,ipwhois.app),(DOMAIN,ipwho.is),(DOMAIN,api.ip.sb),(DOMAIN,ipapi.co),(DOMAIN,ipinfo.io)),PROXY
+      - RULE-SET,oisd_big,REJECT
+      - PROCESS-NAME,Discord.exe,PROXY
+      - RULE-SET,ru-bundle,PROXY
+      - RULE-SET,refilter_domains,PROXY
+      - RULE-SET,refilter_ipsum,PROXY
+      - MATCH,DIRECT
+    "#;
+
+    const WITHOUT_RU_TEMPLATE: &str = r#"
+    mixed-port: 7890
+    allow-lan: true
+    tcp-concurrent: true
+    enable-process: true
+    find-process-mode: always
+    mode: rule
+    log-level: debug
+    ipv6: false
+    keep-alive-interval: 30
+    unified-delay: false
+    profile:
+      store-selected: true
+      store-fake-ip: true
+    sniffer:
+      enable: true
+      force-dns-mapping: true
+      parse-pure-ip: true
+      sniff:
+        HTTP:
+          ports:
+            - 80
+            - 8080-8880
+          override-destination: true
+        TLS:
+          ports:
+            - 443
+            - 8443
+    tun:
+      enable: true
+      stack: gvisor
+      auto-route: true
+      auto-detect-interface: false
+      dns-hijack:
+        - any:53
+      strict-route: true
+      mtu: 1500
+    dns:
+      enable: true
+      prefer-h3: true
+      use-hosts: true
+      use-system-hosts: true
+      listen: 127.0.0.1:6868
+      ipv6: false
+      enhanced-mode: redir-host
+      default-nameserver:
+        - tls://1.1.1.1
+        - tls://1.0.0.1
+      proxy-server-nameserver:
+        - tls://1.1.1.1
+        - tls://1.0.0.1
+      direct-nameserver:
+        - tls://77.88.8.8
+      nameserver:
+        - https://cloudflare-dns.com/dns-query
+
+    proxies:
+      - name: myproxy
+        type: vless
+        server: YOURDOMAIN
+        port: 443
+        uuid: YOURUUID
+        network: tcp
+        flow: xtls-rprx-vision
+        udp: true
+        tls: true
+        reality-opts:
+          public-key: YOURPUBLIC
+          short-id: YOURSHORTID
+        servername: YOURREALITYDEST
+        client-fingerprint: chrome
+
+    proxy-groups:
+      - name: PROXY
+        icon: https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Hijacking.png
+        type: select
+        proxies:
+          - ⚡️ Fastest
+          - 📶 First Available
+          - myproxy
+      - name: ⚡️ Fastest
+        icon: https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Auto.png
+        type: url-test
+        tolerance: 150
+        url: https://cp.cloudflare.com/generate_204
+        interval: 300
+        proxies:
+          - myproxy
+      - name: 📶 First Available
+        icon: https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Download.png
+        type: fallback
+        url: https://cp.cloudflare.com/generate_204
+        interval: 300
+        proxies:
+          - myproxy
+
+
+    rule-providers:
+      torrent-trackers:
+        type: http
+        behavior: domain
+        format: mrs
+        url: https://github.com/legiz-ru/mihomo-rule-sets/raw/main/other/torrent-trackers.mrs
+        path: ./rule-sets/torrent-trackers.mrs
+        interval: 86400
+      torrent-clients:
+        type: http
+        behavior: classical
+        format: yaml
+        url: https://github.com/legiz-ru/mihomo-rule-sets/raw/main/other/torrent-clients.yaml
+        path: ./rule-sets/torrent-clients.yaml
+        interval: 86400
+      geosite-ru:
+        type: http
+        behavior: domain
+        format: mrs
+        url: https://github.com/MetaCubeX/meta-rules-dat/raw/meta/geo/geosite/category-ru.mrs
+        path: ./geosite-ru.mrs
+        interval: 86400
+      xiaomi:
+        type: http
+        behavior: domain
+        format: mrs
+        url: https://github.com/MetaCubeX/meta-rules-dat/raw/meta/geo/geosite/xiaomi.mrs
+        path: ./rule-sets/xiaomi.mrs
+        interval: 86400
+      blender:
+        type: http
+        behavior: domain
+        format: mrs
+        url: https://github.com/MetaCubeX/meta-rules-dat/raw/meta/geo/geosite/blender.mrs
+        path: ./rule-sets/blender.mrs
+        interval: 86400
+      drweb:
+        type: http
+        behavior: domain
+        format: mrs
+        url: https://github.com/MetaCubeX/meta-rules-dat/raw/meta/geo/geosite/drweb.mrs
+        path: ./rule-sets/drweb.mrs
+        interval: 86400
+      debian:
+        type: http
+        behavior: domain
+        format: mrs
+        url: https://github.com/MetaCubeX/meta-rules-dat/raw/meta/geo/geosite/debian.mrs
+        path: ./rule-sets/debian.mrs
+        interval: 86400
+      canonical:
+        type: http
+        behavior: domain
+        format: mrs
+        url: https://github.com/MetaCubeX/meta-rules-dat/raw/meta/geo/geosite/canonical.mrs
+        path: ./rule-sets/canonical.mrs
+        interval: 86400
+      python:
+        type: http
+        behavior: domain
+        format: mrs
+        url: https://github.com/MetaCubeX/meta-rules-dat/raw/meta/geo/geosite/python.mrs
+        path: ./rule-sets/python.mrs
+        interval: 86400
+      geoip-ru:
+        type: http
+        behavior: ipcidr
+        format: mrs
+        url: https://github.com/MetaCubeX/meta-rules-dat/raw/meta/geo/geoip/ru.mrs
+        path: ./geoip-ru.mrs
+        interval: 86400
+      geosite-private:
+        type: http
+        behavior: domain
+        format: mrs
+        url: https://github.com/MetaCubeX/meta-rules-dat/raw/meta/geo/geosite/private.mrs
+        path: ./geosite-private.mrs
+        interval: 86400
+      geoip-private:
+        type: http
+        behavior: ipcidr
+        format: mrs
+        url: https://github.com/MetaCubeX/meta-rules-dat/raw/meta/geo/geoip/private.mrs
+        path: ./geoip-private.mrs
+        interval: 86400
+
+    rules:
+      - DOMAIN-SUFFIX,habr.com,PROXY
+      - DOMAIN-SUFFIX,kemono.su,PROXY
+      - DOMAIN-SUFFIX,jut.su,PROXY
+      - DOMAIN-SUFFIX,kara.su,PROXY
+      - DOMAIN-SUFFIX,theins.ru,PROXY
+      - DOMAIN-SUFFIX,tvrain.ru,PROXY
+      - DOMAIN-SUFFIX,echo.msk.ru,PROXY
+      - DOMAIN-SUFFIX,the-village.ru,PROXY
+      - DOMAIN-SUFFIX,snob.ru,PROXY
+      - DOMAIN-SUFFIX,novayagazeta.ru,PROXY
+      - DOMAIN-SUFFIX,moscowtimes.ru,PROXY
+      - DOMAIN-KEYWORD,animego,PROXY
+      - DOMAIN-KEYWORD,yummyanime,PROXY
+      - DOMAIN-KEYWORD,yummy-anime,PROXY
+      - DOMAIN-KEYWORD,animeportal,PROXY
+      - DOMAIN-KEYWORD,anime-portal,PROXY
+      - DOMAIN-KEYWORD,animedub,PROXY
+      - DOMAIN-KEYWORD,anidub,PROXY
+      - DOMAIN-KEYWORD,animelib,PROXY
+      - DOMAIN-KEYWORD,ikianime,PROXY
+      - DOMAIN-KEYWORD,anilibria,PROXY
+      - PROCESS-NAME,Discord.exe,PROXY
+      - PROCESS-NAME,discord,PROXY
+      - RULE-SET,geosite-private,DIRECT,no-resolve
+      - RULE-SET,geoip-private,DIRECT
+      - RULE-SET,torrent-clients,DIRECT
+      - RULE-SET,torrent-trackers,DIRECT
+      - DOMAIN-SUFFIX,.ru,DIRECT
+      - DOMAIN-SUFFIX,.su,DIRECT
+      - DOMAIN-SUFFIX,.ru.com,DIRECT
+      - DOMAIN-SUFFIX,.ru.net,DIRECT
+      - DOMAIN-SUFFIX,wikipedia.org,DIRECT
+      - DOMAIN-SUFFIX,kudago.com,DIRECT
+      - DOMAIN-SUFFIX,kinescope.io,DIRECT
+      - DOMAIN-SUFFIX,redheadsound.studio,DIRECT
+      - DOMAIN-SUFFIX,plplayer.online,DIRECT
+      - DOMAIN-SUFFIX,lomont.site,DIRECT
+      - DOMAIN-SUFFIX,remanga.org,DIRECT
+      - DOMAIN-SUFFIX,shopstory.live,DIRECT
+      - DOMAIN-KEYWORD,miradres,DIRECT
+      - DOMAIN-KEYWORD,premier,DIRECT
+      - DOMAIN-KEYWORD,shutterstock,DIRECT
+      - DOMAIN-KEYWORD,2gis,DIRECT
+      - DOMAIN-KEYWORD,diginetica,DIRECT
+      - DOMAIN-KEYWORD,kinescopecdn,DIRECT
+      - DOMAIN-KEYWORD,researchgate,DIRECT
+      - DOMAIN-KEYWORD,springer,DIRECT
+      - DOMAIN-KEYWORD,nextcloud,DIRECT
+      - DOMAIN-KEYWORD,wiki,DIRECT
+      - DOMAIN-KEYWORD,kaspersky,DIRECT
+      - DOMAIN-KEYWORD,stepik,DIRECT
+      - DOMAIN-KEYWORD,likee,DIRECT
+      - DOMAIN-KEYWORD,snapchat,DIRECT
+      - DOMAIN-KEYWORD,yappy,DIRECT
+      - DOMAIN-KEYWORD,pikabu,DIRECT
+      - DOMAIN-KEYWORD,okko,DIRECT
+      - DOMAIN-KEYWORD,wink,DIRECT
+      - DOMAIN-KEYWORD,kion,DIRECT
+      - DOMAIN-KEYWORD,roblox,DIRECT
+      - DOMAIN-KEYWORD,ozon,DIRECT
+      - DOMAIN-KEYWORD,wildberries,DIRECT
+      - DOMAIN-KEYWORD,aliexpress,DIRECT
+      - RULE-SET,geosite-ru,DIRECT
+      - RULE-SET,xiaomi,DIRECT
+      - RULE-SET,blender,DIRECT
+      - RULE-SET,drweb,DIRECT
+      - RULE-SET,debian,DIRECT
+      - RULE-SET,canonical,DIRECT
+      - RULE-SET,python,DIRECT
+      - RULE-SET,geoip-ru,DIRECT
+      - MATCH,PROXY
+    "#;
+
+    let template_yaml = match template_name.as_str() {
+        "without_ru" => WITHOUT_RU_TEMPLATE,
+        _ => DEFAULT_TEMPLATE,
+    };
+
+    let parsed_url = Url::parse(&link).map_err(|e| e.to_string())?;
+    let scheme = parsed_url.scheme();
+    let proxy_name = parsed_url.fragment().unwrap_or("Proxy from Link").to_string();
+
+    let mut proxy_map: BTreeMap<String, Value> = BTreeMap::new();
+    proxy_map.insert("name".into(), proxy_name.clone().into());
+    proxy_map.insert("type".into(), scheme.into());
+    proxy_map.insert("server".into(), parsed_url.host_str().unwrap_or_default().into());
+    proxy_map.insert("port".into(), parsed_url.port().unwrap_or(443).into());
+    proxy_map.insert("udp".into(), true.into());
+
+    match scheme {
+        "vless" | "trojan" => {
+            proxy_map.insert("uuid".into(), parsed_url.username().into());
+            let mut reality_opts: BTreeMap<String, Value> = BTreeMap::new();
+            for (key, value) in parsed_url.query_pairs() {
+                match key.as_ref() {
+                    "security" if value == "reality" => {
+                        proxy_map.insert("tls".into(), true.into());
+                    }
+                    "security" if value == "tls" => {
+                        proxy_map.insert("tls".into(), true.into());
+                    }
+                    "flow" => { proxy_map.insert("flow".into(), value.to_string().into()); }
+                    "sni" => { proxy_map.insert("servername".into(), value.to_string().into()); }
+                    "fp" => { proxy_map.insert("client-fingerprint".into(), value.to_string().into()); }
+                    "pbk" => { reality_opts.insert("public-key".into(), value.to_string().into()); }
+                    "sid" => { reality_opts.insert("short-id".into(), value.to_string().into()); }
+                    _ => {}
+                }
+            }
+            if !reality_opts.is_empty() {
+                proxy_map.insert("reality-opts".into(), serde_yaml::to_value(reality_opts).map_err(|e| e.to_string())?);
+            }
+        }
+        "ss" => {
+            if let Ok(decoded_user) = STANDARD.decode(parsed_url.username()) {
+                if let Ok(user_str) = String::from_utf8(decoded_user) {
+                    if let Some((cipher, password)) = user_str.split_once(':') {
+                        proxy_map.insert("cipher".into(), cipher.into());
+                        proxy_map.insert("password".into(), password.into());
+                    }
+                }
+            }
+        }
+        "vmess" => {
+            if let Ok(decoded_bytes) = STANDARD.decode(parsed_url.host_str().unwrap_or_default()) {
+                if let Ok(json_str) = String::from_utf8(decoded_bytes) {
+                    if let Ok(vmess_params) = serde_json::from_str::<BTreeMap<String, Value>>(&json_str) {
+                        if let Some(add) = vmess_params.get("add") { proxy_map.insert("server".into(), add.clone()); }
+                        if let Some(port) = vmess_params.get("port") { proxy_map.insert("port".into(), port.clone()); }
+                        if let Some(id) = vmess_params.get("id") { proxy_map.insert("uuid".into(), id.clone()); }
+                        if let Some(aid) = vmess_params.get("aid") { proxy_map.insert("alterId".into(), aid.clone()); }
+                        if let Some(net) = vmess_params.get("net") { proxy_map.insert("network".into(), net.clone()); }
+                        if let Some(ps) = vmess_params.get("ps") { proxy_map.insert("name".into(), ps.clone()); }
+                    }
+                }
+            }
+        }
+        _ => {
+        }
+    }
+
+    let mut config: Value = serde_yaml::from_str(template_yaml).map_err(|e| e.to_string())?;
+
+    if let Some(proxies) = config.get_mut("proxies").and_then(|v| v.as_sequence_mut()) {
+        proxies.clear();
+        proxies.push(serde_yaml::to_value(proxy_map).map_err(|e| e.to_string())?);
+    }
+
+    if let Some(groups) = config.get_mut("proxy-groups").and_then(|v| v.as_sequence_mut()) {
+        for group in groups.iter_mut() {
+            if let Some(mapping) = group.as_mapping_mut() {
+                if let Some(proxies_list) = mapping.get_mut("proxies").and_then(|p| p.as_sequence_mut()) {
+                    let new_proxies_list: Vec<Value> = proxies_list
+                        .iter()
+                        .map(|p| {
+                            if p.as_str() == Some("myproxy") {
+                                proxy_name.clone().into()
+                            } else {
+                                p.clone()
+                            }
+                        })
+                        .collect();
+                    *proxies_list = new_proxies_list;
+                }
+            }
+        }
+    }
+
+    let new_yaml_content = serde_yaml::to_string(&config).map_err(|e| e.to_string())?;
+
+    let item = PrfItem::from_local(proxy_name, "Created from share link".into(), Some(new_yaml_content), None)
+        .map_err(|e| e.to_string())?;
+
+    wrap_err!(Config::profiles().data().append_item(item))
 }
