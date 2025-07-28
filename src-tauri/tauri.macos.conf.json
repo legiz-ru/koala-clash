@@ -14,11 +14,11 @@
         "background": "images/background.png",
         "appPosition": {
           "x": 180,
-          "y": 170
+          "y": 200
         },
         "applicationFolderPosition": {
           "x": 480,
-          "y": 170
+          "y": 200
         },
         "windowSize": {
           "height": 400,
