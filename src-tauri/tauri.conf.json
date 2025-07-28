@@ -3,7 +3,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "bundle": {
     "active": true,
-    "longDescription": "Clash Verge Rev Lite",
+    "longDescription": "Koala Clash",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -12,11 +12,11 @@
       "icons/icon.ico"
     ],
     "resources": ["resources", "resources/locales/*"],
-    "publisher": "Clash Verge Rev Lite",
+    "publisher": "Koala Clash",
     "externalBin": ["sidecar/verge-mihomo", "sidecar/verge-mihomo-alpha"],
     "copyright": "GNU General Public License v3.0",
     "category": "DeveloperTool",
-    "shortDescription": "Clash Verge Rev Lite",
+    "shortDescription": "Koala Clash",
     "createUpdaterArtifacts": true
   },
   "build": {
@@ -25,7 +25,7 @@
     "beforeDevCommand": "pnpm run web:dev",
     "devUrl": "http://localhost:3000/"
   },
-  "productName": "Clash Verge Rev Lite",
+  "productName": "Koala Clash",
   "identifier": "io.github.clash-verge-rev.clash-verge-rev",
   "plugins": {
     "updater": {

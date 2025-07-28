@@ -118,7 +118,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{env.VERSION}}
-          name: "Clash Verge Rev Lite v${{env.VERSION}}"
+          name: "Koala Clash v${{env.VERSION}}"
           body_path: release.txt
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -217,7 +217,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{steps.build.outputs.appVersion}}
-          name: "Clash Verge Rev Lite v${{steps.build.outputs.appVersion}}"
+          name: "Koala Clash v${{steps.build.outputs.appVersion}}"
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
             src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
@@ -339,7 +339,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{env.VERSION}}
-          name: "Clash Verge Rev Lite v${{env.VERSION}}"
+          name: "Koala Clash v${{env.VERSION}}"
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
             src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
@@ -429,7 +429,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{steps.build.outputs.appVersion}}
-          name: "Clash Verge Rev Lite v${{steps.build.outputs.appVersion}}"
+          name: "Koala Clash v${{steps.build.outputs.appVersion}}"
           token: ${{ secrets.GITHUB_TOKEN }}
           files: src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*setup*
 
