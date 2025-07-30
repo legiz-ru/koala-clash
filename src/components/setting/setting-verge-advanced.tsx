@@ -180,32 +180,12 @@ const SettingVergeAdvanced = ({ onError }: Props) => {
           extra={<TooltipIcon tooltip={t("LightWeight Mode Info")} />}
           onClick={() => liteModeRef.current?.open()}
         />
-        <SettingRow
-          onClick={exitApp}
-          label={<LabelWithIcon icon={LogOut} text={t("Exit")} />}
-        />
-
-        <SettingRow
-          label={
-            <LabelWithIcon
-              icon={ClipboardList}
-              text={t("Export Diagnostic Info")}
-            />
-          }
-        >
-          <TooltipIcon
-            tooltip={t("Copy")}
-            icon={<Copy className="h-4 w-4" />}
-            onClick={onExportDiagnosticInfo}
-          />
-        </SettingRow>
 
         <SettingRow
           label={<LabelWithIcon icon={Info} text={t("Verge Version")} />}
         >
           <p className="text-sm font-medium pr-2 font-mono">v{version}</p>
         </SettingRow>
-        {/* --- КОНЕЦ ИЗМЕНЕНИЙ 2 --- */}
       </div>
     </div>
   );
