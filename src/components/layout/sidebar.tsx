@@ -40,10 +40,20 @@ export function AppSidebar() {
   return (
     <Sidebar variant="floating" collapsible="icon">
       <SidebarHeader>
-        <SidebarMenuButton>
-          <EarthLock/>
-          <span className="font-semibold group-data-[state=collapsed]:hidden">
-            Clash Koala
+        <SidebarMenuButton size="lg"
+          className={cn(
+            "flex h-12 items-center transition-all duration-200",
+            "group-data-[state=expanded]:w-full group-data-[state=expanded]:gap-2 group-data-[state=expanded]:px-3",
+            "group-data-[state=collapsed]:w-full group-data-[state=collapsed]:justify-center"
+          )}
+        >
+          <img
+            src="./assets/image/logo.png"
+            alt="logo"
+            className="h-6 w-6 flex-shrink-0"
+          />
+          <span className="font-semibold whitespace-nowrap group-data-[state=collapsed]:hidden">
+            Koala Clash
           </span>
         </SidebarMenuButton>
       </SidebarHeader>
