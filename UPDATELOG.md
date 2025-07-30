@@ -1,3 +1,15 @@
+## v0.2.4
+
+- added auto-scaling and scaling via key combination
+- direct was removed, and the translation for rules and global was replaced
+- added icons for proxy groups on main page
+- fixed log color when dark theme is enabled
+- the alphabetical index has been removed, and additional information about proxies is now hidden by default
+- notification of exceeding the number of devices in the subscription
+- support for vless:// links with templates by @legiz-ru
+- started the process of renaming to Koala Clash, replaced icons
+- traffic information has been reworked on profile page
+
 ## v0.2.3
 
 - fixed problem with profile inactivation after adding via deeplink on windows
