@@ -56,6 +56,7 @@ import {
   Loader2,
   Info,
   DownloadCloud,
+  Download,
   Trash2,
   Edit3,
   FileText as FileTextIcon,
@@ -66,7 +67,7 @@ import {
   ListTree,
   CheckCircle,
   Infinity,
-  RefreshCw,
+  RefreshCw, Network,
 } from "lucide-react";
 import { t } from "i18next";
 
@@ -343,8 +344,8 @@ export const ProfileItem = (props: Props) => {
                 </div>
                 <div className="flex items-center flex-shrink-0">
                   <Badge
-                    variant={type === "local" ? "secondary" : "outline"}
-                    className="text-xs"
+                    variant="outline"
+                    className="text-xs shadow-sm"
                   >
                     {type}
                   </Badge>
@@ -384,20 +385,21 @@ export const ProfileItem = (props: Props) => {
                     )}
                   </div>
                 </div>
-              </div>
-            </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Download className="h-3 w-3 inline mr-1.5" />
+                    <span className="pr-5">
+                      {parseTraffic(download)}
+                    </span>
+                    <Network className="h-3 w-3 inline mr-1.5" />
+                    {total > 0 ? (
+                       <span>{parseTraffic(total)}</span>
+                    ) : <Infinity className="h-3 w-3 inline mr-1.5" />}
 
-            {hasExtra && total > 0 && (
-              <div className="relative h-5">
-                <Progress value={progress} className="h-full rounded-none" />
-                <div className="absolute inset-0 flex items-center justify-between px-2 text-xs text-white/90 font-medium">
-                  <span>
-                    {parseTraffic(download)}↓ / {parseTraffic(upload)}↑
-                  </span>
-                  <span>{parseTraffic(total)}</span>
+                  </div>
                 </div>
               </div>
-            )}
+            </div>
           </Card>
         </ContextMenuTrigger>
 
@@ -405,7 +407,6 @@ export const ProfileItem = (props: Props) => {
           className="w-56"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Объединяем все части меню */}
           {[...homeMenuItem, ...mainMenuItems].map((item) => (
             <ContextMenuItem
               key={item.label}
@@ -420,7 +421,7 @@ export const ProfileItem = (props: Props) => {
           <ContextMenuSub>
             <ContextMenuSubTrigger disabled={!hasUrl || isLoading}>
               <DownloadCloud className="mr-2 h-4 w-4" />
-              <span>{t("Update")}</span>
+              <span className="px-2">{t("Update")}</span>
             </ContextMenuSubTrigger>
             <ContextMenuPortal>
               <ContextMenuSubContent>
