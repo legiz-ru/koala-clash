@@ -86,30 +86,30 @@ jobs:
           ## Which version should I download?
 
           ### macOS
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_aarch64.dmg"><img src="https://img.shields.io/badge/DMG-default?style=flat&logo=apple&label=Apple%20Silicon"></a><br>
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_x64.dmg"><img src="https://img.shields.io/badge/DMG-default?style=flat&logo=apple&label=Intel"></a><br>
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash_aarch64.dmg"><img src="https://img.shields.io/badge/DMG-default?style=flat&logo=apple&label=Apple%20Silicon"></a><br>
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash_x64.dmg"><img src="https://img.shields.io/badge/DMG-default?style=flat&logo=apple&label=Intel"></a><br>
           > :warning: **Warning**
           If you get a notification that the application is corrupted when you run it on macOS, run this command:<br>
           <code>sudo xattr -r -c /Applications/Clash\ Verge\ Rev\ Lite.app</code>
           
           ### Linux
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_amd64.deb"><img src="https://img.shields.io/badge/x64-default?style=flat&logo=debian&label=DEB"> </a><br>
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite-${{ env.VERSION }}-1.x86_64.rpm"><img src="https://img.shields.io/badge/x64-default?style=flat&logo=fedora&label=RPM"> </a>
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash_amd64.deb"><img src="https://img.shields.io/badge/x64-default?style=flat&logo=debian&label=DEB"> </a><br>
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash.x86_64.rpm"><img src="https://img.shields.io/badge/x64-default?style=flat&logo=fedora&label=RPM"> </a>
           
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_arm64.deb"><img src="https://img.shields.io/badge/arm64-default?style=flat&logo=debian&label=DEB"> </a><br>
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite-${{ env.VERSION }}-1.aarch64.rpm"><img src="https://img.shields.io/badge/aarch64-default?style=flat&logo=fedora&label=RPM"> </a>
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash_arm64.deb"><img src="https://img.shields.io/badge/arm64-default?style=flat&logo=debian&label=DEB"> </a><br>
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash.aarch64.rpm"><img src="https://img.shields.io/badge/aarch64-default?style=flat&logo=fedora&label=RPM"> </a>
           
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_armhf.deb"><img src="https://img.shields.io/badge/armhf-default?style=flat&logo=debian&label=DEB"> </a><br>
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite-${{ env.VERSION }}-1.armhfp.rpm"><img src="https://img.shields.io/badge/armhfp-default?style=flat&logo=fedora&label=RPM"> </a>
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash_armhf.deb"><img src="https://img.shields.io/badge/armhf-default?style=flat&logo=debian&label=DEB"> </a><br>
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash.armhfp.rpm"><img src="https://img.shields.io/badge/armhfp-default?style=flat&logo=fedora&label=RPM"> </a>
           
           ### Windows (Win7 is no longer supported)
           #### Normal version (recommended)
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_x64-setup.exe"><img src="https://badgen.net/badge/icon/x64?icon=windows&label=exe"></a><br>
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_arm64-setup.exe"><img src="https://badgen.net/badge/icon/arm64?icon=windows&label=exe"></a>
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash_x64-setup.exe"><img src="https://badgen.net/badge/icon/x64?icon=windows&label=exe"></a><br>
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash_arm64-setup.exe"><img src="https://badgen.net/badge/icon/arm64?icon=windows&label=exe"></a>
           #### Portable version is no longer available with many problems
           #### Built-in Webview version 2 (large size, only used in enterprise version of the system or can not install webview2)
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_x64_fixed_webview2-setup.exe"><img src="https://badgen.net/badge/icon/x64?icon=windows&label=exe"></a><br>
-          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Clash.Verge.Rev.Lite_${{ env.VERSION }}_arm64_fixed_webview2-setup.exe"><img src="https://badgen.net/badge/icon/arm64?icon=windows&label=exe"></a>
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash_x64_fixed_webview2-setup.exe"><img src="https://badgen.net/badge/icon/x64?icon=windows&label=exe"></a><br>
+          <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash_arm64_fixed_webview2-setup.exe"><img src="https://badgen.net/badge/icon/arm64?icon=windows&label=exe"></a>
 
           Created at ${{ env.BUILDTIME }}.
           EOF
@@ -197,7 +197,7 @@ jobs:
           $version = ${{steps.build.outputs.appVersion}}
           $files = Get-ChildItem ".\src-tauri\target\${{ matrix.target }}\release\bundle\nsis\*-setup.exe"
           foreach ($file in $files) {
-            $newName = $file.Name replace "_${version}_", "_" 
+            $newName = $file.Name -replace "_${version}_", "_" 
             Rename-Item $file.FullName $newName
           }
 
@@ -205,13 +205,25 @@ jobs:
         if: runner.os == 'Linux' || runner.os == 'macOS'
         shell: bash
         run: |
-          VERSION=${{steps.build.outputs.appVersion}}
-          old_path=$(find src-tauri/target/release/bundle -type f \(-o -name "*.dmg" -o -name "*.deb" -o -name "*.rpm" \) -print -quit)
+          TARGET_DIR="src-tauri/target/${{ matrix.target }}/release/bundle"
           
-          new_path=$(echo "$old_path" | sed -E "s/-${VERSION}-1//g" | sed -E "s/_${VERSION}_//g" | sed -E "s/-${VERSION}-//g")
+          if [ ! -d "$TARGET_DIR" ]; then
+              exit 1
+          fi
           
-          echo "Renaming '$old_path' to '$new_path'"
-          mv "$old_path" "$new_path"
+          find "$TARGET_DIR" -type f \( -name "*.dmg" -o -name "*.deb" -o -name "*.rpm" \) -print0 | while IFS= read -r -d '' old_path; do
+              dir_path=$(dirname "$old_path")
+              old_filename=$(basename "$old_path")
+              new_filename=$(echo "$old_filename" \
+                  | sed -E 's/_[0-9]+\.[0-9]+\.[0-9]+_/_/' \
+                  | sed -E 's/-[0-9]+\.[0-9]+\.[0-9]+-[0-9]+//' \
+              )
+              new_path="${dir_path}/${new_filename}"
+              if [ "$old_path" != "$new_path" ]; then
+                  echo "   - '$old_filename' -> '$new_filename'"
+                  mv "$old_path" "$new_path"
+              fi
+          done
 
       - name: Upload Release
         uses: softprops/action-gh-release@v2
@@ -223,6 +235,7 @@ jobs:
             src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
             src-tauri/target/${{ matrix.target }}/release/bundle/rpm/*.rpm
             src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*setup*
+            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
 
   release-for-linux-arm:
     name: Release Build for Linux ARM
@@ -335,6 +348,29 @@ jobs:
           echo "VERSION=$(cat package.json | jq '.version' | tr -d '"')" >> $GITHUB_ENV
           echo "BUILDTIME=$(TZ=Europe/Moscow date)" >> $GITHUB_ENV
 
+      - name: Rename
+        shell: bash
+        run: |
+          TARGET_DIR="src-tauri/target/${{ matrix.target }}/release/bundle"
+          
+          if [ ! -d "$TARGET_DIR" ]; then
+              exit 1
+          fi
+          
+          find "$TARGET_DIR" -type f \( -name "*.dmg" -o -name "*.deb" -o -name "*.rpm" \) -print0 | while IFS= read -r -d '' old_path; do
+              dir_path=$(dirname "$old_path")
+              old_filename=$(basename "$old_path")
+              new_filename=$(echo "$old_filename" \
+                  | sed -E 's/_[0-9]+\.[0-9]+\.[0-9]+_/_/' \
+                  | sed -E 's/-[0-9]+\.[0-9]+\.[0-9]+-[0-9]+//' \
+              )
+              new_path="${dir_path}/${new_filename}"
+              if [ "$old_path" != "$new_path" ]; then
+                  echo "   - '$old_filename' -> '$new_filename'"
+                  mv "$old_path" "$new_path"
+              fi
+          done
+
       - name: Upload Release
         uses: softprops/action-gh-release@v2
         with:
@@ -409,19 +445,19 @@ jobs:
         run: |
           $files = Get-ChildItem ".\src-tauri\target\${{ matrix.target }}\release\bundle\nsis\*-setup.exe"
           foreach ($file in $files) {
-            $newName = $file.Name -replace "-setup\.exe$", "_fixed_webview2-setup.exe"
+            $newName = $file.Name -replace "_${{steps.build.outputs.appVersion}}_", "_" -replace "-setup\.exe$", "_fixed_webview2-setup.exe"
             Rename-Item $file.FullName $newName
           }
 
           $files = Get-ChildItem ".\src-tauri\target\${{ matrix.target }}\release\bundle\nsis\*.nsis.zip"
           foreach ($file in $files) {
-            $newName = $file.Name -replace "-setup\.nsis\.zip$", "_fixed_webview2-setup.nsis.zip"
+            $newName = $file.Name -replace "_${{steps.build.outputs.appVersion}}_", "_" -replace "-setup\.nsis\.zip$", "_fixed_webview2-setup.nsis.zip"
             Rename-Item $file.FullName $newName
           }
 
           $files = Get-ChildItem ".\src-tauri\target\${{ matrix.target }}\release\bundle\nsis\*-setup.exe.sig"
           foreach ($file in $files) {
-            $newName = $file.Name -replace "-setup\.exe\.sig$", "_fixed_webview2-setup.exe.sig"
+            $newName = $file.Name -replace "_${{steps.build.outputs.appVersion}}_", "_" -replace "-setup\.exe\.sig$", "_fixed_webview2-setup.exe.sig"
             Rename-Item $file.FullName $newName
           }
 
