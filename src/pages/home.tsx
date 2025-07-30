@@ -25,7 +25,7 @@ import {
   AlertTriangle,
   Loader2,
   Globe,
-  Send, ExternalLink, RefreshCw,
+  Send, ExternalLink, RefreshCw, ArrowDown, ArrowUp,
 } from "lucide-react";
 import { useVerge } from "@/hooks/use-verge";
 import { useSystemState } from "@/hooks/use-system-state";
@@ -37,6 +37,8 @@ import { closeAllConnections } from "@/services/api";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { updateProfile } from "@/services/cmds";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import parseTraffic from "@/utils/parse-traffic";
+import { useAppData } from "@/providers/app-data-provider";
 
 const MinimalHomePage: React.FC = () => {
   const { t } = useTranslation();
@@ -46,6 +48,7 @@ const MinimalHomePage: React.FC = () => {
     useProfiles();
   const viewerRef = useRef<ProfileViewerRef>(null);
   const [uidToActivate, setUidToActivate] = useState<string | null>(null);
+  const { connections } = useAppData();
 
   const profileItems = useMemo(() => {
     const items =
@@ -239,13 +242,26 @@ const MinimalHomePage: React.FC = () => {
               )}
             </div>
           )}
-          <div className="text-center">
+          <div className="relative text-center">
             <h1
               className="text-4xl mb-2 font-semibold"
               style={{ color: isProxyEnabled ? "#22c55e" : "#ef4444" }}
             >
               {isProxyEnabled ? t("Connected") : t("Disconnected")}
             </h1>
+            {isProxyEnabled && (
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-48 flex justify-center items-center text-sm text-muted-foreground gap-6">
+                <div className="flex items-center gap-1">
+                    <ArrowDown className="h-4 w-4 text-green-500" />
+                    {parseTraffic(connections.downloadTotal)}
+                </div>
+                <div className="flex items-center gap-1">
+                    <ArrowUp className="h-4 w-4 text-sky-500" />
+                    {parseTraffic(connections.uploadTotal)}
+                </div>
+              </div>
+            )}
+
             <p className="h-6 text-sm text-muted-foreground transition-opacity duration-300">
               {isToggling &&
                 (isProxyEnabled ? t("Disconnecting...") : t("Connecting..."))}
@@ -260,6 +276,7 @@ const MinimalHomePage: React.FC = () => {
               aria-label={t("Toggle Proxy")}
             />
           </div>
+
 
           {showTunAlert && (
             <div className="w-full max-w-sm">
