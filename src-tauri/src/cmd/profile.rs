@@ -13,6 +13,7 @@ use std::collections::BTreeMap;
 use url::Url;
 use serde_yaml::Value;
 use base64::{engine::general_purpose::STANDARD, Engine as _};
+use percent_encoding::percent_decode_str;
 
 // 全局互斥锁防止并发配置更新
 static PROFILE_UPDATE_MUTEX: Mutex<()> = Mutex::const_new(());
@@ -1079,7 +1080,9 @@ pub async fn create_profile_from_share_link(link: String, template_name: String)
 
     let parsed_url = Url::parse(&link).map_err(|e| e.to_string())?;
     let scheme = parsed_url.scheme();
-    let proxy_name = parsed_url.fragment().unwrap_or("Proxy from Link").to_string();
+    let proxy_name = parsed_url.fragment()
+        .map(|f| percent_decode_str(f).decode_utf8_lossy().to_string())
+        .unwrap_or_else(|| "Proxy from Link".to_string());
 
     let mut proxy_map: BTreeMap<String, Value> = BTreeMap::new();
     proxy_map.insert("name".into(), proxy_name.clone().into());
