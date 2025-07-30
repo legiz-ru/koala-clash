@@ -235,7 +235,7 @@
   "uninstall": "uninstalled",
   "active": "active",
   "unknown": "unknown",
-  "Information: Please make sure that the Clash Verge Service is installed and enabled": "Information: Please make sure that the Koala Clash Service is installed and enabled",
+  "Information: Please make sure that the Clash Verge Service is installed and enabled": "Information: Please make sure that the Clash Verge Service is installed and enabled",
   "Install": "Install",
   "Uninstall": "Uninstall",
   "Disable Service Mode": "Disable Service Mode",
@@ -645,6 +645,10 @@
   "Attention Required": "Attention Required",
   "Menu": "Menu",
   "Add Profile": "Add Profile",
+  "Proxy enabled": "Proxy enabled",
+  "Proxy disabled": "Proxy disabled",
+  "Connecting...": "Connecting...",
+  "Disconnecting...": "Disconnecting...",
   "Delete Profile": "Delete Profile {{name}}?",
   "This action cannot be undone.": "This action cannot be undone.",
   "Check Group Latency": "Check Group Latency",
@@ -667,5 +671,9 @@
   "New Version": "New Version",
   "New update": "New update",
   "Device Limit Reached": "Device Limit Reached",
-  "Update Profile": "Update Profile"
+  "Update Profile": "Update Profile",
+  "Template": "Template",
+  "Select a template...": "Select a template...",
+  "Default Template": "Ru-bundle template",
+  "Template without RU Rules": "Without-ru template"
 }
