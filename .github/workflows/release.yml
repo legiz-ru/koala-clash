@@ -236,6 +236,8 @@ jobs:
             src-tauri/target/${{ matrix.target }}/release/bundle/rpm/*.rpm
             src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*setup*
             src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.tar.gz
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.tar.gz.sig
 
   release-for-linux-arm:
     name: Release Build for Linux ARM
@@ -563,6 +565,7 @@ jobs:
             UPDATE_LOGS="More new features are now supported. Check for detailed changelog soon."
           else
             echo "Using found update logs"
+            UPDATE_LOGS=$(echo "$UPDATE_LOGS" | sed 's/^## \(v.*\)/\*\1\*/')
           fi
           
           cat > release.txt << EOF
@@ -580,6 +583,7 @@ jobs:
           to: ${{ secrets.TELEGRAM_TO_CHANNEL }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
           message_file: release.txt
+          format: markdown
 
       - name: notify to group
         uses: appleboy/telegram-action@master
