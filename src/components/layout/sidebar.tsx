@@ -24,6 +24,7 @@ import {
 import { UpdateButton } from "@/components/layout/update-button";
 import React from "react";
 import { SheetClose } from '@/components/ui/sheet';
+import logo from "@/assets/image/logo.png"
 
 const menuItems = [
   { title: 'Home', url: '/home', icon: Home },
@@ -48,7 +49,7 @@ export function AppSidebar() {
           )}
         >
           <img
-            src="./assets/image/logo.png"
+            src={logo}
             alt="logo"
             className="h-6 w-6 flex-shrink-0"
           />
