@@ -364,6 +364,10 @@ pub fn run() {
         } => {
             if !has_visible_windows {
                 AppHandleManager::global().set_activation_policy_regular();
+                if let Some(window) = app_handle.get_webview_window("main") {
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
             }
             AppHandleManager::global().init(app_handle.clone());
         }
@@ -384,7 +388,6 @@ pub fn run() {
                 match event {
                     tauri::WindowEvent::CloseRequested { api, .. } => {
                         #[cfg(target_os = "macos")]
-                        AppHandleManager::global().set_activation_policy_accessory();
                         if core::handle::Handle::global().is_exiting() {
                             return;
                         }
