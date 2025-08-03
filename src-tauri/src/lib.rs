@@ -10,7 +10,7 @@ mod utils;
 use crate::{
     core::hotkey,
     process::AsyncHandler,
-    utils::{resolve, resolve::resolve_scheme, server},
+    utils::{resolve, resolve::resolve_scheme},
 };
 use config::Config;
 use std::sync::{Mutex, Once};
@@ -90,33 +90,6 @@ pub fn run() {
 
     let _ = utils::dirs::init_portable_flag();
 
-    // 异步单例检测
-    AsyncHandler::spawn(move || async move {
-        logging!(info, Type::Setup, true, "开始检查单例实例...");
-        match timeout(Duration::from_secs(3), server::check_singleton()).await {
-            Ok(result) => {
-                if result.is_err() {
-                    logging!(info, Type::Setup, true, "检测到已有应用实例运行");
-                    if let Some(app_handle) = AppHandleManager::global().get() {
-                        app_handle.exit(0);
-                    } else {
-                        std::process::exit(0);
-                    }
-                } else {
-                    logging!(info, Type::Setup, true, "未检测到其他应用实例");
-                }
-            }
-            Err(_) => {
-                logging!(
-                    warn,
-                    Type::Setup,
-                    true,
-                    "单例检查超时，假定没有其他实例运行"
-                );
-            }
-        }
-    });
-
     #[cfg(target_os = "linux")]
     std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
 
@@ -125,6 +98,13 @@ pub fn run() {
 
     #[allow(unused_mut)]
     let mut builder = tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.unminimize();
+                let _ = window.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
