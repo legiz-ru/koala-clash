@@ -21,7 +21,7 @@ import { useClashInfo } from "@/hooks/use-clash";
 import { initGlobalLogService } from "@/services/global-log-service";
 import { invoke } from "@tauri-apps/api/core";
 import { showNotice } from "@/services/noticeService";
-import { NoticeManager } from "@/components/base/NoticeManager";
+import { Toaster } from "@/components/ui/sonner";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/sidebar";
 import { useZoomControls } from "@/hooks/useZoomControls";
@@ -472,9 +472,9 @@ const Layout = () => {
 
   return (
     <SWRConfig value={{ errorRetryCount: 3 }}>
-      <NoticeManager />
       <SidebarProvider defaultOpen={false}>
         <AppLayout />
+        <Toaster />
       </SidebarProvider>
     </SWRConfig>
   );
