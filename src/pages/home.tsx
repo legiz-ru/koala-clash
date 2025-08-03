@@ -39,6 +39,8 @@ import { updateProfile } from "@/services/cmds";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import parseTraffic from "@/utils/parse-traffic";
 import { useAppData } from "@/providers/app-data-provider";
+import {PowerButton} from "@/components/home/power-button";
+import {cn} from "@root/lib/utils";
 
 const MinimalHomePage: React.FC = () => {
   const { t } = useTranslation();
@@ -154,8 +156,48 @@ const MinimalHomePage: React.FC = () => {
     }
   });
 
+  const statusInfo = useMemo(() => {
+    if (isToggling) {
+      return {
+        text: isProxyEnabled ? t('Disconnecting...') : t('Connecting...'),
+        color: isProxyEnabled ? '#f59e0b' : '#84cc16',
+        isAnimating: true,
+      };
+    }
+    if (isProxyEnabled) {
+      return {
+        text: t('Connected'),
+        color: '#22c55e',
+        isAnimating: false,
+      };
+    }
+    return {
+      text: t('Disconnected'),
+      color: '#ef4444',
+      isAnimating: false,
+    };
+  }, [isToggling, isProxyEnabled, t]);
+
   return (
     <div className="h-full w-full flex flex-col">
+      <div className="absolute inset-0 opacity-20 pointer-events-none z-0 [transform:translateZ(0)]">
+        <img
+            src="../assets/image/map.svg"
+            alt="World map"
+            className="w-full h-full object-cover"
+        />
+      </div>
+
+      {isProxyEnabled && (
+          <div
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] rounded-full pointer-events-none z-0 transition-opacity duration-500"
+              style={{
+                background: 'radial-gradient(circle, rgba(34,197,94,0.3) 0%, transparent 70%)',
+                filter: 'blur(100px)',
+              }}
+          />
+      )}
+
       <header className="flex-shrink-0 p-5 grid grid-cols-3 items-center z-10">
         <div className="flex justify-start">
           <SidebarTrigger />
@@ -242,15 +284,18 @@ const MinimalHomePage: React.FC = () => {
               )}
             </div>
           )}
-          <div className="relative text-center">
-            <h1
-              className="text-4xl mb-2 font-semibold"
-              style={{ color: isProxyEnabled ? "#22c55e" : "#ef4444" }}
-            >
-              {isProxyEnabled ? t("Connected") : t("Disconnected")}
-            </h1>
+            <div className="relative text-center">
+              <h1
+                  className={cn(
+                      "text-4xl mb-2 font-semibold transition-colors duration-300",
+                      statusInfo.isAnimating && "animate-pulse"
+                  )}
+                  style={{ color: statusInfo.color }}
+              >
+                {statusInfo.text}
+              </h1>
             {isProxyEnabled && (
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-48 flex justify-center items-center text-sm text-muted-foreground gap-6">
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-52 flex justify-center items-center text-sm text-muted-foreground gap-6">
                 <div className="flex items-center gap-1">
                     <ArrowDown className="h-4 w-4 text-green-500" />
                     {parseTraffic(connections.downloadTotal)}
@@ -261,22 +306,17 @@ const MinimalHomePage: React.FC = () => {
                 </div>
               </div>
             )}
-
-            <p className="h-6 text-sm text-muted-foreground transition-opacity duration-300">
-              {isToggling &&
-                (isProxyEnabled ? t("Disconnecting...") : t("Connecting..."))}
-            </p>
           </div>
 
-          <div className="scale-[7] my-16">
-            <Switch
-              disabled={showTunAlert || isToggling || profileItems.length === 0}
-              checked={!!isProxyEnabled}
-              onCheckedChange={handleToggleProxy}
-              aria-label={t("Toggle Proxy")}
+          <div className="relative -translate-y-6">
+            <PowerButton
+                loading={isToggling}
+                checked={!!isProxyEnabled}
+                onClick={handleToggleProxy}
+                disabled={showTunAlert || isToggling || profileItems.length === 0}
+                aria-label={t("Toggle Proxy")}
             />
           </div>
-
 
           {showTunAlert && (
             <div className="w-full max-w-sm">

@@ -131,3 +131,21 @@
 svg {
   stroke-width: var(--icon-stroke-width, 2);
 }
+
+
+@keyframes gradient-wave {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.animate-gradient-wave {
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: gradient-wave 2s linear infinite;
+}
