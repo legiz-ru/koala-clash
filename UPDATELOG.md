@@ -1,3 +1,12 @@
+## v0.2.5
+
+- new main page
+- fixed issue with opening via shortcut 
+- fixed logo in sidebar
+- fixed issue with changing tray settings
+- name changed to koala clash
+- added signing for installer on macOS
+
 ## v0.2.4
 
 - added auto-scaling and scaling via key combination
