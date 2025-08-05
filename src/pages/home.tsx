@@ -39,8 +39,9 @@ import { updateProfile } from "@/services/cmds";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import parseTraffic from "@/utils/parse-traffic";
 import { useAppData } from "@/providers/app-data-provider";
-import {PowerButton} from "@/components/home/power-button";
-import {cn} from "@root/lib/utils";
+import { PowerButton } from "@/components/home/power-button";
+import { cn } from "@root/lib/utils";
+import map from "../assets/image/map.svg";
 
 const MinimalHomePage: React.FC = () => {
   const { t } = useTranslation();
@@ -148,7 +149,7 @@ const MinimalHomePage: React.FC = () => {
     try {
       await updateProfile(currentProfile.uid);
       toast.success(t("Profile Updated Successfully"));
-      mutateProfiles(); // Обновляем данные в UI
+      mutateProfiles();
     } catch (err: any) {
       toast.error(t("Failed to update profile"), { description: err.message });
     } finally {
@@ -182,7 +183,7 @@ const MinimalHomePage: React.FC = () => {
     <div className="h-full w-full flex flex-col">
       <div className="absolute inset-0 opacity-20 pointer-events-none z-0 [transform:translateZ(0)]">
         <img
-            src="../assets/image/map.svg"
+            src={map}
             alt="World map"
             className="w-full h-full object-cover"
         />
@@ -343,7 +344,7 @@ const MinimalHomePage: React.FC = () => {
             </div>
           )}
 
-          <div className="w-full mt-4 flex justify-center">
+          <div className="w-full max-w-sm mt-4 flex justify-center">
             {profileItems.length > 0 ? (
               <ProxySelectors />
             ) : (
