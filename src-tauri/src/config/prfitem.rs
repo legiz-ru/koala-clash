@@ -4,11 +4,11 @@ use crate::utils::{
     tmpl,
 };
 use anyhow::{bail, Context, Result};
+use base64::{engine::general_purpose::STANDARD, Engine as _};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_yaml::Mapping;
 use std::{fs, time::Duration};
-use base64::{engine::general_purpose::STANDARD, Engine as _};
 use url::Url;
 
 use super::Config;
@@ -407,7 +407,8 @@ impl PrfItem {
             Some(value) => {
                 let str_value = value.to_str().unwrap_or("");
                 if let Some(b64_data) = str_value.strip_prefix("base64:") {
-                    STANDARD.decode(b64_data)
+                    STANDARD
+                        .decode(b64_data)
                         .ok()
                         .and_then(|bytes| String::from_utf8(bytes).ok())
                 } else {
@@ -423,7 +424,7 @@ impl PrfItem {
                 bail!(announce_msg.clone());
             }
         }
-        
+
         let announce_url = match header.get("announce-url") {
             Some(value) => {
                 let str_value = value.to_str().unwrap_or("");
@@ -436,7 +437,8 @@ impl PrfItem {
             Some(value) => {
                 let str_value = value.to_str().unwrap_or("");
                 if let Some(b64_data) = str_value.strip_prefix("base64:") {
-                    STANDARD.decode(b64_data)
+                    STANDARD
+                        .decode(b64_data)
                         .ok()
                         .and_then(|bytes| String::from_utf8(bytes).ok())
                 } else {
@@ -448,7 +450,9 @@ impl PrfItem {
 
         let uid = help::get_uid("R");
         let file = format!("{uid}.yaml");
-        let name = name.or(profile_title).unwrap_or(filename.unwrap_or("Remote File".into()));
+        let name = name
+            .or(profile_title)
+            .unwrap_or(filename.unwrap_or("Remote File".into()));
         let data = resp.text_with_charset("utf-8").await?;
 
         // process the charset "UTF-8 with BOM"

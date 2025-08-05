@@ -246,7 +246,7 @@ fn init_dns_config() -> Result<()> {
         help::save_yaml(
             &dns_path,
             &default_dns_config,
-            Some("# Clash Verge DNS Config"),
+            Some("# Koala Clash DNS Config"),
         )?;
     }
 
@@ -274,14 +274,14 @@ pub fn init_config() -> Result<()> {
 
     crate::log_err!(dirs::clash_path().map(|path| {
         if !path.exists() {
-            help::save_yaml(&path, &IClashTemp::template().0, Some("# Clash Vergeasu"))?;
+            help::save_yaml(&path, &IClashTemp::template().0, Some("# Koala Clash"))?;
         }
         <Result<()>>::Ok(())
     }));
 
     crate::log_err!(dirs::verge_path().map(|path| {
         if !path.exists() {
-            help::save_yaml(&path, &IVerge::template(), Some("# Clash Verge"))?;
+            help::save_yaml(&path, &IVerge::template(), Some("# Koala Clash"))?;
         }
         <Result<()>>::Ok(())
     }));
@@ -291,7 +291,7 @@ pub fn init_config() -> Result<()> {
 
     crate::log_err!(dirs::profiles_path().map(|path| {
         if !path.exists() {
-            help::save_yaml(&path, &IProfiles::template(), Some("# Clash Verge"))?;
+            help::save_yaml(&path, &IProfiles::template(), Some("# Koala Clash"))?;
         }
         <Result<()>>::Ok(())
     }));
@@ -371,8 +371,8 @@ pub fn init_scheme() -> Result<()> {
 
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     let (clash, _) = hkcu.create_subkey("Software\\Classes\\Clash")?;
-    clash.set_value("", &"Clash Verge")?;
-    clash.set_value("URL Protocol", &"Clash Verge URL Scheme Protocol")?;
+    clash.set_value("", &"Koala Clash")?;
+    clash.set_value("URL Protocol", &"Koala Clash URL Scheme Protocol")?;
     let (default_icon, _) = hkcu.create_subkey("Software\\Classes\\Clash\\DefaultIcon")?;
     default_icon.set_value("", &app_exe)?;
     let (command, _) = hkcu.create_subkey("Software\\Classes\\Clash\\Shell\\Open\\Command")?;
@@ -384,7 +384,7 @@ pub fn init_scheme() -> Result<()> {
 pub fn init_scheme() -> Result<()> {
     let output = std::process::Command::new("xdg-mime")
         .arg("default")
-        .arg("clash-verge.desktop")
+        .arg("koala-clash.desktop")
         .arg("x-scheme-handler/clash")
         .output()?;
     if !output.status.success() {

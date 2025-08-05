@@ -1060,80 +1060,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "clash-verge"
-version = "0.2.4"
-dependencies = [
- "ab_glyph",
- "aes-gcm",
- "anyhow",
- "async-trait",
- "base64 0.22.1",
- "boa_engine",
- "chrono",
- "deelevate",
- "delay_timer",
- "dirs 6.0.0",
- "dunce",
- "futures",
- "gethostname 1.0.2",
- "getrandom 0.3.3",
- "hex",
- "hmac",
- "image",
- "imageproc",
- "lazy_static",
- "libc",
- "log",
- "log4rs",
- "machine-uid",
- "mihomo_api",
- "nanoid",
- "network-interface",
- "once_cell",
- "open",
- "os_info",
- "parking_lot",
- "percent-encoding",
- "port_scanner",
- "regex",
- "reqwest",
- "reqwest_dav",
- "runas",
- "scopeguard",
- "serde",
- "serde_json",
- "serde_yaml",
- "sha2 0.10.9",
- "sys-locale",
- "sysinfo",
- "sysproxy",
- "tauri",
- "tauri-build",
- "tauri-plugin-autostart",
- "tauri-plugin-clipboard-manager",
- "tauri-plugin-deep-link",
- "tauri-plugin-devtools",
- "tauri-plugin-dialog",
- "tauri-plugin-fs",
- "tauri-plugin-global-shortcut",
- "tauri-plugin-notification",
- "tauri-plugin-process",
- "tauri-plugin-shell",
- "tauri-plugin-updater",
- "tauri-plugin-window-state",
- "tempfile",
- "tokio",
- "tokio-tungstenite 0.27.0",
- "tungstenite 0.27.0",
- "url",
- "users",
- "warp",
- "winapi",
- "winreg 0.55.0",
- "zip",
-]
-
-[[package]]
 name = "clipboard-win"
 version = "5.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3623,6 +3549,81 @@ dependencies = [
 ]
 
 [[package]]
+name = "koala-clash"
+version = "0.2.4"
+dependencies = [
+ "ab_glyph",
+ "aes-gcm",
+ "anyhow",
+ "async-trait",
+ "base64 0.22.1",
+ "boa_engine",
+ "chrono",
+ "deelevate",
+ "delay_timer",
+ "dirs 6.0.0",
+ "dunce",
+ "futures",
+ "gethostname 1.0.2",
+ "getrandom 0.3.3",
+ "hex",
+ "hmac",
+ "image",
+ "imageproc",
+ "lazy_static",
+ "libc",
+ "log",
+ "log4rs",
+ "machine-uid",
+ "mihomo_api",
+ "nanoid",
+ "network-interface",
+ "once_cell",
+ "open",
+ "os_info",
+ "parking_lot",
+ "percent-encoding",
+ "port_scanner",
+ "regex",
+ "reqwest",
+ "reqwest_dav",
+ "runas",
+ "scopeguard",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sha2 0.10.9",
+ "sys-locale",
+ "sysinfo",
+ "sysproxy",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-autostart",
+ "tauri-plugin-clipboard-manager",
+ "tauri-plugin-deep-link",
+ "tauri-plugin-devtools",
+ "tauri-plugin-dialog",
+ "tauri-plugin-fs",
+ "tauri-plugin-global-shortcut",
+ "tauri-plugin-notification",
+ "tauri-plugin-process",
+ "tauri-plugin-shell",
+ "tauri-plugin-single-instance",
+ "tauri-plugin-updater",
+ "tauri-plugin-window-state",
+ "tempfile",
+ "tokio",
+ "tokio-tungstenite 0.27.0",
+ "tungstenite 0.27.0",
+ "url",
+ "users",
+ "warp",
+ "winapi",
+ "winreg 0.55.0",
+ "zip",
+]
+
+[[package]]
 name = "kuchikiki"
 version = "0.8.8-speedreader"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3887,11 +3888,12 @@ dependencies = [
 
 [[package]]
 name = "machine-uid"
-version = "0.2.0"
+version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f1595709b0a7386bcd56ba34d250d626e5503917d05d32cdccddcd68603e212"
+checksum = "0c4506fa0abb0a2ea93f5862f55973da0a662d2ad0e98f337a1c5aac657f0892"
 dependencies = [
- "winreg 0.6.2",
+ "libc",
+ "winreg 0.52.0",
 ]
 
 [[package]]
@@ -6846,9 +6848,9 @@ dependencies = [
 
 [[package]]
 name = "sysinfo"
-version = "0.35.2"
+version = "0.36.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c3ffa3e4ff2b324a57f7aeb3c349656c7b127c3c189520251a648102a92496e"
+checksum = "252800745060e7b9ffb7b2badbd8b31cfa4aa2e61af879d0a3bf2a317c20217d"
 dependencies = [
  "libc",
  "memchr",
@@ -7292,6 +7294,21 @@ dependencies = [
  "tauri-plugin",
  "thiserror 2.0.12",
  "tokio",
+]
+
+[[package]]
+name = "tauri-plugin-single-instance"
+version = "2.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "50a0e5a4ce43cb3a733c3aef85e8478bc769dac743c615e26639cbf5d953faf7"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tauri",
+ "thiserror 2.0.12",
+ "tracing",
+ "windows-sys 0.60.2",
+ "zbus",
 ]
 
 [[package]]
@@ -9325,15 +9342,6 @@ dependencies = [
 
 [[package]]
 name = "winreg"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2986deb581c4fe11b621998a5e53361efe6b48a151178d0cd9eeffa4dc6acc9"
-dependencies = [
- "winapi",
-]
-
-[[package]]
-name = "winreg"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "80d0f4e272c85def139476380b12f9ac60926689dd2e01d4923222f40580869d"
@@ -9568,9 +9576,9 @@ dependencies = [
 
 [[package]]
 name = "zbus"
-version = "5.7.1"
+version = "5.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3a7c7cee313d044fca3f48fa782cb750c79e4ca76ba7bc7718cd4024cdf6f68"
+checksum = "4bb4f9a464286d42851d18a605f7193b8febaf5b0919d71c6399b7b26e5b0aad"
 dependencies = [
  "async-broadcast",
  "async-executor",
@@ -9602,9 +9610,9 @@ dependencies = [
 
 [[package]]
 name = "zbus_macros"
-version = "5.7.1"
+version = "5.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a17e7e5eec1550f747e71a058df81a9a83813ba0f6a95f39c4e218bdc7ba366a"
+checksum = "ef9859f68ee0c4ee2e8cde84737c78e3f4c54f946f2a38645d0d4c7a95327659"
 dependencies = [
  "proc-macro-crate 3.3.0",
  "proc-macro2",

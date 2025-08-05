@@ -549,7 +549,7 @@ pub async fn resolve_scheme(param: String) -> Result<()> {
         }
     };
 
-    if link_parsed.scheme() == "clash" || link_parsed.scheme() == "clash-verge" {
+    if link_parsed.scheme() == "clash" || link_parsed.scheme() == "koala-clash" {
         let mut name: Option<String> = None;
         let mut url_param: Option<String> = None;
 

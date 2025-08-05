@@ -414,7 +414,7 @@ impl Tray {
 
         if let Some(tray) = app_handle.tray_by_id("main") {
             let _ = tray.set_tooltip(Some(&format!(
-                "Clash Verge {version}\n{}: {}\n{}: {}\n{}: {}",
+                "Koala Clash {version}\n{}: {}\n{}: {}\n{}: {}",
                 t("SysProxy"),
                 switch_map[system_proxy],
                 t("TUN"),

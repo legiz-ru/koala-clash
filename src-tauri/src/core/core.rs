@@ -146,7 +146,7 @@ impl CoreManager {
         help::save_yaml(
             &runtime_path,
             &Config::clash().latest().0,
-            Some("# Clash Verge Runtime"),
+            Some("# Koala Clash Runtime"),
         )?;
         handle::Handle::notice_message(msg_type, msg_content);
         Ok(())
@@ -443,7 +443,7 @@ impl CoreManager {
             child_guard.as_ref().map(|child| child.pid())
         };
 
-        let target_processes = ["verge-mihomo", "verge-mihomo-alpha"];
+        let target_processes = ["koala-mihomo", "koala-mihomo-alpha"];
 
         // 并行查找所有目标进程
         let mut process_futures = Vec::new();

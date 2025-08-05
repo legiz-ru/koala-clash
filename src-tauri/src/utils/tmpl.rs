@@ -1,7 +1,7 @@
 //! Some config file template
 
 /// template for new a profile item
-pub const ITEM_LOCAL: &str = "# Profile Template for Clash Verge
+pub const ITEM_LOCAL: &str = "# Profile Template for Koala Clash
 
 proxies: []
 
@@ -11,13 +11,13 @@ rules: []
 ";
 
 /// enhanced profile
-pub const ITEM_MERGE: &str = "# Profile Enhancement Merge Template for Clash Verge
+pub const ITEM_MERGE: &str = "# Profile Enhancement Merge Template for Koala Clash
 
 profile:
   store-selected: true
 ";
 
-pub const ITEM_MERGE_EMPTY: &str = "# Profile Enhancement Merge Template for Clash Verge
+pub const ITEM_MERGE_EMPTY: &str = "# Profile Enhancement Merge Template for Koala Clash
 
 ";
 
@@ -30,7 +30,7 @@ function main(config, profileName) {
 ";
 
 /// enhanced profile
-pub const ITEM_RULES: &str = "# Profile Enhancement Rules Template for Clash Verge
+pub const ITEM_RULES: &str = "# Profile Enhancement Rules Template for Koala Clash
 
 prepend: []
 
@@ -40,7 +40,7 @@ delete: []
 ";
 
 /// enhanced profile
-pub const ITEM_PROXIES: &str = "# Profile Enhancement Proxies Template for Clash Verge
+pub const ITEM_PROXIES: &str = "# Profile Enhancement Proxies Template for Koala Clash
 
 prepend: []
 
@@ -50,7 +50,7 @@ delete: []
 ";
 
 /// enhanced profile
-pub const ITEM_GROUPS: &str = "# Profile Enhancement Groups Template for Clash Verge
+pub const ITEM_GROUPS: &str = "# Profile Enhancement Groups Template for Koala Clash
 
 prepend: []
 

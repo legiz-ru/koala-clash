@@ -6,9 +6,9 @@ use sha2::{Digest, Sha256};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const IPC_SOCKET_NAME: &str = if cfg!(windows) {
-    r"\\.\pipe\clash-verge-service"
+    r"\\.\pipe\koala-clash-service"
 } else {
-    "/tmp/clash-verge-service.sock"
+    "/tmp/koala-clash-service.sock"
 };
 
 // 定义命令类型
@@ -43,7 +43,7 @@ pub struct IpcResponse {
 fn derive_secret_key() -> Vec<u8> {
     // to do
     // 从系统安全存储中获取或从程序安装时生成的密钥文件中读取
-    let unique_app_id = "clash-verge-app-secret-fuck-me-until-daylight";
+    let unique_app_id = "koala-clash-app-secret-fuck-me-until-daylight";
     let mut hasher = Sha256::new();
     hasher.update(unique_app_id.as_bytes());
     hasher.finalize().to_vec()
