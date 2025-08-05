@@ -638,7 +638,7 @@
   "AppQuitBody": "Приложение закрыто с помощью горячей клавиши",
   "AppHiddenTitle": "Приложение скрыто",
   "AppHiddenBody": "Окно приложения скрыто с помощью горячей клавиши",
-  "Invalid Profile URL": "Неверный URL-адрес профиля. Введите URL-адрес, начинающийся с http:// или https://.",
+  "Invalid Profile URL": "Неверный URL-адрес профиля. Введите URL-адрес, начинающийся с http:// или https://",
   "Saved Successfully": "Успешно сохранено",
   "Connected": "Подключено",
   "Disconnected": "Отключено",
@@ -675,5 +675,8 @@
   "Template": "Шаблон",
   "Select a template...": "Выберите шаблон...",
   "Default Template": "Шаблон ru-bundle",
-  "Template without RU Rules": "Шаблон without-ru"
+  "Template without RU Rules": "Шаблон without-ru",
+  "Stopping Core...": "Остановка ядра...",
+  "Uninstalling Service...": "Удаление сервиса...",
+  "Try running core as Sidecar...": "Попытка запустить ядро как Sidecar..."
 }

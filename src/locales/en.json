@@ -675,5 +675,8 @@
   "Template": "Template",
   "Select a template...": "Select a template...",
   "Default Template": "Ru-bundle template",
-  "Template without RU Rules": "Without-ru template"
+  "Template without RU Rules": "Without-ru template",
+  "Stopping Core...": "Stopping Core...",
+  "Uninstalling Service...": "Uninstalling Service...",
+  "Try running core as Sidecar...": "Try running core as Sidecar..."
 }
