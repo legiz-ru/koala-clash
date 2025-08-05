@@ -601,16 +601,6 @@ fn create_tray_menu(
     )
     .unwrap();
 
-    let direct_mode = &CheckMenuItem::with_id(
-        app_handle,
-        "direct_mode",
-        t("Direct Mode"),
-        true,
-        mode == "direct",
-        hotkeys.get("clash_mode_direct").map(|s| s.as_str()),
-    )
-    .unwrap();
-
     let profiles = &Submenu::with_id_and_items(
         app_handle,
         "profiles",
@@ -647,45 +637,6 @@ fn create_tray_menu(
         true,
         is_lightweight_mode,
         hotkeys.get("entry_lightweight_mode").map(|s| s.as_str()),
-    )
-    .unwrap();
-
-    let copy_env =
-        &MenuItem::with_id(app_handle, "copy_env", t("Copy Env"), true, None::<&str>).unwrap();
-
-    let open_app_dir = &MenuItem::with_id(
-        app_handle,
-        "open_app_dir",
-        t("Conf Dir"),
-        true,
-        None::<&str>,
-    )
-    .unwrap();
-
-    let open_core_dir = &MenuItem::with_id(
-        app_handle,
-        "open_core_dir",
-        t("Core Dir"),
-        true,
-        None::<&str>,
-    )
-    .unwrap();
-
-    let open_logs_dir = &MenuItem::with_id(
-        app_handle,
-        "open_logs_dir",
-        t("Logs Dir"),
-        true,
-        None::<&str>,
-    )
-    .unwrap();
-
-    let open_dir = &Submenu::with_id_and_items(
-        app_handle,
-        "open_dir",
-        t("Open Dir"),
-        true,
-        &[open_app_dir, open_core_dir, open_logs_dir],
     )
     .unwrap();
 
@@ -736,7 +687,6 @@ fn create_tray_menu(
             separator,
             rule_mode,
             global_mode,
-            direct_mode,
             separator,
             profiles,
             separator,
@@ -744,8 +694,6 @@ fn create_tray_menu(
             tun_mode,
             separator,
             lighteweight_mode,
-            copy_env,
-            open_dir,
             more,
             separator,
             quit,
@@ -788,16 +736,6 @@ fn on_menu_event(_: &AppHandle, event: MenuEvent) {
         }
         "tun_mode" => {
             feat::toggle_tun_mode(None);
-        }
-        "copy_env" => feat::copy_clash_env(),
-        "open_app_dir" => {
-            let _ = cmd::open_app_dir();
-        }
-        "open_core_dir" => {
-            let _ = cmd::open_core_dir();
-        }
-        "open_logs_dir" => {
-            let _ = cmd::open_logs_dir();
         }
         "restart_clash" => feat::restart_clash_core(),
         "restart_app" => feat::restart_app(),
