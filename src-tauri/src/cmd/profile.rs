@@ -176,7 +176,34 @@ pub async fn update_profile(index: String, option: Option<PrfOption>) -> CmdResu
 /// 删除配置文件
 #[tauri::command]
 pub async fn delete_profile(index: String) -> CmdResult {
-    let should_update = wrap_err!({ Config::profiles().data().delete_item(index) })?;
+    let should_update;
+
+    {
+        let profiles_config = Config::profiles();
+        let mut profiles_data = profiles_config.data();
+        should_update = profiles_data.delete_item(index.clone()).map_err(|e| e.to_string())?;
+
+        let was_last_profile = profiles_data.items.as_ref().map_or(true, |items| {
+            !items.iter().any(|item|
+                item.itype == Some("remote".to_string()) || item.itype == Some("local".to_string())
+            )
+        });
+
+        if was_last_profile {
+            logging!(info, Type::Cmd, true, "The last profile has been deleted. Disabling proxy modes...");
+            let verge_config = Config::verge();
+            let mut verge_data = verge_config.data();
+
+            if verge_data.enable_tun_mode == Some(true) || verge_data.enable_system_proxy == Some(true) {
+                verge_data.enable_tun_mode = Some(false);
+                verge_data.enable_system_proxy = Some(false);
+                verge_data.save_file().map_err(|e| e.to_string())?;
+
+                handle::Handle::refresh_verge();
+                handle::Handle::notice_message("info", "All profiles deleted, proxy disabled.");
+            }
+        }
+    }
 
     // 删除后自动清理冗余文件
     let _ = Config::profiles().latest().auto_cleanup();

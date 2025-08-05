@@ -17,7 +17,8 @@ export const PowerButton = React.forwardRef<HTMLButtonElement, PowerButtonProps>
                 <div
                     className={cn(
                         'absolute h-28 w-28 rounded-full blur-3xl transition-all duration-500',
-                        state === 'on' ? 'bg-green-400/60' : 'bg-red-500/40'
+                        state === 'on' ? 'bg-green-400/60' : 'bg-red-500/40',
+                        props.disabled && 'opacity-0'
                     )}
                 />
 
@@ -33,11 +34,18 @@ export const PowerButton = React.forwardRef<HTMLButtonElement, PowerButtonProps>
                         'data-[state=on]:text-green-500 dark:data-[state=on]:text-white',
                         'data-[state=on]:shadow-[0_0_50px_rgba(34,197,94,1)]',
                         'transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none',
+                        'disabled:cursor-not-allowed disabled:scale-100',
+
+                        // Стили ТОЛЬКО для отключенного состояния (но не для загрузки)
+                        (props.disabled && !loading) && 'grayscale opacity-50 shadow-none bg-slate-100/70 border-slate-300/80',
                         className
                     )}
                     {...props}
                 >
-                    <Power className="h-20 w-20 transition-transform duration-300 active:scale-90" />
+                    <Power className={cn(
+                    "h-20 w-20",
+                    !props.disabled && "active:scale-90 transition-transform duration-300"
+                    )} />
                 </button>
 
                 {loading && (

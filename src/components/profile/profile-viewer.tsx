@@ -296,7 +296,7 @@ export const ProfileViewer = forwardRef<ProfileViewerRef, Props>(
                 </Button>
                 {!isUrlValid && importUrl && (
                   <p className="text-sm text-destructive px-1">
-                    {t("Please enter a valid URL")}
+                    {t("Invalid Profile URL")}
                   </p>
                 )}
               </div>

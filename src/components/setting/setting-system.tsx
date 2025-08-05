@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import {useMemo, useRef, useState} from "react";
 import { useTranslation } from "react-i18next";
 import { useLockFn } from "ahooks";
 import { mutate } from "swr";
@@ -56,6 +56,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {useProfiles} from "@/hooks/use-profiles";
 
 const isWIN = getSystem() === "windows";
 interface Props {
@@ -105,6 +106,12 @@ const SettingSystem = ({ onError }: Props) => {
   const { t } = useTranslation();
   const { verge, patchVerge, mutateVerge } = useVerge();
   const { installServiceAndRestartCore } = useServiceInstaller();
+
+  const { profiles } = useProfiles();
+  const hasProfiles = useMemo(() => {
+    const items = profiles?.items ?? [];
+    return items.some(p => p.type === 'local' || p.type === 'remote');
+  }, [profiles]);
 
   const {
     actualState: systemProxyActualState,
@@ -261,7 +268,7 @@ const SettingSystem = ({ onError }: Props) => {
             }}
             onCatch={onError}
           >
-            <Switch disabled={!isTunAvailable} />
+            <Switch disabled={!isTunAvailable || !hasProfiles} />
           </GuardState>
         </SettingRow>
 
@@ -297,7 +304,7 @@ const SettingSystem = ({ onError }: Props) => {
             }}
             onCatch={onError}
           >
-            <Switch />
+            <Switch disabled={!hasProfiles} />
           </GuardState>
         </SettingRow>
 
