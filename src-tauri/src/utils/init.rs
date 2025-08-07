@@ -178,9 +178,8 @@ fn init_dns_config() -> Result<()> {
             "default-nameserver".into(),
             Value::Sequence(vec![
                 Value::String("system".into()),
-                Value::String("223.6.6.6".into()),
                 Value::String("8.8.8.8".into()),
-                Value::String("2400:3200::1".into()),
+                Value::String("1.1.1.1".into()),
                 Value::String("2001:4860:4860::8888".into()),
             ]),
         ),
@@ -189,7 +188,8 @@ fn init_dns_config() -> Result<()> {
             Value::Sequence(vec![
                 Value::String("8.8.8.8".into()),
                 Value::String("https://doh.pub/dns-query".into()),
-                Value::String("https://dns.alidns.com/dns-query".into()),
+                Value::String("https://dns.google/dns-query".into()),
+                Value::String("https://cloudflare-dns.com/dns-query".into()),
             ]),
         ),
         ("fallback".into(), Value::Sequence(vec![])),
@@ -201,8 +201,9 @@ fn init_dns_config() -> Result<()> {
             "proxy-server-nameserver".into(),
             Value::Sequence(vec![
                 Value::String("https://doh.pub/dns-query".into()),
-                Value::String("https://dns.alidns.com/dns-query".into()),
-                Value::String("tls://223.5.5.5".into()),
+                Value::String("https://dns.google/dns-query".into()),
+                Value::String("https://cloudflare-dns.com/dns-query".into()),
+                Value::String("tls://1.1.1.1".into()),
             ]),
         ),
         ("direct-nameserver".into(), Value::Sequence(vec![])),
