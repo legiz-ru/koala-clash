@@ -48,14 +48,14 @@ const MinimalHomePage: React.FC = () => {
   const [isToggling, setIsToggling] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const { profiles, patchProfiles, activateSelected, mutateProfiles } =
-    useProfiles();
+      useProfiles();
   const viewerRef = useRef<ProfileViewerRef>(null);
   const [uidToActivate, setUidToActivate] = useState<string | null>(null);
   const { connections } = useAppData();
 
   const profileItems = useMemo(() => {
     const items =
-      profiles && Array.isArray(profiles.items) ? profiles.items : [];
+        profiles && Array.isArray(profiles.items) ? profiles.items : [];
     const allowedTypes = ["local", "remote"];
     return items.filter((i: any) => i && allowedTypes.includes(i.type!));
   }, [profiles]);
@@ -66,20 +66,20 @@ const MinimalHomePage: React.FC = () => {
   const currentProfileName = currentProfile?.name || profiles?.current;
 
   const activateProfile = useCallback(
-    async (uid: string, notifySuccess: boolean) => {
-      try {
-        await patchProfiles({ current: uid });
-        await closeAllConnections();
-        await activateSelected();
-        if (notifySuccess) {
-          toast.success(t("Profile Switched"));
+      async (uid: string, notifySuccess: boolean) => {
+        try {
+          await patchProfiles({ current: uid });
+          await closeAllConnections();
+          await activateSelected();
+          if (notifySuccess) {
+            toast.success(t("Profile Switched"));
+          }
+        } catch (err: any) {
+          toast.error(err.message || err.toString());
+          mutateProfiles();
         }
-      } catch (err: any) {
-        toast.error(err.message || err.toString());
-        mutateProfiles();
-      }
-    },
-    [patchProfiles, activateSelected, mutateProfiles, t],
+      },
+      [patchProfiles, activateSelected, mutateProfiles, t],
   );
 
   useEffect(() => {
@@ -89,7 +89,6 @@ const MinimalHomePage: React.FC = () => {
       sessionStorage.removeItem('activateProfile');
     }
   }, [profileItems, activateProfile]);
-
 
   const handleProfileChange = useLockFn(async (uid: string) => {
     if (profiles?.current === uid) return;
@@ -102,7 +101,7 @@ const MinimalHomePage: React.FC = () => {
   const isTunAvailable = isServiceMode || isAdminMode;
   const isProxyEnabled = verge?.enable_system_proxy || verge?.enable_tun_mode;
   const showTunAlert =
-    (verge?.primary_action ?? "tun-mode") === "tun-mode" && !isTunAvailable;
+      (verge?.primary_action ?? "tun-mode") === "tun-mode" && !isTunAvailable;
 
   const handleToggleProxy = useLockFn(async () => {
     const turningOn = !isProxyEnabled;
@@ -180,111 +179,188 @@ const MinimalHomePage: React.FC = () => {
   }, [isToggling, isProxyEnabled, t]);
 
   return (
-    <div className="h-full w-full flex flex-col">
-      <div className="absolute inset-0 opacity-20 pointer-events-none z-0 [transform:translateZ(0)]">
-        <img
-            src={map}
-            alt="World map"
-            className="w-full h-full object-cover"
-        />
-      </div>
-
-      {isProxyEnabled && (
-          <div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] rounded-full pointer-events-none z-0 transition-opacity duration-500"
-              style={{
-                background: 'radial-gradient(circle, rgba(34,197,94,0.3) 0%, transparent 70%)',
-                filter: 'blur(100px)',
-              }}
+      <div className="h-full w-full flex flex-col">
+        <div className="absolute inset-0 opacity-20 pointer-events-none z-0 [transform:translateZ(0)]">
+          <img
+              src={map}
+              alt="World map"
+              className="w-full h-full object-cover"
           />
-      )}
-
-      <header className="flex-shrink-0 p-5 grid grid-cols-3 items-center z-10">
-        <div className="flex justify-start">
-          <SidebarTrigger />
         </div>
-       <div className="justify-self-center flex flex-col items-center gap-2">
-          <div className="relative">
-            {profileItems.length > 0 && (
-              <div className="flex-shrink-0">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full max-w-[250px] sm:max-w-xs">
-                      <span className="truncate">{currentProfileName}</span>
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
-                    <DropdownMenuLabel>{t("Profiles")}</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {profileItems.map((p) => (
-                      <DropdownMenuItem
-                        key={p.uid}
-                        onSelect={() => handleProfileChange(p.uid)}
-                      >
-                        <span className="flex-1 truncate">{p.name}</span>
-                        {profiles?.current === p.uid && (
-                          <Check className="ml-4 h-4 w-4" />
-                        )}
-                      </DropdownMenuItem>
-                    ))}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={() => viewerRef.current?.create()}>
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      <span>{t("Add Profile")}</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            )}
-             {currentProfile?.type === 'remote' && (
-              <div className="absolute top-1/2 -translate-y-1/2 left-full ml-2">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleUpdateProfile}
-                        disabled={isUpdating}
-                        className="flex-shrink-0"
-                      >
-                        {isUpdating ? <Loader2 className="h-5 w-5 animate-spin" /> : <RefreshCw className="h-5 w-5" />}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>{t("Update Profile")}</p></TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            )}
+
+        {isProxyEnabled && (
+            <div
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] rounded-full pointer-events-none z-0 transition-opacity duration-500"
+                style={{
+                  background: 'radial-gradient(circle, rgba(34,197,94,0.3) 0%, transparent 70%)',
+                  filter: 'blur(100px)',
+                }}
+            />
+        )}
+
+        <header className="flex-shrink-0 p-5 grid grid-cols-3 items-center z-10">
+          <div className="flex justify-start">
+            <SidebarTrigger />
           </div>
-        </div>
-        <div className="flex justify-end">
-        </div>
-      </header>
-
-      <main className="flex-1 overflow-y-auto flex items-center justify-center">
-          <div className="relative flex flex-col items-center gap-8 py-10 w-full max-w-4xl px-4">
-          {currentProfile?.announce && (
-            <div className="absolute -top-15 w-full flex justify-center text-center max-w-lg">
-              {currentProfile.announce_url ? (
-                <a
-                  href={currentProfile.announce_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-base font-semibold text-foreground hover:underline hover:opacity-80 transition-all whitespace-pre-wrap"
-                  title={currentProfile.announce_url.replace(/\\n/g, '\n')}
-                >
-                  <span>{currentProfile.announce.replace(/\\n/g, '\n')}</span>
-                  <ExternalLink className="h-4 w-4 flex-shrink-0" />
-                </a>
+          <div className="justify-self-center flex flex-col items-center gap-2">
+            <div className="relative flex items-center justify-center">
+              {profileItems.length > 0 ? (
+                  <>
+                    <div className="absolute right-full mr-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => viewerRef.current?.create()}
+                                className={cn(
+                                    "backdrop-blur-sm bg-white/80 border-gray-300/60",
+                                    "dark:bg-white/5 dark:border-white/15",
+                                    "hover:bg-white/90 hover:border-gray-400/70",
+                                    "dark:hover:bg-white/10 dark:hover:border-white/20",
+                                    "transition-all duration-200"
+                                )}
+                            >
+                              <PlusCircle className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{t("Add Profile")}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                            variant="outline"
+                            className={cn(
+                                "w-full max-w-[250px] sm:max-w-xs",
+                                "backdrop-blur-sm bg-white/80 border-gray-300/60",
+                                "dark:bg-white/5 dark:border-white/15",
+                                "hover:bg-white/90 hover:border-gray-400/70",
+                                "dark:hover:bg-white/10 dark:hover:border-white/20",
+                                "transition-all duration-200"
+                            )}
+                        >
+                          <span className="truncate">{currentProfileName}</span>
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                        <DropdownMenuLabel>{t("Profiles")}</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {profileItems.map((p) => (
+                            <DropdownMenuItem
+                                key={p.uid}
+                                onSelect={() => handleProfileChange(p.uid)}
+                            >
+                              <span className="flex-1 truncate">{p.name}</span>
+                              {profiles?.current === p.uid && (
+                                  <Check className="ml-4 h-4 w-4" />
+                              )}
+                            </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    {currentProfile?.type === 'remote' && (
+                        <div className="absolute left-full ml-2">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={handleUpdateProfile}
+                                    disabled={isUpdating}
+                                    className={cn(
+                                        "flex-shrink-0",
+                                        "backdrop-blur-sm bg-white/70 border border-gray-300/50",
+                                        "dark:bg-white/5 dark:border-white/10",
+                                        "hover:bg-white/85 hover:border-gray-400/60",
+                                        "dark:hover:bg-white/10 dark:hover:border-white/15",
+                                        "transition-all duration-200"
+                                    )}
+                                >
+                                  {isUpdating ? <Loader2 className="h-5 w-5 animate-spin" /> : <RefreshCw className="h-5 w-5" />}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent><p>{t("Update Profile")}</p></TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                    )}
+                  </>
               ) : (
-                <p className="text-base font-semibold text-foreground whitespace-pre-wrap">
-                  {currentProfile.announce}
-                </p>
+                  <>
+                    <div className="absolute right-full mr-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => viewerRef.current?.create()}
+                                className={cn(
+                                    "backdrop-blur-sm bg-white/80 border-gray-300/60",
+                                    "dark:bg-white/5 dark:border-white/15",
+                                    "hover:bg-white/90 hover:border-gray-400/70",
+                                    "dark:hover:bg-white/10 dark:hover:border-white/20",
+                                    "transition-all duration-200"
+                                )}
+                            >
+                              <PlusCircle className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{t("Add Profile")}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <Button
+                        variant="outline"
+                        disabled
+                        className={cn(
+                            "max-w-[250px] sm:max-w-xs opacity-50 cursor-not-allowed",
+                            "backdrop-blur-sm bg-white/50 border-gray-300/40",
+                            "dark:bg-white/3 dark:border-white/10"
+                        )}
+                    >
+                      <span className="truncate">{t("No profiles available")}</span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-30" />
+                    </Button>
+                  </>
               )}
             </div>
-          )}
+          </div>
+          <div className="flex justify-end">
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto flex items-center justify-center">
+          <div className="relative flex flex-col items-center gap-8 py-10 w-full max-w-4xl px-4">
+            {currentProfile?.announce && (
+                <div className="absolute -top-15 w-full flex justify-center text-center max-w-lg">
+                  {currentProfile.announce_url ? (
+                      <a
+                          href={currentProfile.announce_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-base font-semibold text-foreground hover:underline hover:opacity-80 transition-all whitespace-pre-wrap"
+                          title={currentProfile.announce_url.replace(/\\n/g, '\n')}
+                      >
+                        <span>{currentProfile.announce.replace(/\\n/g, '\n')}</span>
+                        <ExternalLink className="h-4 w-4 flex-shrink-0" />
+                      </a>
+                  ) : (
+                      <p className="text-base font-semibold text-foreground whitespace-pre-wrap">
+                        {currentProfile.announce}
+                      </p>
+                  )}
+                </div>
+            )}
             <div className="relative text-center">
               <h1
                   className={cn(
@@ -295,103 +371,103 @@ const MinimalHomePage: React.FC = () => {
               >
                 {statusInfo.text}
               </h1>
-            {isProxyEnabled && (
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-52 flex justify-center items-center text-sm text-muted-foreground gap-6">
-                <div className="flex items-center gap-1">
-                    <ArrowDown className="h-4 w-4 text-green-500" />
-                    {parseTraffic(connections.downloadTotal)}
-                </div>
-                <div className="flex items-center gap-1">
-                    <ArrowUp className="h-4 w-4 text-sky-500" />
-                    {parseTraffic(connections.uploadTotal)}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="relative -translate-y-6">
-            <PowerButton
-                loading={isToggling}
-                checked={!!isProxyEnabled}
-                onClick={handleToggleProxy}
-                disabled={showTunAlert || isToggling || profileItems.length === 0}
-                aria-label={t("Toggle Proxy")}
-            />
-          </div>
-
-          {showTunAlert && (
-            <div className="w-full max-w-sm">
-              <Alert
-                variant="destructive"
-                className="flex flex-col items-center gap-2 text-center"
-              >
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>{t("Attention Required")}</AlertTitle>
-                <AlertDescription className="text-xs">
-                  {t("TUN requires Service Mode or Admin Mode")}
-                </AlertDescription>
-                {!isServiceMode && !isAdminMode && (
-                  <Button
-                    size="sm"
-                    className="mt-2"
-                    onClick={installServiceAndRestartCore}
-                  >
-                    <Wrench className="mr-2 h-4 w-4" />
-                    {t("Install Service")}
-                  </Button>
-                )}
-              </Alert>
+              {isProxyEnabled && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-52 flex justify-center items-center text-sm text-muted-foreground gap-6">
+                    <div className="flex items-center gap-1">
+                      <ArrowDown className="h-4 w-4 text-green-500" />
+                      {parseTraffic(connections.downloadTotal)}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <ArrowUp className="h-4 w-4 text-sky-500" />
+                      {parseTraffic(connections.uploadTotal)}
+                    </div>
+                  </div>
+              )}
             </div>
-          )}
 
-          <div className="w-full max-w-sm mt-4 flex justify-center">
-            {profileItems.length > 0 ? (
-              <ProxySelectors />
-            ) : (
-              <Alert className="flex flex-col items-center gap-2 text-center">
-                <PlusCircle className="h-4 w-4" />
-                <AlertTitle>{t("Get Started")}</AlertTitle>
-                <AlertDescription className="whitespace-pre-wrap">
-                  {t(
-                    "You don't have any profiles yet. Add your first one to begin.",
-                  )}
-                </AlertDescription>
-                <Button
-                  className="mt-2"
-                  onClick={() => viewerRef.current?.create()}
-                >
-                  {t("Add Profile")}
-                </Button>
-              </Alert>
+            <div className="relative -translate-y-6">
+              <PowerButton
+                  loading={isToggling}
+                  checked={!!isProxyEnabled}
+                  onClick={handleToggleProxy}
+                  disabled={showTunAlert || isToggling || profileItems.length === 0}
+                  aria-label={t("Toggle Proxy")}
+              />
+            </div>
+
+            {showTunAlert && (
+                <div className="w-full max-w-sm">
+                  <Alert
+                      variant="destructive"
+                      className="flex flex-col items-center gap-2 text-center"
+                  >
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>{t("Attention Required")}</AlertTitle>
+                    <AlertDescription className="text-xs">
+                      {t("TUN requires Service Mode or Admin Mode")}
+                    </AlertDescription>
+                    {!isServiceMode && !isAdminMode && (
+                        <Button
+                            size="sm"
+                            className="mt-2"
+                            onClick={installServiceAndRestartCore}
+                        >
+                          <Wrench className="mr-2 h-4 w-4" />
+                          {t("Install Service")}
+                        </Button>
+                    )}
+                  </Alert>
+                </div>
             )}
+
+            <div className="w-full max-w-sm mt-4 flex justify-center">
+              {profileItems.length > 0 ? (
+                  <ProxySelectors />
+              ) : (
+                  <Alert className="flex flex-col items-center gap-2 text-center">
+                    <PlusCircle className="h-4 w-4" />
+                    <AlertTitle>{t("Get Started")}</AlertTitle>
+                    <AlertDescription className="whitespace-pre-wrap">
+                      {t(
+                          "You don't have any profiles yet. Add your first one to begin.",
+                      )}
+                    </AlertDescription>
+                    <Button
+                        className="mt-2"
+                        onClick={() => viewerRef.current?.create()}
+                    >
+                      {t("Add Profile")}
+                    </Button>
+                  </Alert>
+              )}
+            </div>
           </div>
-      </div>
-      </main>
-      <footer className="flex justify-center p-4 flex-shrink-0">
-        {currentProfile?.support_url && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        </main>
+        <footer className="flex justify-center p-4 flex-shrink-0">
+          {currentProfile?.support_url && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>{t("Support")}:</span>
                 <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <a href={currentProfile.support_url} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-primary">
-                                {(currentProfile.support_url.includes('t.me') || currentProfile.support_url.includes('telegram') || currentProfile.support_url.startsWith('tg://')) ? (
-                                    <Send className="h-5 w-5" />
-                                ) : (
-                                    <Globe className="h-5 w-5" />
-                                )}
-                            </a>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>{currentProfile.support_url}</p>
-                        </TooltipContent>
-                    </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a href={currentProfile.support_url} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-primary">
+                        {(currentProfile.support_url.includes('t.me') || currentProfile.support_url.includes('telegram') || currentProfile.support_url.startsWith('tg://')) ? (
+                            <Send className="h-5 w-5" />
+                        ) : (
+                            <Globe className="h-5 w-5" />
+                        )}
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{currentProfile.support_url}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </TooltipProvider>
-            </div>
-        )}
-      </footer>
-      <ProfileViewer ref={viewerRef} onChange={() => mutateProfiles()} />
-    </div>
+              </div>
+          )}
+        </footer>
+        <ProfileViewer ref={viewerRef} onChange={() => mutateProfiles()} />
+      </div>
   );
 };
 
