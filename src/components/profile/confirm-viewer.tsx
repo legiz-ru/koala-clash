@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next";
 
-// Новые импорты из shadcn/ui
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +17,7 @@ interface Props {
   open: boolean;
   title: string;
   description: string;
-  onOpenChange: (open: boolean) => void; // shadcn использует этот коллбэк
+  onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
 }
 
@@ -30,7 +29,7 @@ export const ConfirmViewer = (props: Props) => {
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogTitle className="truncate">{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
