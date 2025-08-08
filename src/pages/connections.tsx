@@ -49,17 +49,36 @@ import {
   PauseCircle,
   ArrowDown,
   ArrowUp,
-  Menu,
 } from "lucide-react";
 import {SidebarTrigger} from "@/components/ui/sidebar";
+
+interface IConnectionsItem {
+  id: string;
+  metadata: {
+    host: string;
+    destinationIP: string;
+    process?: string;
+  };
+  start?: string;
+  curUpload?: number;
+  curDownload?: number;
+}
+
+interface IConnections {
+  uploadTotal: number;
+  downloadTotal: number;
+  connections: IConnectionsItem[];
+  data: IConnectionsItem[];
+}
+
+type OrderFunc = (list: IConnectionsItem[]) => IConnectionsItem[];
 
 const initConn: IConnections = {
   uploadTotal: 0,
   downloadTotal: 0,
   connections: [],
+  data: [],
 };
-
-type OrderFunc = (list: IConnectionsItem[]) => IConnectionsItem[];
 
 const ConnectionsPage = () => {
   const { t } = useTranslation();
@@ -72,14 +91,14 @@ const ConnectionsPage = () => {
 
   const orderOpts: Record<string, OrderFunc> = {
     Default: (list) =>
-      list.sort(
-        (a, b) =>
-          new Date(b.start || "0").getTime()! -
-          new Date(a.start || "0").getTime()!,
-      ),
-    "Upload Speed": (list) => list.sort((a, b) => b.curUpload! - a.curUpload!),
+        list.sort(
+            (a, b) =>
+                new Date(b.start || "0").getTime()! -
+                new Date(a.start || "0").getTime()!,
+        ),
+    "Upload Speed": (list) => list.sort((a, b) => (b.curUpload ?? 0) - (a.curUpload ?? 0)),
     "Download Speed": (list) =>
-      list.sort((a, b) => b.curDownload! - a.curDownload!),
+        list.sort((a, b) => (b.curDownload ?? 0) - (a.curDownload ?? 0)),
   };
 
   const [isPaused, setIsPaused] = useState(false);
@@ -91,6 +110,7 @@ const ConnectionsPage = () => {
       uploadTotal: connections.uploadTotal,
       downloadTotal: connections.downloadTotal,
       connections: connections.data,
+      data: connections.data,
     };
     if (isPaused) return frozenData ?? currentData;
     return currentData;
@@ -101,7 +121,7 @@ const ConnectionsPage = () => {
     let conns = displayData.connections.filter((conn) => {
       const { host, destinationIP, process } = conn.metadata;
       return (
-        match(host || "") || match(destinationIP || "") || match(process || "")
+          match(host || "") || match(destinationIP || "") || match(process || "")
       );
     });
     if (orderFunc) conns = orderFunc(conns);
@@ -109,24 +129,24 @@ const ConnectionsPage = () => {
   }, [displayData, match, curOrderOpt]);
 
   const [scrollingElement, setScrollingElement] = useState<
-    HTMLElement | Window | null
+      HTMLElement | Window | null
   >(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
   const scrollerRefCallback = useCallback(
-    (node: HTMLElement | Window | null) => {
-      setScrollingElement(node);
-    },
-    [],
+      (node: HTMLElement | Window | null) => {
+        setScrollingElement(node);
+      },
+      [],
   );
 
   useEffect(() => {
     if (!scrollingElement) return;
     const handleScroll = () => {
       const scrollTop =
-        scrollingElement instanceof Window
-          ? scrollingElement.scrollY
-          : scrollingElement.scrollTop;
+          scrollingElement instanceof Window
+              ? scrollingElement.scrollY
+              : scrollingElement.scrollTop;
       setIsScrolled(scrollTop > 5);
     };
 
@@ -137,8 +157,8 @@ const ConnectionsPage = () => {
   const onCloseAll = useLockFn(closeAllConnections);
   const detailRef = useRef<ConnectionDetailRef>(null!);
   const handleSearch = useCallback(
-    (m: (content: string) => boolean) => setMatch(() => m),
-    [],
+      (m: (content: string) => boolean) => setMatch(() => m),
+      [],
   );
   const handlePauseToggle = useCallback(() => {
     setIsPaused((prev) => {
@@ -147,6 +167,7 @@ const ConnectionsPage = () => {
           uploadTotal: connections.uploadTotal,
           downloadTotal: connections.downloadTotal,
           connections: connections.data,
+          data: connections.data,
         });
       } else {
         setFrozenData(null);
@@ -155,133 +176,137 @@ const ConnectionsPage = () => {
     });
   }, [connections]);
 
-  return (
-    <div className="h-full w-full relative">
-      <div
-        className={cn(
-          "absolute top-0 left-0 right-0 z-10 p-4 transition-all duration-200",
-          { "bg-background/80 backdrop-blur-sm shadow-sm": isScrolled },
-        )}
-      >
-        <div className="flex justify-between items-center">
-          <div className="w-10">
-            <SidebarTrigger />
-          </div>
-          <h2 className="text-2xl font-semibold tracking-tight">
-            {t("Connections")}
-          </h2>
-          <TooltipProvider delayDuration={100}>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <ArrowDown className="h-4 w-4 text-green-500" />
-                  {parseTraffic(displayData.downloadTotal)}
-                </div>
-                <div className="flex items-center gap-1">
-                  <ArrowUp className="h-4 w-4 text-sky-500" />
-                  {parseTraffic(displayData.uploadTotal)}
-                </div>
-              </div>
-              <Separator orientation="vertical" className="h-6 mx-2" />
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() =>
-                      setSetting((o) =>
-                        o?.layout !== "table"
-                          ? { ...o, layout: "table" }
-                          : { ...o, layout: "list" },
-                      )
-                    }
-                  >
-                    {isTableLayout ? (
-                      <List className="h-5 w-5" />
-                    ) : (
-                      <Table2 className="h-5 w-5" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{isTableLayout ? t("List View") : t("Table View")}</p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handlePauseToggle}
-                  >
-                    {isPaused ? (
-                      <PlayCircle className="h-5 w-5" />
-                    ) : (
-                      <PauseCircle className="h-5 w-5" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{isPaused ? t("Resume") : t("Pause")}</p>
-                </TooltipContent>
-              </Tooltip>
-              <Button size="sm" variant="destructive" onClick={onCloseAll}>
-                {t("Close All")}
-              </Button>
-            </div>
-          </TooltipProvider>
-        </div>
-        <div className="flex items-center gap-2 mt-2">
-          {!isTableLayout && (
-            <Select
-              value={curOrderOpt}
-              onValueChange={(value) => setOrderOpt(value)}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder={t("Sort by")} />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.keys(orderOpts).map((opt) => (
-                  <SelectItem key={opt} value={opt}>
-                    {t(opt)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          <div className="flex-1">
-            <BaseSearchBox onSearch={handleSearch} />
-          </div>
-        </div>
-      </div>
+  const headerHeight = "7rem";
 
-      <div className="absolute top-0 left-0 right-0 bottom-0 pt-28">
-        {filterConn.length === 0 ? (
-          <BaseEmpty />
-        ) : isTableLayout ? (
-          <div className="p-4 pt-0 h-full w-full">
-            <ConnectionTable
-              connections={filterConn}
-              onShowDetail={(detail) => detailRef.current?.open(detail)}
-              scrollerRef={scrollerRefCallback}
-            />
+  return (
+      <div className="relative h-full w-full">
+        <div
+            className="absolute top-0 left-0 right-0 z-20 p-4 bg-background/80 backdrop-blur-sm"
+            style={{ height: headerHeight }}
+        >
+          <div className="flex justify-between items-center">
+            <div className="w-10">
+              <SidebarTrigger />
+            </div>
+            <h2 className="text-2xl font-semibold tracking-tight">
+              {t("Connections")}
+            </h2>
+            <TooltipProvider delayDuration={100}>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <ArrowDown className="h-4 w-4 text-green-500" />
+                    {parseTraffic(displayData.downloadTotal)}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <ArrowUp className="h-4 w-4 text-sky-500" />
+                    {parseTraffic(displayData.uploadTotal)}
+                  </div>
+                </div>
+                <Separator orientation="vertical" className="h-6 mx-2" />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() =>
+                            setSetting((o) =>
+                                o?.layout !== "table"
+                                    ? { ...o, layout: "table" }
+                                    : { ...o, layout: "list" },
+                            )
+                        }
+                    >
+                      {isTableLayout ? (
+                          <List className="h-5 w-5" />
+                      ) : (
+                          <Table2 className="h-5 w-5" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{isTableLayout ? t("List View") : t("Table View")}</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handlePauseToggle}
+                    >
+                      {isPaused ? (
+                          <PlayCircle className="h-5 w-5" />
+                      ) : (
+                          <PauseCircle className="h-5 w-5" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{isPaused ? t("Resume") : t("Pause")}</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Button size="sm" variant="destructive" onClick={onCloseAll}>
+                  {t("Close All")}
+                </Button>
+              </div>
+            </TooltipProvider>
           </div>
-        ) : (
-          <Virtuoso
-            scrollerRef={scrollerRefCallback}
-            data={filterConn}
-            className="h-full w-full"
-            itemContent={(_, item) => (
-              <ConnectionItem
-                value={item}
-                onShowDetail={() => detailRef.current?.open(item)}
-              />
+          <div className="flex items-center gap-2 mt-2">
+            {!isTableLayout && (
+                <Select
+                    value={curOrderOpt}
+                    onValueChange={(value) => setOrderOpt(value)}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder={t("Sort by")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(orderOpts).map((opt) => (
+                        <SelectItem key={opt} value={opt}>
+                          {t(opt)}
+                        </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
             )}
-          />
-        )}
-        <ConnectionDetail ref={detailRef} />
+            <div className="flex-1">
+              <BaseSearchBox onSearch={handleSearch} />
+            </div>
+          </div>
+        </div>
+
+        <div
+            ref={scrollerRefCallback}
+            className="absolute left-0 right-0 bottom-0 overflow-y-auto"
+            style={{ top: headerHeight }}
+        >
+          {filterConn.length === 0 ? (
+              <BaseEmpty />
+          ) : isTableLayout ? (
+              <div className="p-4 pt-0">
+                <ConnectionTable
+                    connections={filterConn}
+                    onShowDetail={(detail) => detailRef.current?.open(detail)}
+                    scrollerRef={scrollerRefCallback}
+                />
+              </div>
+          ) : (
+              <Virtuoso
+                  scrollerRef={scrollerRefCallback}
+                  data={filterConn}
+                  className="h-full w-full"
+                  itemContent={(_, item) => (
+                      <ConnectionItem
+                          value={item}
+                          onShowDetail={() => detailRef.current?.open(item)}
+                      />
+                  )}
+              />
+          )}
+          <ConnectionDetail ref={detailRef} />
+        </div>
       </div>
-    </div>
   );
 };
 
