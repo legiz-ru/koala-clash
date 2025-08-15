@@ -25,14 +25,14 @@ fn open_or_close_dashboard_internal(bypass_debounce: bool) {
     use crate::process::AsyncHandler;
     use crate::utils::window_manager::WindowManager;
 
-    log::info!(target: "app", "Attempting to open/close dashboard (绕过防抖: {bypass_debounce})");
+    log::info!(target: "app", "Attempting to open/close dashboard (bypass debounce: {bypass_debounce})");
 
     // 热键调用调度到主线程执行，避免 WebView 创建死锁
     if bypass_debounce {
-        log::info!(target: "app", "热键调用，调度到主线程执行窗口操作");
+        log::info!(target: "app", "Hotkey invoked, dispatching window operation to main thread");
 
         AsyncHandler::spawn(move || async move {
-            log::info!(target: "app", "主线程中执行热键窗口操作");
+            log::info!(target: "app", "Executing hotkey window operation on main thread");
 
             if crate::module::lightweight::is_in_lightweight_mode() {
                 log::info!(target: "app", "Currently in lightweight mode, exiting lightweight mode");
@@ -64,7 +64,7 @@ fn open_or_close_dashboard_internal(bypass_debounce: bool) {
 /// 异步优化的应用退出函数
 pub fn quit() {
     use crate::process::AsyncHandler;
-    logging!(debug, Type::System, true, "启动退出流程");
+    logging!(debug, Type::System, true, "Start exit process");
 
     // 获取应用句柄并设置退出标志
     let app_handle = handle::Handle::global().app_handle().unwrap();
@@ -73,19 +73,19 @@ pub fn quit() {
     // 优先关闭窗口，提供立即反馈
     if let Some(window) = handle::Handle::global().get_window() {
         let _ = window.hide();
-        log::info!(target: "app", "窗口已隐藏");
+        log::info!(target: "app", "Window hidden");
     }
 
     // 使用异步任务处理资源清理，避免阻塞
     AsyncHandler::spawn(move || async move {
-        logging!(info, Type::System, true, "开始异步清理资源");
+        logging!(info, Type::System, true, "Start asynchronous resource cleanup");
         let cleanup_result = clean_async().await;
 
         logging!(
             info,
             Type::System,
             true,
-            "资源清理完成，退出代码: {}",
+            "Resource cleanup completed, exit code: {}",
             if cleanup_result { 0 } else { 1 }
         );
         app_handle.exit(if cleanup_result { 0 } else { 1 });
@@ -95,7 +95,7 @@ pub fn quit() {
 async fn clean_async() -> bool {
     use tokio::time::{timeout, Duration};
 
-    logging!(info, Type::System, true, "开始执行异步清理操作...");
+    logging!(info, Type::System, true, "Start executing asynchronous cleanup...");
 
     // 1. 处理TUN模式
     let tun_task = async {
@@ -112,11 +112,11 @@ async fn clean_async() -> bool {
             .await
             {
                 Ok(_) => {
-                    log::info!(target: "app", "TUN模式已禁用");
+                    log::info!(target: "app", "TUN mode disabled");
                     true
                 }
                 Err(_) => {
-                    log::warn!(target: "app", "禁用TUN模式超时");
+                    log::warn!(target: "app", "Timeout disabling TUN mode");
                     false
                 }
             }
@@ -134,11 +134,11 @@ async fn clean_async() -> bool {
         .await
         {
             Ok(_) => {
-                log::info!(target: "app", "系统代理已重置");
+                log::info!(target: "app", "System proxy reset");
                 true
             }
             Err(_) => {
-                log::warn!(target: "app", "重置系统代理超时");
+                log::warn!(target: "app", "Timeout resetting system proxy");
                 false
             }
         }
@@ -148,11 +148,11 @@ async fn clean_async() -> bool {
     let core_task = async {
         match timeout(Duration::from_secs(3), CoreManager::global().stop_core()).await {
             Ok(_) => {
-                log::info!(target: "app", "核心服务已停止");
+                log::info!(target: "app", "Core service stopped");
                 true
             }
             Err(_) => {
-                log::warn!(target: "app", "停止核心服务超时");
+                log::warn!(target: "app", "Timeout stopping core service");
                 false
             }
         }
@@ -168,11 +168,11 @@ async fn clean_async() -> bool {
         .await
         {
             Ok(_) => {
-                log::info!(target: "app", "DNS设置已恢复");
+                log::info!(target: "app", "DNS settings restored");
                 true
             }
             Err(_) => {
-                log::warn!(target: "app", "恢复DNS设置超时");
+                log::warn!(target: "app", "Timeout restoring DNS settings");
                 false
             }
         }
@@ -192,7 +192,7 @@ async fn clean_async() -> bool {
         info,
         Type::System,
         true,
-        "异步清理操作完成 - TUN: {}, 代理: {}, 核心: {}, DNS: {}, 总体: {}",
+        "Asynchronous cleanup completed - TUN: {}, Proxy: {}, Core: {}, DNS: {}, Overall: {}",
         tun_success,
         proxy_success,
         core_success,
@@ -209,7 +209,7 @@ pub fn clean() -> bool {
     let (tx, rx) = std::sync::mpsc::channel();
 
     AsyncHandler::spawn(move || async move {
-        logging!(info, Type::System, true, "开始执行清理操作...");
+        logging!(info, Type::System, true, "Start executing cleanup...");
 
         // 使用已有的异步清理函数
         let cleanup_result = clean_async().await;
@@ -220,7 +220,7 @@ pub fn clean() -> bool {
 
     match rx.recv_timeout(std::time::Duration::from_secs(8)) {
         Ok(result) => {
-            logging!(info, Type::System, true, "清理操作完成，结果: {}", result);
+            logging!(info, Type::System, true, "Cleanup completed, result: {}", result);
             result
         }
         Err(_) => {
@@ -228,7 +228,7 @@ pub fn clean() -> bool {
                 warn,
                 Type::System,
                 true,
-                "清理操作超时，返回成功状态避免阻塞"
+                "Cleanup timed out, returning success to avoid blocking"
             );
             true
         }

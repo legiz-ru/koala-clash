@@ -133,17 +133,17 @@ pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdR
                 || (!file_path_str.ends_with(".js") && !is_script_error)
             {
                 // 普通YAML错误使用YAML通知处理
-                log::info!(target: "app", "[cmd配置save] YAML配置文件验证失败，发送通知");
+                log::info!(target: "app", "[cmd config save] YAML config file validation failed, sending notification");
                 let result = (false, error_msg.clone());
                 crate::cmd::validate::handle_yaml_validation_notice(&result, "YAML配置文件");
             } else if is_script_error {
                 // 脚本错误使用专门的通知处理
-                log::info!(target: "app", "[cmd配置save] 脚本文件验证失败，发送通知");
+                log::info!(target: "app", "[cmd config save] Script file validation failed, sending notification");
                 let result = (false, error_msg.clone());
                 crate::cmd::validate::handle_script_validation_notice(&result, "脚本文件");
             } else {
                 // 普通配置错误使用一般通知
-                log::info!(target: "app", "[cmd配置save] 其他类型验证失败，发送一般通知");
+                log::info!(target: "app", "[cmd config save] Other validation failure type, sending general notification");
                 handle::Handle::notice_message("config_validate::error", &error_msg);
             }
 
@@ -154,7 +154,7 @@ pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdR
                 error,
                 Type::Config,
                 true,
-                "[cmd配置save] 验证过程发生错误: {}",
+                "[cmd config save] Error occurred during validation: {}",
                 e
             );
             // 恢复原始配置文件

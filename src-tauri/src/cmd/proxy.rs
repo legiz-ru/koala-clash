@@ -33,7 +33,7 @@ pub async fn get_proxies() -> CmdResult<serde_json::Value> {
             state.proxies = Box::new(proxies);
             state.need_refresh = false;
         }
-        log::debug!(target: "app", "proxies刷新成功");
+        log::debug!(target: "app", "Proxies refreshed successfully");
     }
 
     let proxies = {
@@ -50,7 +50,7 @@ pub async fn force_refresh_proxies() -> CmdResult<serde_json::Value> {
     let app_handle = handle::Handle::global().app_handle().unwrap();
     let cmd_proxy_state = app_handle.state::<Mutex<CmdProxyState>>();
 
-    log::debug!(target: "app", "强制刷新代理缓存");
+    log::debug!(target: "app", "Force refresh proxy cache");
 
     let proxies = manager.get_refresh_proxies().await?;
 
@@ -61,7 +61,7 @@ pub async fn force_refresh_proxies() -> CmdResult<serde_json::Value> {
         state.last_refresh_time = Instant::now();
     }
 
-    log::debug!(target: "app", "强制刷新代理缓存完成");
+    log::debug!(target: "app", "Force refresh proxy cache completed");
     Ok(proxies)
 }
 
@@ -88,7 +88,7 @@ pub async fn get_providers_proxies() -> CmdResult<serde_json::Value> {
             state.providers_proxies = Box::new(providers);
             state.need_refresh = false;
         }
-        log::debug!(target: "app", "providers_proxies刷新成功");
+        log::debug!(target: "app", "providers_proxies refreshed successfully");
     }
 
     let providers_proxies = {

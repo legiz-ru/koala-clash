@@ -477,7 +477,7 @@ pub async fn reinstall_service() -> Result<()> {
 
 /// 检查服务状态 - 使用IPC通信
 pub async fn check_ipc_service_status() -> Result<JsonResponse> {
-    logging!(info, Type::Service, true, "开始检查服务状态 (IPC)");
+    logging!(info, Type::Service, true, "Starting service status check (IPC)");
 
     // 使用IPC通信
     let payload = serde_json::json!({});
@@ -495,8 +495,10 @@ pub async fn check_ipc_service_status() -> Result<JsonResponse> {
             ); */
 
             if !response.success {
-                let err_msg = response.error.unwrap_or_else(|| "未知服务错误".to_string());
-                logging!(error, Type::Service, true, "服务响应错误: {}", err_msg);
+                let err_msg = response
+                    .error
+                    .unwrap_or_else(|| "Unknown service error".to_string());
+                logging!(error, Type::Service, true, "Service response error: {}", err_msg);
                 bail!(err_msg);
             }
 
@@ -516,7 +518,7 @@ pub async fn check_ipc_service_status() -> Result<JsonResponse> {
                                         warn,
                                         Type::Service,
                                         true,
-                                        "解析嵌套的ResponseBody失败: {}; 尝试其他方式",
+                                        "Failed to parse nested ResponseBody: {}; trying alternative",
                                         e
                                     );
                                     None
@@ -536,7 +538,7 @@ pub async fn check_ipc_service_status() -> Result<JsonResponse> {
                             info,
                             Type::Service,
                             true,
-                            "服务检测成功: code={}, msg={}, data存在={}",
+                            "Service check succeeded: code={}, msg={}, data_present={}",
                             json_response.code,
                             json_response.msg,
                             json_response.data.is_some()
@@ -550,7 +552,7 @@ pub async fn check_ipc_service_status() -> Result<JsonResponse> {
                                     info,
                                     Type::Service,
                                     true,
-                                    "服务检测成功: code={}, msg={}",
+                                    "Service check succeeded: code={}, msg={}",
                                     json_response.code,
                                     json_response.msg
                                 );
@@ -561,31 +563,31 @@ pub async fn check_ipc_service_status() -> Result<JsonResponse> {
                                     error,
                                     Type::Service,
                                     true,
-                                    "解析服务响应失败: {}; 原始数据: {:?}",
+                                    "Failed to parse service response: {}; raw data: {:?}",
                                     e,
                                     data
                                 );
-                                bail!("无法解析服务响应数据: {}", e)
+                                bail!("Unable to parse service response data: {}", e)
                             }
                         }
                     }
                 }
                 None => {
-                    logging!(error, Type::Service, true, "服务响应中没有数据");
-                    bail!("服务响应中没有数据")
+                    logging!(error, Type::Service, true, "No data in service response");
+                    bail!("No data in service response")
                 }
             }
         }
         Err(e) => {
-            logging!(error, Type::Service, true, "IPC通信失败: {}", e);
-            bail!("无法连接到Koala Clash Service: {}", e)
+            logging!(error, Type::Service, true, "IPC communication failed: {}", e);
+            bail!("Unable to connect to Koala Clash Service: {}", e)
         }
     }
 }
 
 /// 检查服务版本 - 使用IPC通信
 pub async fn check_service_version() -> Result<String> {
-    logging!(info, Type::Service, true, "开始检查服务版本 (IPC)");
+    logging!(info, Type::Service, true, "Starting service version check (IPC)");
 
     let payload = serde_json::json!({});
     // logging!(debug, Type::Service, true, "发送GetVersion请求");
@@ -604,8 +606,8 @@ pub async fn check_service_version() -> Result<String> {
             if !response.success {
                 let err_msg = response
                     .error
-                    .unwrap_or_else(|| "获取服务版本失败".to_string());
-                logging!(error, Type::Service, true, "获取版本错误: {}", err_msg);
+                    .unwrap_or_else(|| "Failed to get service version".to_string());
+                logging!(error, Type::Service, true, "Failed to get service version: {}", err_msg);
                 bail!(err_msg);
             }
 
@@ -618,7 +620,7 @@ pub async fn check_service_version() -> Result<String> {
                                     info,
                                     Type::Service,
                                     true,
-                                    "获取到服务版本: {}",
+                                    "Service version: {}",
                                     version_str
                                 );
                                 return Ok(version_str.to_string());
@@ -628,7 +630,7 @@ pub async fn check_service_version() -> Result<String> {
                             error,
                             Type::Service,
                             true,
-                            "嵌套数据中没有version字段: {:?}",
+                            "Nested data does not contain version field: {:?}",
                             nested_data
                         );
                     } else {
@@ -639,7 +641,7 @@ pub async fn check_service_version() -> Result<String> {
                                     info,
                                     Type::Service,
                                     true,
-                                    "获取到服务版本: {}",
+                                    "Received service version: {}",
                                     version_response.version
                                 );
                                 return Ok(version_response.version);
@@ -649,44 +651,44 @@ pub async fn check_service_version() -> Result<String> {
                                     error,
                                     Type::Service,
                                     true,
-                                    "解析版本响应失败: {}; 原始数据: {:?}",
+                                    "Failed to parse version response: {}; raw data: {:?}",
                                     e,
                                     data
                                 );
-                                bail!("无法解析服务版本数据: {}", e)
+                                bail!("Unable to parse service version data: {}", e)
                             }
                         }
                     }
-                    bail!("响应中未找到有效的版本信息")
+                    bail!("No valid version information found in response")
                 }
                 None => {
-                    logging!(error, Type::Service, true, "版本响应中没有数据");
-                    bail!("服务版本响应中没有数据")
+                    logging!(error, Type::Service, true, "No data in version response");
+                    bail!("No data in service version response")
                 }
             }
         }
         Err(e) => {
-            logging!(error, Type::Service, true, "IPC通信失败: {}", e);
-            bail!("无法连接到Koala Clash Service: {}", e)
+            logging!(error, Type::Service, true, "IPC communication failed: {}", e);
+            bail!("Unable to connect to Koala Clash Service: {}", e)
         }
     }
 }
 
 /// 检查服务是否需要重装
 pub async fn check_service_needs_reinstall() -> bool {
-    logging!(info, Type::Service, true, "开始检查服务是否需要重装");
+    logging!(info, Type::Service, true, "Checking whether service needs reinstallation");
 
     let service_state = ServiceState::get();
 
     if !service_state.can_reinstall() {
-        log::info!(target: "app", "服务重装检查: 处于冷却期或已达最大尝试次数");
+        log::info!(target: "app", "Service reinstall check: in cooldown period or max attempts reached");
         return false;
     }
 
     // 检查版本和可用性
     match check_service_version().await {
         Ok(version) => {
-            log::info!(target: "app", "服务版本检测：当前={version}, 要求={REQUIRED_SERVICE_VERSION}");
+            log::info!(target: "app", "Service version check: current={version}, required={REQUIRED_SERVICE_VERSION}");
             /*             logging!(
                 info,
                 Type::Service,
@@ -698,25 +700,25 @@ pub async fn check_service_needs_reinstall() -> bool {
 
             let needs_reinstall = version != REQUIRED_SERVICE_VERSION;
             if needs_reinstall {
-                log::warn!(target: "app", "发现服务版本不匹配，需要重装! 当前={version}, 要求={REQUIRED_SERVICE_VERSION}");
-                logging!(warn, Type::Service, true, "服务版本不匹配，需要重装");
+                log::warn!(target: "app", "Service version mismatch detected, reinstallation required! current={version}, required={REQUIRED_SERVICE_VERSION}");
+                logging!(warn, Type::Service, true, "Service version mismatch, reinstallation required");
 
                 // log::debug!(target: "app", "当前版本字节: {:?}", version.as_bytes());
                 // log::debug!(target: "app", "要求版本字节: {:?}", REQUIRED_SERVICE_VERSION.as_bytes());
             } else {
-                log::info!(target: "app", "服务版本匹配，无需重装");
+                log::info!(target: "app", "Service version matches, no reinstallation needed");
                 // logging!(info, Type::Service, true, "服务版本匹配，无需重装");
             }
 
             needs_reinstall
         }
         Err(err) => {
-            logging!(error, Type::Service, true, "检查服务版本失败: {}", err);
+            logging!(error, Type::Service, true, "Failed to check service version: {}", err);
 
             // 检查服务是否可用
             match is_service_available().await {
                 Ok(()) => {
-                    log::info!(target: "app", "服务正在运行但版本检查失败: {err}");
+                    log::info!(target: "app", "Service is running but version check failed: {err}");
                     /*                     logging!(
                         info,
                         Type::Service,
@@ -727,7 +729,7 @@ pub async fn check_service_needs_reinstall() -> bool {
                     false
                 }
                 _ => {
-                    log::info!(target: "app", "服务不可用或未运行，需要重装");
+                    log::info!(target: "app", "Service unavailable or not running, reinstallation needed");
                     // logging!(info, Type::Service, true, "服务不可用或未运行，需要重装");
                     true
                 }
@@ -738,7 +740,7 @@ pub async fn check_service_needs_reinstall() -> bool {
 
 /// 尝试使用服务启动core
 pub(super) async fn start_with_existing_service(config_file: &PathBuf) -> Result<()> {
-    log::info!(target:"app", "尝试使用现有服务启动核心 (IPC)");
+    log::info!(target:"app", "Attempting to start core with existing service (IPC)");
     // logging!(info, Type::Service, true, "尝试使用现有服务启动核心");
 
     let clash_core = Config::verge().latest().get_valid_clash_core();
@@ -781,8 +783,8 @@ pub(super) async fn start_with_existing_service(config_file: &PathBuf) -> Result
             ); */
 
             if !response.success {
-                let err_msg = response.error.unwrap_or_else(|| "启动核心失败".to_string());
-                logging!(error, Type::Service, true, "启动核心失败: {}", err_msg);
+                let err_msg = response.error.unwrap_or_else(|| "Failed to start core".to_string());
+                logging!(error, Type::Service, true, "Failed to start core: {}", err_msg);
                 bail!(err_msg);
             }
 
@@ -793,127 +795,127 @@ pub(super) async fn start_with_existing_service(config_file: &PathBuf) -> Result
                     let msg = data
                         .get("msg")
                         .and_then(|m| m.as_str())
-                        .unwrap_or("未知错误");
+                        .unwrap_or("Unknown error");
 
                     if code_value != 0 {
                         logging!(
                             error,
                             Type::Service,
                             true,
-                            "启动核心返回错误: code={}, msg={}",
+                            "Start core returned error: code={}, msg={}",
                             code_value,
                             msg
                         );
-                        bail!("启动核心失败: {}", msg);
+                        bail!("Failed to start core: {}", msg);
                     }
                 }
             }
 
-            logging!(info, Type::Service, true, "服务成功启动核心");
+            logging!(info, Type::Service, true, "Service successfully started core");
             Ok(())
         }
         Err(e) => {
-            logging!(error, Type::Service, true, "启动核心IPC通信失败: {}", e);
-            bail!("无法连接到Koala Clash Service: {}", e)
+            logging!(error, Type::Service, true, "Failed to start core via IPC: {}", e);
+            bail!("Unable to connect to Koala Clash Service: {}", e)
         }
     }
 }
 
 // 以服务启动core
 pub(super) async fn run_core_by_service(config_file: &PathBuf) -> Result<()> {
-    log::info!(target: "app", "正在尝试通过服务启动核心");
+    log::info!(target: "app", "Attempting to start core via service");
 
     // 先检查服务版本，不受冷却期限制
     let version_check = match check_service_version().await {
         Ok(version) => {
-            log::info!(target: "app", "检测到服务版本: {version}, 要求版本: {REQUIRED_SERVICE_VERSION}");
+            log::info!(target: "app", "Detected service version: {version}, required: {REQUIRED_SERVICE_VERSION}");
 
             if version.as_bytes() != REQUIRED_SERVICE_VERSION.as_bytes() {
-                log::warn!(target: "app", "服务版本不匹配，需要重装");
+                log::warn!(target: "app", "Service version mismatch, reinstallation required");
                 false
             } else {
-                log::info!(target: "app", "服务版本匹配");
+                log::info!(target: "app", "Service version matches");
                 true
             }
         }
         Err(err) => {
-            log::warn!(target: "app", "无法获取服务版本: {err}");
+            log::warn!(target: "app", "Failed to get service version: {err}");
             false
         }
     };
 
     if version_check && is_service_available().await.is_ok() {
-        log::info!(target: "app", "服务已在运行且版本匹配，尝试使用");
+        log::info!(target: "app", "Service is running and version matches, attempting to use it");
         return start_with_existing_service(config_file).await;
     }
 
     if !version_check {
-        log::info!(target: "app", "服务版本不匹配，尝试重装");
+        log::info!(target: "app", "Service version mismatch, attempting reinstallation");
 
         let service_state = ServiceState::get();
         if !service_state.can_reinstall() {
-            log::warn!(target: "app", "由于限制无法重装服务");
+            log::warn!(target: "app", "Cannot reinstall service due to limitations");
             if let Ok(()) = start_with_existing_service(config_file).await {
-                log::info!(target: "app", "尽管版本不匹配，但成功启动了服务");
+                log::info!(target: "app", "Service started successfully despite version mismatch");
                 return Ok(());
             } else {
-                bail!("服务版本不匹配且无法重装，启动失败");
+                bail!("Service version mismatch and cannot reinstall; startup failed");
             }
         }
 
-        log::info!(target: "app", "开始重装服务");
+        log::info!(target: "app", "Starting service reinstallation");
         if let Err(err) = reinstall_service().await {
-            log::warn!(target: "app", "服务重装失败: {err}");
+            log::warn!(target: "app", "Service reinstallation failed: {err}");
 
-            log::info!(target: "app", "尝试使用现有服务");
+            log::info!(target: "app", "Attempting to use existing service");
             return start_with_existing_service(config_file).await;
         }
 
-        log::info!(target: "app", "服务重装成功，尝试启动");
+        log::info!(target: "app", "Service reinstalled successfully, attempting to start");
         return start_with_existing_service(config_file).await;
     }
 
-    // 检查服务状态
+    // Check service status
     match check_ipc_service_status().await {
         Ok(_) => {
-            log::info!(target: "app", "服务可用但未运行核心，尝试启动");
+            log::info!(target: "app", "Service available but core not running, attempting to start");
             if let Ok(()) = start_with_existing_service(config_file).await {
                 return Ok(());
             }
         }
         Err(err) => {
-            log::warn!(target: "app", "服务检查失败: {err}");
+            log::warn!(target: "app", "Service check failed: {err}");
         }
     }
 
-    // 服务不可用或启动失败，检查是否需要重装
+    // Service unavailable or startup failed, check if reinstallation is needed
     if check_service_needs_reinstall().await {
-        log::info!(target: "app", "服务需要重装");
+        log::info!(target: "app", "Service needs reinstallation");
 
         if let Err(err) = reinstall_service().await {
-            log::warn!(target: "app", "服务重装失败: {err}");
+            log::warn!(target: "app", "Service reinstallation failed: {err}");
             bail!("Failed to reinstall service: {}", err);
         }
 
-        log::info!(target: "app", "服务重装完成，尝试启动核心");
+        log::info!(target: "app", "Service reinstallation completed, attempting to start core");
         start_with_existing_service(config_file).await
     } else {
-        log::warn!(target: "app", "服务不可用且无法重装");
+        log::warn!(target: "app", "Service unavailable and cannot be reinstalled");
         bail!("Service is not available and cannot be reinstalled at this time")
     }
 }
 
 /// 通过服务停止core
 pub(super) async fn stop_core_by_service() -> Result<()> {
-    logging!(info, Type::Service, true, "通过服务停止核心 (IPC)");
+    logging!(info, Type::Service, true, "Stopping core via service (IPC)");
 
     let payload = serde_json::json!({});
     let response = send_ipc_request(IpcCommand::StopClash, payload)
         .await
-        .context("无法连接到Koala Clash Service")?;
+        .context("Unable to connect to Koala Clash Service")?;
 
     if !response.success {
-        bail!(response.error.unwrap_or_else(|| "停止核心失败".to_string()));
+        bail!(response.error.unwrap_or_else(|| "Failed to stop core".to_string()));
     }
 
     if let Some(data) = &response.data {
@@ -922,18 +924,18 @@ pub(super) async fn stop_core_by_service() -> Result<()> {
             let msg = data
                 .get("msg")
                 .and_then(|m| m.as_str())
-                .unwrap_or("未知错误");
+                .unwrap_or("Unknown error");
 
             if code_value != 0 {
                 logging!(
                     error,
                     Type::Service,
                     true,
-                    "停止核心返回错误: code={}, msg={}",
+                    "Stop core returned error: code={}, msg={}",
                     code_value,
                     msg
                 );
-                bail!("停止核心失败: {}", msg);
+                bail!("Failed to stop core: {}", msg);
             }
         }
     }
@@ -943,19 +945,19 @@ pub(super) async fn stop_core_by_service() -> Result<()> {
 
 /// 检查服务是否正在运行
 pub async fn is_service_available() -> Result<()> {
-    logging!(info, Type::Service, true, "开始检查服务是否正在运行");
+    logging!(info, Type::Service, true, "Checking whether service is running");
 
     match check_ipc_service_status().await {
         Ok(resp) => {
             if resp.code == 0 && resp.msg == "ok" && resp.data.is_some() {
-                logging!(info, Type::Service, true, "服务正在运行");
+                logging!(info, Type::Service, true, "Service is running");
                 Ok(())
             } else {
                 logging!(
                     warn,
                     Type::Service,
                     true,
-                    "服务未正常运行: code={}, msg={}",
+                    "Service not running normally: code={}, msg={}",
                     resp.code,
                     resp.msg
                 );
@@ -963,7 +965,7 @@ pub async fn is_service_available() -> Result<()> {
             }
         }
         Err(err) => {
-            logging!(error, Type::Service, true, "检查服务运行状态失败: {}", err);
+            logging!(error, Type::Service, true, "Failed to check service running status: {}", err);
             Err(err)
         }
     }
@@ -971,21 +973,21 @@ pub async fn is_service_available() -> Result<()> {
 
 /// 强制重装服务（UI修复按钮）
 pub async fn force_reinstall_service() -> Result<()> {
-    log::info!(target: "app", "用户请求强制重装服务");
+    log::info!(target: "app", "User requested forced service reinstallation");
 
     let service_state = ServiceState::default();
     service_state.save()?;
 
-    log::info!(target: "app", "已重置服务状态，开始执行重装");
+    log::info!(target: "app", "Service state reset, starting reinstallation");
 
     match reinstall_service().await {
         Ok(()) => {
-            log::info!(target: "app", "服务重装成功");
+            log::info!(target: "app", "Service reinstalled successfully");
             Ok(())
         }
         Err(err) => {
-            log::error!(target: "app", "强制重装服务失败: {err}");
-            bail!("强制重装服务失败: {}", err)
+            log::error!(target: "app", "Forced service reinstallation failed: {err}");
+            bail!("Forced service reinstallation failed: {}", err)
         }
     }
 }
