@@ -202,7 +202,9 @@ pub async fn enhance() -> (Mapping, Vec<String>, HashMap<String, ResultLog>) {
             });
             let patch_tun = value.as_mapping().cloned().unwrap_or(Mapping::new());
             for (key, value) in patch_tun.into_iter() {
-                tun.insert(key, value);
+                if !tun.contains_key(&key) {
+                    tun.insert(key, value);
+                }
             }
             config.insert("tun".into(), tun.into());
         } else {
