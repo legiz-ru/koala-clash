@@ -154,7 +154,7 @@ interface IConnectionsItem {
   start: string;
   chains: string[];
   rule: string;
-  rulePayload: string;
+  rulePayload?: string;
   curUpload?: number; // upload speed, calculate at runtime
   curDownload?: number; // download speed, calculate at runtime
 }

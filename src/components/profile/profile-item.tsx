@@ -23,7 +23,6 @@ import { open } from "@tauri-apps/plugin-shell";
 import { ProxiesEditorViewer } from "./proxies-editor-viewer";
 import { cn } from "@root/lib/utils";
 
-// --- Компоненты shadcn/ui ---
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +45,6 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 
-// --- Иконки ---
 import {
   GripVertical,
   File as FileIcon,
@@ -71,10 +69,8 @@ import {
 } from "lucide-react";
 import { t } from "i18next";
 
-// Активируем плагин для dayjs
 dayjs.extend(relativeTime);
 
-// --- Вспомогательные функции ---
 const parseUrl = (url?: string): string | undefined => {
   if (!url) return undefined;
   try {
@@ -302,6 +298,11 @@ export const ProfileItem = (props: Props) => {
     isDestructive: true,
   };
 
+  const MAX_NAME_LENGTH = 25;
+  const truncatedName = name.length > MAX_NAME_LENGTH
+      ? `${name.slice(0, MAX_NAME_LENGTH)}...`
+      : name;
+
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
       <ContextMenu>
@@ -459,7 +460,6 @@ export const ProfileItem = (props: Props) => {
         </ContextMenuContent>
       </ContextMenu>
 
-      {/* Модальные окна для редактирования */}
       {fileOpen && (
         <EditorViewer
           open={true}
@@ -479,10 +479,10 @@ export const ProfileItem = (props: Props) => {
         <RulesEditorViewer
           open={true}
           onClose={() => setRulesOpen(false)}
-          profileUid={uid} // <-- Был 'uid', стал 'profileUid'
+          profileUid={uid}
           property={option?.rules ?? ""}
-          groupsUid={option?.groups ?? ""} // <-- Добавлен недостающий пропс
-          mergeUid={option?.merge ?? ""} // <-- Добавлен недостающий пропс
+          groupsUid={option?.groups ?? ""}
+          mergeUid={option?.merge ?? ""}
           onSave={onSave}
         />
       )}
@@ -491,7 +491,7 @@ export const ProfileItem = (props: Props) => {
         <ProxiesEditorViewer
           open={true}
           onClose={() => setProxiesOpen(false)}
-          profileUid={uid} // <-- Был 'uid', стал 'profileUid'
+          profileUid={uid}
           property={option?.proxies ?? ""}
           onSave={onSave}
         />
@@ -501,20 +501,20 @@ export const ProfileItem = (props: Props) => {
         <GroupsEditorViewer
           open={true}
           onClose={() => setGroupsOpen(false)}
-          profileUid={uid} // <-- Был 'uid', стал 'profileUid'
+          profileUid={uid}
           property={option?.groups ?? ""}
-          proxiesUid={option?.proxies ?? ""} // <-- Добавлен недостающий пропс
-          mergeUid={option?.merge ?? ""} // <-- Добавлен недостающий пропс
+          proxiesUid={option?.proxies ?? ""}
+          mergeUid={option?.merge ?? ""}
           onSave={onSave}
         />
       )}
 
       <ConfirmViewer
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        onConfirm={onDelete}
-        title={t("Delete Profile", { name })}
-        description={t("This action cannot be undone.")}
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          onConfirm={onDelete}
+          title={t("Delete Profile", { name: truncatedName })}
+          description={t("This action cannot be undone.")}
       />
     </div>
   );
