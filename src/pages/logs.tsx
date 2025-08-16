@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {SidebarTrigger} from "@/components/ui/sidebar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 const LogPage = () => {
   const { t } = useTranslation();

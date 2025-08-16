@@ -12,7 +12,8 @@ import {
   createProfile,
   patchProfile,
   importProfile,
-  enhanceProfiles, createProfileFromShareLink,
+  enhanceProfiles,
+  createProfileFromShareLink,
 } from "@/services/cmds";
 import { useProfiles } from "@/hooks/use-profiles";
 import { showNotice } from "@/services/noticeService";
@@ -138,7 +139,9 @@ export const ProfileViewer = forwardRef<ProfileViewerRef, Props>(
       setIsCheckingUrl(true);
 
       const handler = setTimeout(() => {
-        const isValid = /^(https?|vmess|vless|ss|socks|trojan):\/\//.test(importUrl);
+        const isValid = /^(https?|vmess|vless|ss|socks|trojan):\/\//.test(
+          importUrl,
+        );
         setIsUrlValid(isValid);
         setIsCheckingUrl(false);
       }, 500);
@@ -165,23 +168,35 @@ export const ProfileViewer = forwardRef<ProfileViewerRef, Props>(
         await enhanceProfiles();
         setOpen(false);
       } catch (err: any) {
-        const errorMessage = typeof err === 'string' ? err : (err.message || String(err));
+        const errorMessage =
+          typeof err === "string" ? err : err.message || String(err);
         const lowerErrorMessage = errorMessage.toLowerCase();
-        if (lowerErrorMessage.includes('device') || lowerErrorMessage.includes('устройств')) {
-          window.dispatchEvent(new CustomEvent('show-hwid-error', { detail: errorMessage }));
+        if (
+          lowerErrorMessage.includes("device") ||
+          lowerErrorMessage.includes("устройств")
+        ) {
+          window.dispatchEvent(
+            new CustomEvent("show-hwid-error", { detail: errorMessage }),
+          );
         } else if (!isShareLink && errorMessage.includes("failed to fetch")) {
-            showNotice("info", t("Import failed, retrying with Clash proxy..."));
-            try {
-              await importProfile(importUrl, { with_proxy: false, self_proxy: true });
-              showNotice("success", t("Profile Imported with Clash proxy"));
-              props.onChange();
-              await enhanceProfiles();
-              setOpen(false);
-            } catch (retryErr: any) {
-              showNotice("error", `${t("Import failed even with Clash proxy")}: ${retryErr?.message || retryErr.toString()}`);
-            }
+          showNotice("info", t("Import failed, retrying with Clash proxy..."));
+          try {
+            await importProfile(importUrl, {
+              with_proxy: false,
+              self_proxy: true,
+            });
+            showNotice("success", t("Profile Imported with Clash proxy"));
+            props.onChange();
+            await enhanceProfiles();
+            setOpen(false);
+          } catch (retryErr: any) {
+            showNotice(
+              "error",
+              `${t("Import failed even with Clash proxy")}: ${retryErr?.message || retryErr.toString()}`,
+            );
+          }
         } else {
-            showNotice("error", errorMessage);
+          showNotice("error", errorMessage);
         }
       } finally {
         setIsImporting(false);
@@ -302,19 +317,26 @@ export const ProfileViewer = forwardRef<ProfileViewerRef, Props>(
               </div>
 
               {/^(vmess|vless|ss|socks|trojan):\/\//.test(importUrl) && (
-                  <div className="space-y-2">
+                <div className="space-y-2">
                   <Label>{t("Template")}</Label>
-                  <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                      <SelectTrigger>
-                          <SelectValue placeholder="Select a template..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                          <SelectItem value="default">{t("Default Template")}</SelectItem>
-                          <SelectItem value="without_ru">{t("Template without RU Rules")}</SelectItem>
-                      </SelectContent>
+                  <Select
+                    value={selectedTemplate}
+                    onValueChange={setSelectedTemplate}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a template..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">
+                        {t("Default Template")}
+                      </SelectItem>
+                      <SelectItem value="without_ru">
+                        {t("Template without RU Rules")}
+                      </SelectItem>
+                    </SelectContent>
                   </Select>
-              </div>
-          )}
+                </div>
+              )}
 
               <Button
                 variant="outline"
@@ -473,15 +495,15 @@ export const ProfileViewer = forwardRef<ProfileViewerRef, Props>(
                       control={control}
                       name="option.update_always"
                       render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between">
-                              <FormLabel>{t("Update on Startup")}</FormLabel>
-                              <FormControl>
-                                <Switch
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                          </FormItem>
+                        <FormItem className="flex flex-row items-center justify-between">
+                          <FormLabel>{t("Update on Startup")}</FormLabel>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
                       )}
                     />
                     <FormField

@@ -1,1 +1,5 @@
-custom: ['https://t.me/tribute/app?startapp=dtfk','https://t.me/tribute/app?startapp=dtLE']
+custom:
+  [
+    "https://t.me/tribute/app?startapp=dtfk",
+    "https://t.me/tribute/app?startapp=dtLE",
+  ]

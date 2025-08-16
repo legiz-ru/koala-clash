@@ -27,7 +27,6 @@ import { AppSidebar } from "@/components/layout/sidebar";
 import { useZoomControls } from "@/hooks/useZoomControls";
 import { HwidErrorDialog } from "@/components/profile/hwid-error-dialog";
 
-
 const appWindow = getCurrentWebviewWindow();
 export let portableFlag = false;
 
@@ -49,16 +48,21 @@ const handleNoticeMessage = (
       mutate("getProfiles");
       navigate("/");
       showNotice("success", t("Import Subscription Successful"));
-      sessionStorage.setItem('activateProfile', msg);
+      sessionStorage.setItem("activateProfile", msg);
       break;
     case "import_sub_url::error":
-        console.log(msg);
-       if (msg.toLowerCase().includes('device') || msg.toLowerCase().includes('устройств')) {
-        window.dispatchEvent(new CustomEvent('show-hwid-error', { detail: msg }));
-       } else {
-         showNotice("error", msg);
-       }
-       break;
+      console.log(msg);
+      if (
+        msg.toLowerCase().includes("device") ||
+        msg.toLowerCase().includes("устройств")
+      ) {
+        window.dispatchEvent(
+          new CustomEvent("show-hwid-error", { detail: msg }),
+        );
+      } else {
+        showNotice("error", msg);
+      }
+      break;
     case "set_config::error":
       showNotice("error", msg);
       break;
@@ -172,7 +176,10 @@ const Layout = () => {
         try {
           handleNoticeMessage(status, msg, t, navigate);
         } catch (error) {
-          console.error("[Layout] Failure to process a notification message:", error);
+          console.error(
+            "[Layout] Failure to process a notification message:",
+            error,
+          );
         }
       }, 0);
     },
@@ -233,11 +240,17 @@ const Layout = () => {
                 try {
                   unlisten();
                 } catch (error) {
-                  console.error("[Layout] Failed to clear event listener:", error);
+                  console.error(
+                    "[Layout] Failed to clear event listener:",
+                    error,
+                  );
                 }
               })
               .catch((error) => {
-                console.error("[Layout] Failed to get unlisten function:", error);
+                console.error(
+                  "[Layout] Failed to get unlisten function:",
+                  error,
+                );
               });
           }
         });
@@ -259,7 +272,9 @@ const Layout = () => {
 
   useEffect(() => {
     if (initRef.current) {
-      console.log("[Layout] Initialization code has already been executed, skip");
+      console.log(
+        "[Layout] Initialization code has already been executed, skip",
+      );
       return;
     }
     console.log("[Layout] Begin executing initialization code");
@@ -305,7 +320,9 @@ const Layout = () => {
       }
 
       initializationAttempts++;
-      console.log(`[Layout] Start ${initializationAttempts} for the first time`);
+      console.log(
+        `[Layout] Start ${initializationAttempts} for the first time`,
+      );
 
       try {
         removeLoadingOverlay();
@@ -326,7 +343,9 @@ const Layout = () => {
           checkReactMount();
 
           setTimeout(() => {
-            console.log("[Layout] React components mount check timeout, continue execution");
+            console.log(
+              "[Layout] React components mount check timeout, continue execution",
+            );
             resolve();
           }, 2000);
         });
@@ -342,7 +361,9 @@ const Layout = () => {
         await notifyBackend("UI ready");
 
         isInitialized = true;
-        console.log(`[Layout] The ${initializationAttempts} initialization is complete`);
+        console.log(
+          `[Layout] The ${initializationAttempts} initialization is complete`,
+        );
       } catch (error) {
         console.error(
           `[Layout] Initialization failure at ${initializationAttempts}:`,
@@ -355,7 +376,9 @@ const Layout = () => {
           );
           setTimeout(performInitialization, 500);
         } else {
-          console.error("[Layout] All initialization attempts fail, perform emergency initialization");
+          console.error(
+            "[Layout] All initialization attempts fail, perform emergency initialization",
+          );
 
           removeLoadingOverlay();
           try {
@@ -375,14 +398,19 @@ const Layout = () => {
         console.log("[Layout] Start listening for startup completion events");
         const unlisten = await listen("verge://startup-completed", () => {
           if (!hasEventTriggered) {
-            console.log("[Layout] Receive startup completion event, start initialization");
+            console.log(
+              "[Layout] Receive startup completion event, start initialization",
+            );
             hasEventTriggered = true;
             performInitialization();
           }
         });
         return unlisten;
       } catch (err) {
-        console.error("[Layout] Failed to listen for startup completion event:", err);
+        console.error(
+          "[Layout] Failed to listen for startup completion event:",
+          err,
+        );
         return () => {};
       }
     };
@@ -393,18 +421,24 @@ const Layout = () => {
         await invoke("update_ui_stage", { stage: "Loading" });
 
         if (!hasEventTriggered && !isInitialized) {
-          console.log("[Layout] Backend is ready, start initialization immediately");
+          console.log(
+            "[Layout] Backend is ready, start initialization immediately",
+          );
           hasEventTriggered = true;
           performInitialization();
         }
       } catch (err) {
-        console.log("[Layout] Backend not yet ready, waiting for startup completion event");
+        console.log(
+          "[Layout] Backend not yet ready, waiting for startup completion event",
+        );
       }
     };
 
     const backupInitialization = setTimeout(() => {
       if (!hasEventTriggered && !isInitialized) {
-        console.warn("[Layout] Standby initialization trigger: initialization not started within 1.5 seconds");
+        console.warn(
+          "[Layout] Standby initialization trigger: initialization not started within 1.5 seconds",
+        );
         hasEventTriggered = true;
         performInitialization();
       }
@@ -412,7 +446,9 @@ const Layout = () => {
 
     const emergencyInitialization = setTimeout(() => {
       if (!isInitialized) {
-        console.error("[Layout] Emergency initialization trigger: initialization not completed within 5 seconds");
+        console.error(
+          "[Layout] Emergency initialization trigger: initialization not completed within 5 seconds",
+        );
         removeLoadingOverlay();
         notifyBackend("UI ready").catch(() => {});
         isInitialized = true;
@@ -445,7 +481,7 @@ const Layout = () => {
   }, [start_page]);
 
   if (!routersEles) {
-      return <div className="h-screen w-screen bg-background" />;
+    return <div className="h-screen w-screen bg-background" />;
   }
 
   const AppLayout = () => {
@@ -454,21 +490,18 @@ const Layout = () => {
     const routersEles = useRoutes(routers);
 
     return (
-        <>
-            <AppSidebar />
-            <main
-                className="h-screen w-full overflow-y-auto transition-[margin] duration-200 ease-linear"
-            >
-                <div className="h-full w-full relative">
-                    {routersEles && React.cloneElement(routersEles, { key: location.pathname })}
-                </div>
-            </main>
-            <HwidErrorDialog />
-        </>
+      <>
+        <AppSidebar />
+        <main className="h-screen w-full overflow-y-auto transition-[margin] duration-200 ease-linear">
+          <div className="h-full w-full relative">
+            {routersEles &&
+              React.cloneElement(routersEles, { key: location.pathname })}
+          </div>
+        </main>
+        <HwidErrorDialog />
+      </>
     );
-};
-
-
+  };
 
   return (
     <SWRConfig value={{ errorRetryCount: 3 }}>

@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { useEffect, useState, useCallback } from "react";
+import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 
 // Константы для управления масштабом
 const ZOOM_STEP = 0.1;
@@ -22,7 +22,9 @@ export const useZoomControls = () => {
 
       let initialZoom = 1.0;
 
-      console.log(`Physical width: ${size.width}, Scale Factor: ${scaleFactor}, Logical width: ${logicalWidth}`);
+      console.log(
+        `Physical width: ${size.width}, Scale Factor: ${scaleFactor}, Logical width: ${logicalWidth}`,
+      );
 
       // 3. Используем логическую ширину для принятия решения
       if (logicalWidth < 1300) {
@@ -38,18 +40,24 @@ export const useZoomControls = () => {
     setInitialZoom();
   }, []);
 
-  const handleZoom = useCallback((delta: number, isReset = false) => {
-    setZoomLevel(currentZoom => {
-      const newZoom = isReset ? 1.0 : currentZoom + delta;
-      const clampedZoom = Math.max(MIN_ZOOM, Math.min(newZoom, MAX_ZOOM));
-      const roundedZoom = Math.round(clampedZoom * 100) / 100;
+  const handleZoom = useCallback(
+    (delta: number, isReset = false) => {
+      setZoomLevel((currentZoom) => {
+        const newZoom = isReset ? 1.0 : currentZoom + delta;
+        const clampedZoom = Math.max(MIN_ZOOM, Math.min(newZoom, MAX_ZOOM));
+        const roundedZoom = Math.round(clampedZoom * 100) / 100;
 
-      appWindow.setZoom(roundedZoom);
-      const newStrokeWidth = 2 / roundedZoom;
-      document.documentElement.style.setProperty('--icon-stroke-width', newStrokeWidth.toString());
-      return roundedZoom;
-    });
-  }, [appWindow]);
+        appWindow.setZoom(roundedZoom);
+        const newStrokeWidth = 2 / roundedZoom;
+        document.documentElement.style.setProperty(
+          "--icon-stroke-width",
+          newStrokeWidth.toString(),
+        );
+        return roundedZoom;
+      });
+    },
+    [appWindow],
+  );
 
   useEffect(() => {
     const handleWheel = (event: WheelEvent) => {
@@ -63,18 +71,18 @@ export const useZoomControls = () => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.ctrlKey || event.metaKey) {
         switch (event.code) {
-          case 'Equal':
-          case 'NumpadAdd':
+          case "Equal":
+          case "NumpadAdd":
             event.preventDefault();
             handleZoom(ZOOM_STEP);
             break;
-          case 'Minus':
-          case 'NumpadSubtract':
+          case "Minus":
+          case "NumpadSubtract":
             event.preventDefault();
             handleZoom(-ZOOM_STEP);
             break;
-          case 'Digit0':
-          case 'Numpad0':
+          case "Digit0":
+          case "Numpad0":
             event.preventDefault();
             handleZoom(0, true);
             break;
@@ -82,12 +90,12 @@ export const useZoomControls = () => {
       }
     };
 
-    window.addEventListener('wheel', handleWheel, { passive: false });
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      window.removeEventListener('wheel', handleWheel);
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [handleZoom]);
 };

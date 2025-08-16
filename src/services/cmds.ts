@@ -401,6 +401,9 @@ export async function getNextUpdateTime(uid: string) {
   return invoke<number | null>("get_next_update_time", { uid });
 }
 
-export async function createProfileFromShareLink(link: string, templateName: string) {
+export async function createProfileFromShareLink(
+  link: string,
+  templateName: string,
+) {
   return invoke<void>("create_profile_from_share_link", { link, templateName });
 }
