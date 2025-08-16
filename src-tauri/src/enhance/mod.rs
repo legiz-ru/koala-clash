@@ -241,7 +241,7 @@ pub async fn enhance() -> (Mapping, Vec<String>, HashMap<String, ResultLog>) {
             .filter(|(s, _)| s.is_support(clash_core.as_ref()))
             .map(|(_, c)| c)
             .for_each(|item| {
-                log::debug!(target: "app", "run builtin script {}", item.uid);
+                log::debug!(target: "app", "run builtin script {0}", item.uid);
                 if let ChainType::Script(script) = item.data {
                     match use_script(script, config.to_owned(), "".to_string()) {
                         Ok((res_config, _)) => {

@@ -100,7 +100,12 @@ impl Timer {
                     let uid = item.uid.as_ref()?;
 
                     if interval > 0 && cur_timestamp - updated >= interval * 60 {
-                        logging!(info, Type::Timer, "Profile requires immediate update: uid={}", uid);
+                        logging!(
+                            info,
+                            Type::Timer,
+                            "Profile requires immediate update: uid={}",
+                            uid
+                        );
                         Some(uid.clone())
                     } else {
                         None
@@ -321,7 +326,12 @@ impl Timer {
         }
 
         logging!(debug, Type::Timer, "定时任务变更数量: {}", diff_map.len());
-        logging!(debug, Type::Timer, "Number of timer task changes: {}", diff_map.len());
+        logging!(
+            debug,
+            Type::Timer,
+            "Number of timer task changes: {}",
+            diff_map.len()
+        );
         diff_map
     }
 
@@ -370,7 +380,12 @@ impl Timer {
         let task = match timer_map.get(uid) {
             Some(t) => t,
             None => {
-                logging!(warn, Type::Timer, "Corresponding timer task not found, uid={}", uid);
+                logging!(
+                    warn,
+                    Type::Timer,
+                    "Corresponding timer task not found, uid={}",
+                    uid
+                );
                 return None;
             }
         };
@@ -389,7 +404,12 @@ impl Timer {
         let profile = match items.iter().find(|item| item.uid.as_deref() == Some(uid)) {
             Some(p) => p,
             None => {
-                logging!(warn, Type::Timer, "Corresponding profile not found, uid={}", uid);
+                logging!(
+                    warn,
+                    Type::Timer,
+                    "Corresponding profile not found, uid={}",
+                    uid
+                );
                 return None;
             }
         };

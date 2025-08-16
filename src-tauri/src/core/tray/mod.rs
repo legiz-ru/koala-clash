@@ -3,7 +3,6 @@ use tauri::tray::TrayIconBuilder;
 #[cfg(target_os = "macos")]
 pub mod speed_rate;
 use crate::{
-    cmd,
     config::Config,
     feat, logging,
     module::{lightweight::is_in_lightweight_mode, mihomo::Rate},

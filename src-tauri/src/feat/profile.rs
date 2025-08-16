@@ -31,7 +31,13 @@ pub async fn update_profile(
     option: Option<PrfOption>,
     auto_refresh: Option<bool>,
 ) -> Result<()> {
-    logging!(info, Type::Config, true, "[Subscription Update] Start updating subscription {}", uid);
+    logging!(
+        info,
+        Type::Config,
+        true,
+        "[Subscription Update] Start updating subscription {}",
+        uid
+    );
     let auto_refresh = auto_refresh.unwrap_or(true); // 默认为true，保持兼容性
 
     let url_opt = {
@@ -131,14 +137,30 @@ pub async fn update_profile(
     };
 
     if should_update {
-        logging!(info, Type::Config, true, "[Subscription Update] Update core configuration");
+        logging!(
+            info,
+            Type::Config,
+            true,
+            "[Subscription Update] Update core configuration"
+        );
         match CoreManager::global().update_config().await {
             Ok(_) => {
-                logging!(info, Type::Config, true, "[Subscription Update] Update succeeded");
+                logging!(
+                    info,
+                    Type::Config,
+                    true,
+                    "[Subscription Update] Update succeeded"
+                );
                 handle::Handle::refresh_clash();
             }
             Err(err) => {
-                logging!(error, Type::Config, true, "[Subscription Update] Update failed: {}", err);
+                logging!(
+                    error,
+                    Type::Config,
+                    true,
+                    "[Subscription Update] Update failed: {}",
+                    err
+                );
                 handle::Handle::notice_message("update_failed", format!("{err}"));
                 log::error!(target: "app", "{err}");
             }

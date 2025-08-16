@@ -78,7 +78,12 @@ pub fn quit() {
 
     // 使用异步任务处理资源清理，避免阻塞
     AsyncHandler::spawn(move || async move {
-        logging!(info, Type::System, true, "Start asynchronous resource cleanup");
+        logging!(
+            info,
+            Type::System,
+            true,
+            "Start asynchronous resource cleanup"
+        );
         let cleanup_result = clean_async().await;
 
         logging!(
@@ -95,7 +100,12 @@ pub fn quit() {
 async fn clean_async() -> bool {
     use tokio::time::{timeout, Duration};
 
-    logging!(info, Type::System, true, "Start executing asynchronous cleanup...");
+    logging!(
+        info,
+        Type::System,
+        true,
+        "Start executing asynchronous cleanup..."
+    );
 
     // 1. 处理TUN模式
     let tun_task = async {
@@ -220,7 +230,13 @@ pub fn clean() -> bool {
 
     match rx.recv_timeout(std::time::Duration::from_secs(8)) {
         Ok(result) => {
-            logging!(info, Type::System, true, "Cleanup completed, result: {}", result);
+            logging!(
+                info,
+                Type::System,
+                true,
+                "Cleanup completed, result: {}",
+                result
+            );
             result
         }
         Err(_) => {

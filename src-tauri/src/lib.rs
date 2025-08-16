@@ -144,7 +144,12 @@ pub fn run() {
             });
 
             // 窗口管理
-            logging!(info, Type::Setup, true, "Initializing window state management...");
+            logging!(
+                info,
+                Type::Setup,
+                true,
+                "Initializing window state management..."
+            );
             let window_state_plugin = tauri_plugin_window_state::Builder::new()
                 .with_filename("window_state.json")
                 .with_state_flags(tauri_plugin_window_state::StateFlags::default())
@@ -154,7 +159,12 @@ pub fn run() {
             // 异步处理
             let app_handle = app.handle().clone();
             AsyncHandler::spawn(move || async move {
-                logging!(info, Type::Setup, true, "Executing app setup asynchronously...");
+                logging!(
+                    info,
+                    Type::Setup,
+                    true,
+                    "Executing app setup asynchronously..."
+                );
                 match timeout(
                     Duration::from_secs(30),
                     resolve::resolve_setup_async(&app_handle),
@@ -175,7 +185,12 @@ pub fn run() {
                 }
             });
 
-            logging!(info, Type::Setup, true, "Executing main setup operations...");
+            logging!(
+                info,
+                Type::Setup,
+                true,
+                "Executing main setup operations..."
+            );
 
             logging!(info, Type::Setup, true, "Initializing AppHandleManager...");
             AppHandleManager::global().init(app.handle().clone());
@@ -185,12 +200,24 @@ pub fn run() {
 
             logging!(info, Type::Setup, true, "Initializing config...");
             if let Err(e) = utils::init::init_config() {
-                logging!(error, Type::Setup, true, "Failed to initialize config: {}", e);
+                logging!(
+                    error,
+                    Type::Setup,
+                    true,
+                    "Failed to initialize config: {}",
+                    e
+                );
             }
 
             logging!(info, Type::Setup, true, "Initializing resources...");
             if let Err(e) = utils::init::init_resources() {
-                logging!(error, Type::Setup, true, "Failed to initialize resources: {}", e);
+                logging!(
+                    error,
+                    Type::Setup,
+                    true,
+                    "Failed to initialize resources: {}",
+                    e
+                );
             }
 
             app.manage(Mutex::new(state::proxy::CmdProxyState::default()));
@@ -198,13 +225,23 @@ pub fn run() {
 
             tauri::async_runtime::spawn(async {
                 tokio::time::sleep(Duration::from_secs(5)).await;
-                logging!(info, Type::Cmd, true, "Running profile updates at startup...");
+                logging!(
+                    info,
+                    Type::Cmd,
+                    true,
+                    "Running profile updates at startup..."
+                );
                 if let Err(e) = crate::cmd::update_profiles_on_startup().await {
-                    log::error!("Failed to update profiles on startup: {}", e);
+                    log::error!("Failed to update profiles on startup: {e}");
                 }
             });
 
-            logging!(info, Type::Setup, true, "Initialization completed, continuing");
+            logging!(
+                info,
+                Type::Setup,
+                true,
+                "Initialization completed, continuing"
+            );
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -376,7 +413,12 @@ pub fn run() {
                         if let Some(window) = core::handle::Handle::global().get_window() {
                             let _ = window.hide();
                         } else {
-                            logging!(warn, Type::Window, true, "Tried to hide window but it does not exist");
+                            logging!(
+                                warn,
+                                Type::Window,
+                                true,
+                                "Tried to hide window but it does not exist"
+                            );
                         }
                     }
                     tauri::WindowEvent::Focused(true) => {

@@ -23,7 +23,6 @@ use tauri::{AppHandle, Manager};
 use tokio::net::TcpListener;
 
 use tauri::Url;
-use crate::config::PrfOption;
 //#[cfg(not(target_os = "linux"))]
 // use window_shadows::set_shadow;
 
@@ -556,7 +555,9 @@ pub async fn resolve_scheme(param: String) -> Result<()> {
         for (key, value) in link_parsed.query_pairs() {
             match key.as_ref() {
                 "name" => name = Some(value.into_owned()),
-                "url" => url_param = Some(percent_decode_str(&value).decode_utf8_lossy().to_string()),
+                "url" => {
+                    url_param = Some(percent_decode_str(&value).decode_utf8_lossy().to_string())
+                }
                 _ => {}
             }
         }
