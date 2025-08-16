@@ -28,6 +28,9 @@ jobs:
             bundle: dmg
 
     runs-on: ${{ matrix.os }}
+    env:
+      CARGO_NET_RETRY: "5"
+      CARGO_HTTP_CHECK_REVOKE: "false"
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
