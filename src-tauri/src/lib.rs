@@ -115,7 +115,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_deep_link::init())
         .setup(|app| {
-            logging!(info, Type::Setup, true, "开始应用初始化...");
+            logging!(info, Type::Setup, true, "Starting app initialization...");
             let mut auto_start_plugin_builder = tauri_plugin_autostart::Builder::new();
             #[cfg(target_os = "macos")]
             {
@@ -128,7 +128,7 @@ pub fn run() {
             #[cfg(any(target_os = "linux", all(debug_assertions, windows)))]
             {
                 use tauri_plugin_deep_link::DeepLinkExt;
-                logging!(info, Type::Setup, true, "注册深层链接...");
+                logging!(info, Type::Setup, true, "Registering deep links...");
                 logging_error!(Type::System, true, app.deep_link().register_all());
             }
 
@@ -144,7 +144,12 @@ pub fn run() {
             });
 
             // 窗口管理
-            logging!(info, Type::Setup, true, "初始化窗口状态管理...");
+            logging!(
+                info,
+                Type::Setup,
+                true,
+                "Initializing window state management..."
+            );
             let window_state_plugin = tauri_plugin_window_state::Builder::new()
                 .with_filename("window_state.json")
                 .with_state_flags(tauri_plugin_window_state::StateFlags::default())
@@ -154,7 +159,12 @@ pub fn run() {
             // 异步处理
             let app_handle = app.handle().clone();
             AsyncHandler::spawn(move || async move {
-                logging!(info, Type::Setup, true, "异步执行应用设置...");
+                logging!(
+                    info,
+                    Type::Setup,
+                    true,
+                    "Executing app setup asynchronously..."
+                );
                 match timeout(
                     Duration::from_secs(30),
                     resolve::resolve_setup_async(&app_handle),
@@ -162,35 +172,52 @@ pub fn run() {
                 .await
                 {
                     Ok(_) => {
-                        logging!(info, Type::Setup, true, "应用设置成功完成");
+                        logging!(info, Type::Setup, true, "App setup completed successfully");
                     }
                     Err(_) => {
                         logging!(
                             error,
                             Type::Setup,
                             true,
-                            "应用设置超时(30秒)，继续执行后续流程"
+                            "App setup timed out (30s), continuing with subsequent steps"
                         );
                     }
                 }
             });
 
-            logging!(info, Type::Setup, true, "执行主要设置操作...");
+            logging!(
+                info,
+                Type::Setup,
+                true,
+                "Executing main setup operations..."
+            );
 
-            logging!(info, Type::Setup, true, "初始化AppHandleManager...");
+            logging!(info, Type::Setup, true, "Initializing AppHandleManager...");
             AppHandleManager::global().init(app.handle().clone());
 
-            logging!(info, Type::Setup, true, "初始化核心句柄...");
+            logging!(info, Type::Setup, true, "Initializing core handle...");
             core::handle::Handle::global().init(app.handle());
 
-            logging!(info, Type::Setup, true, "初始化配置...");
+            logging!(info, Type::Setup, true, "Initializing config...");
             if let Err(e) = utils::init::init_config() {
-                logging!(error, Type::Setup, true, "初始化配置失败: {}", e);
+                logging!(
+                    error,
+                    Type::Setup,
+                    true,
+                    "Failed to initialize config: {}",
+                    e
+                );
             }
 
-            logging!(info, Type::Setup, true, "初始化资源...");
+            logging!(info, Type::Setup, true, "Initializing resources...");
             if let Err(e) = utils::init::init_resources() {
-                logging!(error, Type::Setup, true, "初始化资源失败: {}", e);
+                logging!(
+                    error,
+                    Type::Setup,
+                    true,
+                    "Failed to initialize resources: {}",
+                    e
+                );
             }
 
             app.manage(Mutex::new(state::proxy::CmdProxyState::default()));
@@ -198,13 +225,23 @@ pub fn run() {
 
             tauri::async_runtime::spawn(async {
                 tokio::time::sleep(Duration::from_secs(5)).await;
-                logging!(info, Type::Cmd, true, "Running profile updates at startup...");
+                logging!(
+                    info,
+                    Type::Cmd,
+                    true,
+                    "Running profile updates at startup..."
+                );
                 if let Err(e) = crate::cmd::update_profiles_on_startup().await {
-                    log::error!("Failed to update profiles on startup: {}", e);
+                    log::error!("Failed to update profiles on startup: {e}");
                 }
             });
 
-            logging!(info, Type::Setup, true, "初始化完成，继续执行");
+            logging!(
+                info,
+                Type::Setup,
+                true,
+                "Initialization completed, continuing"
+            );
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -324,7 +361,7 @@ pub fn run() {
 
     app.run(|app_handle, e| match e {
         tauri::RunEvent::Ready | tauri::RunEvent::Resumed => {
-            logging!(info, Type::System, true, "应用就绪或恢复");
+            logging!(info, Type::System, true, "App ready or resumed");
             AppHandleManager::global().init(app_handle.clone());
             #[cfg(target_os = "macos")]
             {
@@ -332,7 +369,7 @@ pub fn run() {
                     .get_handle()
                     .get_webview_window("main")
                 {
-                    logging!(info, Type::Window, true, "设置macOS窗口标题");
+                    logging!(info, Type::Window, true, "Setting macOS window title");
                     let _ = window.set_title("Koala Clash");
                 }
             }
@@ -376,7 +413,12 @@ pub fn run() {
                         if let Some(window) = core::handle::Handle::global().get_window() {
                             let _ = window.hide();
                         } else {
-                            logging!(warn, Type::Window, true, "尝试隐藏窗口但窗口不存在");
+                            logging!(
+                                warn,
+                                Type::Window,
+                                true,
+                                "Tried to hide window but it does not exist"
+                            );
                         }
                     }
                     tauri::WindowEvent::Focused(true) => {

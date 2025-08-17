@@ -6,14 +6,14 @@ use crate::{
     utils::{dirs, help, logging::Type},
     wrap_err,
 };
+use base64::{engine::general_purpose::STANDARD, Engine as _};
+use percent_encoding::percent_decode_str;
+use serde_yaml::Value;
+use std::collections::BTreeMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 use tokio::sync::{Mutex, RwLock};
-use std::collections::BTreeMap;
 use url::Url;
-use serde_yaml::Value;
-use base64::{engine::general_purpose::STANDARD, Engine as _};
-use percent_encoding::percent_decode_str;
 
 // 全局互斥锁防止并发配置更新
 static PROFILE_UPDATE_MUTEX: Mutex<()> = Mutex::const_new(());
@@ -138,20 +138,34 @@ pub async fn import_profile(url: String, option: Option<PrfOption>) -> CmdResult
         let profiles = Config::profiles();
         let profiles = profiles.latest();
 
-        profiles.items.as_ref()
+        profiles
+            .items
+            .as_ref()
             .and_then(|items| items.iter().find(|item| item.url.as_deref() == Some(&url)))
             .and_then(|item| item.uid.clone())
     };
 
     if let Some(uid) = existing_uid {
-        logging!(info, Type::Cmd, true, "The profile with URL {} already exists (UID: {}). Running the update...", url, uid);
+        logging!(
+            info,
+            Type::Cmd,
+            true,
+            "The profile with URL {} already exists (UID: {}). Running the update...",
+            url,
+            uid
+        );
         update_profile(uid, option).await
     } else {
-        logging!(info, Type::Cmd, true, "Profile with URL {} not found. Create a new one...", url);
+        logging!(
+            info,
+            Type::Cmd,
+            true,
+            "Profile with URL {} not found. Create a new one...",
+            url
+        );
         let item = wrap_err!(PrfItem::from_url(&url, None, None, option).await)?;
         wrap_err!(Config::profiles().data().append_item(item))
     }
-
 }
 
 /// 重新排序配置文件
@@ -181,20 +195,29 @@ pub async fn delete_profile(index: String) -> CmdResult {
     {
         let profiles_config = Config::profiles();
         let mut profiles_data = profiles_config.data();
-        should_update = profiles_data.delete_item(index.clone()).map_err(|e| e.to_string())?;
+        should_update = profiles_data
+            .delete_item(index.clone())
+            .map_err(|e| e.to_string())?;
 
-        let was_last_profile = profiles_data.items.as_ref().map_or(true, |items| {
-            !items.iter().any(|item|
-                item.itype == Some("remote".to_string()) || item.itype == Some("local".to_string())
-            )
+        let was_last_profile = profiles_data.items.as_ref().is_none_or(|items| {
+            !items
+                .iter()
+                .any(|item| matches!(item.itype.as_deref(), Some("remote") | Some("local")))
         });
 
         if was_last_profile {
-            logging!(info, Type::Cmd, true, "The last profile has been deleted. Disabling proxy modes...");
+            logging!(
+                info,
+                Type::Cmd,
+                true,
+                "The last profile has been deleted. Disabling proxy modes..."
+            );
             let verge_config = Config::verge();
             let mut verge_data = verge_config.data();
 
-            if verge_data.enable_tun_mode == Some(true) || verge_data.enable_system_proxy == Some(true) {
+            if verge_data.enable_tun_mode == Some(true)
+                || verge_data.enable_system_proxy == Some(true)
+            {
                 verge_data.enable_tun_mode = Some(false);
                 verge_data.enable_system_proxy = Some(false);
                 verge_data.save_file().map_err(|e| e.to_string())?;
@@ -696,23 +719,30 @@ pub fn get_next_update_time(uid: String) -> CmdResult<Option<i64>> {
     Ok(next_time)
 }
 
-
 #[tauri::command]
 pub async fn update_profiles_on_startup() -> CmdResult {
-    logging!(info, Type::Cmd, true, "Checking profiles for updates at startup...");
+    logging!(
+        info,
+        Type::Cmd,
+        true,
+        "Checking profiles for updates at startup..."
+    );
 
     let profiles_to_update = {
         let profiles = Config::profiles();
         let profiles = profiles.latest();
 
-        profiles.items.as_ref()
-            .map_or_else(
-                Vec::new,
-                |items| items.iter()
-                    .filter(|item| item.option.as_ref().is_some_and(|opt| opt.update_always == Some(true)))
-                    .filter_map(|item| item.uid.clone())
-                    .collect()
-            )
+        profiles.items.as_ref().map_or_else(Vec::new, |items| {
+            items
+                .iter()
+                .filter(|item| {
+                    item.option
+                        .as_ref()
+                        .is_some_and(|opt| opt.update_always == Some(true))
+                })
+                .filter_map(|item| item.uid.clone())
+                .collect()
+        })
     };
 
     if profiles_to_update.is_empty() {
@@ -720,7 +750,13 @@ pub async fn update_profiles_on_startup() -> CmdResult {
         return Ok(());
     }
 
-    logging!(info, Type::Cmd, true, "Found profiles to update: {:?}", profiles_to_update);
+    logging!(
+        info,
+        Type::Cmd,
+        true,
+        "Found profiles to update: {:?}",
+        profiles_to_update
+    );
 
     let mut update_futures = Vec::new();
     for uid in profiles_to_update {
@@ -729,13 +765,25 @@ pub async fn update_profiles_on_startup() -> CmdResult {
 
     let results = futures::future::join_all(update_futures).await;
 
-
     if results.iter().any(|res| res.is_ok()) {
-        logging!(info, Type::Cmd, true, "The startup update is complete, restart the kernel...");
-        CoreManager::global().update_config().await.map_err(|e| e.to_string())?;
+        logging!(
+            info,
+            Type::Cmd,
+            true,
+            "The startup update is complete, restart the kernel..."
+        );
+        CoreManager::global()
+            .update_config()
+            .await
+            .map_err(|e| e.to_string())?;
         handle::Handle::refresh_clash();
     } else {
-        logging!(warn, Type::Cmd, true, "All updates completed with errors on startup.");
+        logging!(
+            warn,
+            Type::Cmd,
+            true,
+            "All updates completed with errors on startup."
+        );
     }
 
     Ok(())
@@ -743,7 +791,6 @@ pub async fn update_profiles_on_startup() -> CmdResult {
 
 #[tauri::command]
 pub async fn create_profile_from_share_link(link: String, template_name: String) -> CmdResult {
-
     const DEFAULT_TEMPLATE: &str = r#"
     mixed-port: 2080
     allow-lan: true
@@ -1107,14 +1154,18 @@ pub async fn create_profile_from_share_link(link: String, template_name: String)
 
     let parsed_url = Url::parse(&link).map_err(|e| e.to_string())?;
     let scheme = parsed_url.scheme();
-    let proxy_name = parsed_url.fragment()
+    let proxy_name = parsed_url
+        .fragment()
         .map(|f| percent_decode_str(f).decode_utf8_lossy().to_string())
         .unwrap_or_else(|| "Proxy from Link".to_string());
 
     let mut proxy_map: BTreeMap<String, Value> = BTreeMap::new();
     proxy_map.insert("name".into(), proxy_name.clone().into());
     proxy_map.insert("type".into(), scheme.into());
-    proxy_map.insert("server".into(), parsed_url.host_str().unwrap_or_default().into());
+    proxy_map.insert(
+        "server".into(),
+        parsed_url.host_str().unwrap_or_default().into(),
+    );
     proxy_map.insert("port".into(), parsed_url.port().unwrap_or(443).into());
     proxy_map.insert("udp".into(), true.into());
 
@@ -1130,16 +1181,29 @@ pub async fn create_profile_from_share_link(link: String, template_name: String)
                     "security" if value == "tls" => {
                         proxy_map.insert("tls".into(), true.into());
                     }
-                    "flow" => { proxy_map.insert("flow".into(), value.to_string().into()); }
-                    "sni" => { proxy_map.insert("servername".into(), value.to_string().into()); }
-                    "fp" => { proxy_map.insert("client-fingerprint".into(), value.to_string().into()); }
-                    "pbk" => { reality_opts.insert("public-key".into(), value.to_string().into()); }
-                    "sid" => { reality_opts.insert("short-id".into(), value.to_string().into()); }
+                    "flow" => {
+                        proxy_map.insert("flow".into(), value.to_string().into());
+                    }
+                    "sni" => {
+                        proxy_map.insert("servername".into(), value.to_string().into());
+                    }
+                    "fp" => {
+                        proxy_map.insert("client-fingerprint".into(), value.to_string().into());
+                    }
+                    "pbk" => {
+                        reality_opts.insert("public-key".into(), value.to_string().into());
+                    }
+                    "sid" => {
+                        reality_opts.insert("short-id".into(), value.to_string().into());
+                    }
                     _ => {}
                 }
             }
             if !reality_opts.is_empty() {
-                proxy_map.insert("reality-opts".into(), serde_yaml::to_value(reality_opts).map_err(|e| e.to_string())?);
+                proxy_map.insert(
+                    "reality-opts".into(),
+                    serde_yaml::to_value(reality_opts).map_err(|e| e.to_string())?,
+                );
             }
         }
         "ss" => {
@@ -1155,19 +1219,32 @@ pub async fn create_profile_from_share_link(link: String, template_name: String)
         "vmess" => {
             if let Ok(decoded_bytes) = STANDARD.decode(parsed_url.host_str().unwrap_or_default()) {
                 if let Ok(json_str) = String::from_utf8(decoded_bytes) {
-                    if let Ok(vmess_params) = serde_json::from_str::<BTreeMap<String, Value>>(&json_str) {
-                        if let Some(add) = vmess_params.get("add") { proxy_map.insert("server".into(), add.clone()); }
-                        if let Some(port) = vmess_params.get("port") { proxy_map.insert("port".into(), port.clone()); }
-                        if let Some(id) = vmess_params.get("id") { proxy_map.insert("uuid".into(), id.clone()); }
-                        if let Some(aid) = vmess_params.get("aid") { proxy_map.insert("alterId".into(), aid.clone()); }
-                        if let Some(net) = vmess_params.get("net") { proxy_map.insert("network".into(), net.clone()); }
-                        if let Some(ps) = vmess_params.get("ps") { proxy_map.insert("name".into(), ps.clone()); }
+                    if let Ok(vmess_params) =
+                        serde_json::from_str::<BTreeMap<String, Value>>(&json_str)
+                    {
+                        if let Some(add) = vmess_params.get("add") {
+                            proxy_map.insert("server".into(), add.clone());
+                        }
+                        if let Some(port) = vmess_params.get("port") {
+                            proxy_map.insert("port".into(), port.clone());
+                        }
+                        if let Some(id) = vmess_params.get("id") {
+                            proxy_map.insert("uuid".into(), id.clone());
+                        }
+                        if let Some(aid) = vmess_params.get("aid") {
+                            proxy_map.insert("alterId".into(), aid.clone());
+                        }
+                        if let Some(net) = vmess_params.get("net") {
+                            proxy_map.insert("network".into(), net.clone());
+                        }
+                        if let Some(ps) = vmess_params.get("ps") {
+                            proxy_map.insert("name".into(), ps.clone());
+                        }
                     }
                 }
             }
         }
-        _ => {
-        }
+        _ => {}
     }
 
     let mut config: Value = serde_yaml::from_str(template_yaml).map_err(|e| e.to_string())?;
@@ -1177,10 +1254,15 @@ pub async fn create_profile_from_share_link(link: String, template_name: String)
         proxies.push(serde_yaml::to_value(proxy_map).map_err(|e| e.to_string())?);
     }
 
-    if let Some(groups) = config.get_mut("proxy-groups").and_then(|v| v.as_sequence_mut()) {
+    if let Some(groups) = config
+        .get_mut("proxy-groups")
+        .and_then(|v| v.as_sequence_mut())
+    {
         for group in groups.iter_mut() {
             if let Some(mapping) = group.as_mapping_mut() {
-                if let Some(proxies_list) = mapping.get_mut("proxies").and_then(|p| p.as_sequence_mut()) {
+                if let Some(proxies_list) =
+                    mapping.get_mut("proxies").and_then(|p| p.as_sequence_mut())
+                {
                     let new_proxies_list: Vec<Value> = proxies_list
                         .iter()
                         .map(|p| {
@@ -1199,8 +1281,13 @@ pub async fn create_profile_from_share_link(link: String, template_name: String)
 
     let new_yaml_content = serde_yaml::to_string(&config).map_err(|e| e.to_string())?;
 
-    let item = PrfItem::from_local(proxy_name, "Created from share link".into(), Some(new_yaml_content), None)
-        .map_err(|e| e.to_string())?;
+    let item = PrfItem::from_local(
+        proxy_name,
+        "Created from share link".into(),
+        Some(new_yaml_content),
+        None,
+    )
+    .map_err(|e| e.to_string())?;
 
     wrap_err!(Config::profiles().data().append_item(item))
 }

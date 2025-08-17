@@ -326,7 +326,7 @@ impl PrfItem {
                     if let Ok(mut parsed_url) = Url::parse(url) {
                         if parsed_url.set_host(Some(new_domain)).is_ok() {
                             final_url = parsed_url.to_string();
-                            log::info!(target: "app", "URL host updated to -> {}", final_url);
+                            log::info!(target: "app", "URL host updated to -> {final_url}");
                         }
                     }
                 }

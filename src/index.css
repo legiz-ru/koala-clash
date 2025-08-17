@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 
 @theme {
-  --tailwind-darkMode: 'class';
+  --tailwind-darkMode: "class";
 }
 
 @theme inline {
@@ -131,7 +131,6 @@
 svg {
   stroke-width: var(--icon-stroke-width, 2);
 }
-
 
 @keyframes gradient-wave {
   0% {

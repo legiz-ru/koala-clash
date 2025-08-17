@@ -55,13 +55,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-import {
-  PlusCircle,
-  RefreshCw,
-  Zap,
-  FileText,
-  Loader2,
-} from "lucide-react";
+import { PlusCircle, RefreshCw, Zap, FileText, Loader2 } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 const ProfilePage = () => {

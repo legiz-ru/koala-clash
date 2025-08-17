@@ -65,7 +65,8 @@ import {
   ListTree,
   CheckCircle,
   Infinity,
-  RefreshCw, Network,
+  RefreshCw,
+  Network,
 } from "lucide-react";
 import { t } from "i18next";
 
@@ -299,7 +300,8 @@ export const ProfileItem = (props: Props) => {
   };
 
   const MAX_NAME_LENGTH = 25;
-  const truncatedName = name.length > MAX_NAME_LENGTH
+  const truncatedName =
+    name.length > MAX_NAME_LENGTH
       ? `${name.slice(0, MAX_NAME_LENGTH)}...`
       : name;
 
@@ -344,10 +346,7 @@ export const ProfileItem = (props: Props) => {
                   ) : null}
                 </div>
                 <div className="flex items-center flex-shrink-0">
-                  <Badge
-                    variant="outline"
-                    className="text-xs shadow-sm"
-                  >
+                  <Badge variant="outline" className="text-xs shadow-sm">
                     {type}
                   </Badge>
                 </div>
@@ -389,14 +388,13 @@ export const ProfileItem = (props: Props) => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <Download className="h-3 w-3 inline mr-1.5" />
-                    <span className="pr-5">
-                      {parseTraffic(download)}
-                    </span>
+                    <span className="pr-5">{parseTraffic(download)}</span>
                     <Network className="h-3 w-3 inline mr-1.5" />
                     {total > 0 ? (
-                       <span>{parseTraffic(total)}</span>
-                    ) : <Infinity className="h-3 w-3 inline mr-1.5" />}
-
+                      <span>{parseTraffic(total)}</span>
+                    ) : (
+                      <Infinity className="h-3 w-3 inline mr-1.5" />
+                    )}
                   </div>
                 </div>
               </div>
@@ -510,11 +508,11 @@ export const ProfileItem = (props: Props) => {
       )}
 
       <ConfirmViewer
-          open={confirmOpen}
-          onOpenChange={setConfirmOpen}
-          onConfirm={onDelete}
-          title={t("Delete Profile", { name: truncatedName })}
-          description={t("This action cannot be undone.")}
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        onConfirm={onDelete}
+        title={t("Delete Profile", { name: truncatedName })}
+        description={t("This action cannot be undone.")}
       />
     </div>
   );

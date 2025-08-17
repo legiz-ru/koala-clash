@@ -1,7 +1,7 @@
 ## v0.2.5
 
 - new main page
-- fixed issue with opening via shortcut 
+- fixed issue with opening via shortcut
 - fixed logo in sidebar
 - fixed issue with changing tray settings
 - name changed to koala clash
@@ -26,7 +26,6 @@
 - corrected announe transposition by \n
 - corrected side menu in compressed window
 - added check at the main toggle switch, now it cannot be enabled if there are no profiles.
-
 
 ## v0.2.1
 

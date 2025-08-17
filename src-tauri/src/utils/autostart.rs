@@ -41,9 +41,9 @@ pub fn create_shortcut() -> Result<()> {
     let startup_dir = get_startup_dir()?;
     let shortcut_path = startup_dir.join("Koala-Clash.lnk");
 
-    // 如果快捷方式已存在，直接返回成功
+    // If the shortcut already exists, return success directly
     if shortcut_path.exists() {
-        info!(target: "app", "启动快捷方式已存在");
+        info!(target: "app", "Startup shortcut already exists");
         return Ok(());
     }
 
@@ -59,36 +59,36 @@ pub fn create_shortcut() -> Result<()> {
 
     let output = std::process::Command::new("powershell")
         .args(["-Command", &powershell_command])
-        // 隐藏 PowerShell 窗口
+        // Hide the PowerShell window
         .creation_flags(0x08000000) // CREATE_NO_WINDOW
         .output()
-        .map_err(|e| anyhow!("执行 PowerShell 命令失败: {}", e))?;
+        .map_err(|e| anyhow!("Failed to execute PowerShell command: {}", e))?;
 
     if !output.status.success() {
         let error_msg = String::from_utf8_lossy(&output.stderr);
-        return Err(anyhow!("创建快捷方式失败: {}", error_msg));
+        return Err(anyhow!("Failed to create shortcut: {}", error_msg));
     }
 
-    info!(target: "app", "成功创建启动快捷方式");
+    info!(target: "app", "Successfully created startup shortcut");
     Ok(())
 }
 
-/// 删除快捷方式
+/// Remove the shortcut
 #[cfg(target_os = "windows")]
 pub fn remove_shortcut() -> Result<()> {
     let startup_dir = get_startup_dir()?;
     let shortcut_path = startup_dir.join("Koala-Clash.lnk");
 
-    // 如果快捷方式不存在，直接返回成功
+    // If the shortcut does not exist, return success directly
     if !shortcut_path.exists() {
-        info!(target: "app", "启动快捷方式不存在，无需删除");
+        info!(target: "app", "Startup shortcut does not exist, nothing to remove");
         return Ok(());
     }
 
-    // 删除快捷方式
-    fs::remove_file(&shortcut_path).map_err(|e| anyhow!("删除快捷方式失败: {}", e))?;
+    // Delete the shortcut
+    fs::remove_file(&shortcut_path).map_err(|e| anyhow!("Failed to delete shortcut: {}", e))?;
 
-    info!(target: "app", "成功删除启动快捷方式");
+    info!(target: "app", "Successfully removed startup shortcut");
     Ok(())
 }
 

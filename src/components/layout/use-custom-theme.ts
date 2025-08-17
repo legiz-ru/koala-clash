@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSetThemeMode, useThemeMode } from "@/services/states";
 import { useVerge } from "@/hooks/use-verge";
-import { getCurrentWebviewWindow, WebviewWindow } from "@tauri-apps/api/webviewWindow";
+import {
+  getCurrentWebviewWindow,
+  WebviewWindow,
+} from "@tauri-apps/api/webviewWindow";
 import { Theme } from "@tauri-apps/api/window";
 
 export const useCustomTheme = () => {
@@ -12,26 +15,28 @@ export const useCustomTheme = () => {
   const mode = useThemeMode();
   const setMode = useSetThemeMode();
 
-  const [systemTheme, setSystemTheme] = useState(
-      () => window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+  const [systemTheme, setSystemTheme] = useState(() =>
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light",
   );
 
   useEffect(() => {
     setMode(
-        theme_mode === "light" || theme_mode === "dark" ? theme_mode : "system",
+      theme_mode === "light" || theme_mode === "dark" ? theme_mode : "system",
     );
   }, [theme_mode, setMode]);
 
   useEffect(() => {
-    if (mode !== 'system') return;
+    if (mode !== "system") return;
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = (e: MediaQueryListEvent) => {
       setSystemTheme(e.matches ? "dark" : "light");
     };
 
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
   }, [mode]);
 
   useEffect(() => {
@@ -45,7 +50,6 @@ export const useCustomTheme = () => {
     } else {
       appWindow.setTheme(activeTheme as Theme).catch(console.error);
     }
-
   }, [mode, systemTheme, appWindow, theme_mode]);
 
   return {};

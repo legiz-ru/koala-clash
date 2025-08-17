@@ -147,7 +147,7 @@ pub async fn download_icon_cache(url: String, name: String) -> CmdResult<String>
         Ok(icon_path.to_string_lossy().to_string())
     } else {
         let _ = std::fs::remove_file(&temp_path);
-        Err(format!("下载的内容不是有效图片: {url}"))
+        Err(format!("Downloaded content is not a valid image: {url}"))
     }
 }
 
@@ -209,7 +209,7 @@ pub fn copy_icon_file(path: String, icon_info: IconInfo) -> CmdResult<String> {
 /// 通知UI已准备就绪
 #[tauri::command]
 pub fn notify_ui_ready() -> CmdResult<()> {
-    log::info!(target: "app", "前端UI已准备就绪");
+    log::info!(target: "app", "Frontend UI is ready");
     crate::utils::resolve::mark_ui_ready();
     Ok(())
 }
@@ -217,7 +217,7 @@ pub fn notify_ui_ready() -> CmdResult<()> {
 /// UI加载阶段
 #[tauri::command]
 pub fn update_ui_stage(stage: String) -> CmdResult<()> {
-    log::info!(target: "app", "UI加载阶段更新: {stage}");
+    log::info!(target: "app", "UI loading stage updated: {stage}");
 
     use crate::utils::resolve::UiReadyStage;
 
@@ -228,8 +228,8 @@ pub fn update_ui_stage(stage: String) -> CmdResult<()> {
         "ResourcesLoaded" => UiReadyStage::ResourcesLoaded,
         "Ready" => UiReadyStage::Ready,
         _ => {
-            log::warn!(target: "app", "未知的UI加载阶段: {stage}");
-            return Err(format!("未知的UI加载阶段: {stage}"));
+            log::warn!(target: "app", "Unknown UI loading stage: {stage}");
+            return Err(format!("Unknown UI loading stage: {stage}"));
         }
     };
 
@@ -240,7 +240,7 @@ pub fn update_ui_stage(stage: String) -> CmdResult<()> {
 /// 重置UI就绪状态
 #[tauri::command]
 pub fn reset_ui_ready_state() -> CmdResult<()> {
-    log::info!(target: "app", "重置UI就绪状态");
+    log::info!(target: "app", "Reset UI ready state");
     crate::utils::resolve::reset_ui_ready();
     Ok(())
 }

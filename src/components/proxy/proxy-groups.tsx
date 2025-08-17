@@ -24,7 +24,6 @@ import delayManager from "@/services/delay";
 import { useTranslation } from "react-i18next";
 import { ScrollTopButton } from "../layout/scroll-top-button";
 
-
 function throttle<T extends (...args: any[]) => any>(
   func: T,
   wait: number,
@@ -53,7 +52,6 @@ function throttle<T extends (...args: any[]) => any>(
   };
 }
 
-
 interface Props {
   mode: string;
 }
@@ -71,7 +69,6 @@ export const ProxyGroups = memo((props: Props) => {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const scrollerRef = useRef<Element | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-
 
   // Обработчик скролла для показа/скрытия кнопки "Наверх"
   const handleScroll = useCallback(

@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
@@ -21,10 +21,10 @@ export const HwidErrorDialog = () => {
       setErrorMessage(customEvent.detail);
     };
 
-    window.addEventListener('show-hwid-error', handleShowHwidError);
+    window.addEventListener("show-hwid-error", handleShowHwidError);
 
     return () => {
-      window.removeEventListener('show-hwid-error', handleShowHwidError);
+      window.removeEventListener("show-hwid-error", handleShowHwidError);
     };
   }, []);
 
