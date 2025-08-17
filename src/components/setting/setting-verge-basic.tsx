@@ -188,20 +188,20 @@ const SettingVergeBasic = ({ onError }: Props) => {
 
         {OS !== "linux" && (
           <SettingRow
-              label={
-                <LabelWithIcon
-                    icon={MousePointerClick}
-                    text={t("Tray Click Event")}
-                />
-              }
+            label={
+              <LabelWithIcon
+                icon={MousePointerClick}
+                text={t("Tray Click Event")}
+              />
+            }
           >
             <GuardState
-                value={tray_event ?? "main_window"}
-                onCatch={onError}
-                onFormat={(v) => v}
-                onChange={(e) => onChangeData({ tray_event: e })}
-                onGuard={(e) => patchVerge({ tray_event: e })}
-                onChangeProps="onValueChange"
+              value={tray_event ?? "main_window"}
+              onCatch={onError}
+              onFormat={(v) => v}
+              onChange={(e) => onChangeData({ tray_event: e })}
+              onGuard={(e) => patchVerge({ tray_event: e })}
+              onChangeProps="onValueChange"
             >
               <Select>
                 <SelectTrigger className="w-40 h-8">

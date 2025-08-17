@@ -91,17 +91,17 @@ jobs:
           > :warning: **Warning**
           If you get a notification that the application is corrupted when you run it on macOS, run this command:<br>
           <code>sudo xattr -r -c /Applications/Koala\ Clash.app</code>
-          
+
           ### Linux
           <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash_amd64.deb"><img src="https://img.shields.io/badge/x64-default?style=flat&logo=debian&label=DEB"> </a><br>
           <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash.x86_64.rpm"><img src="https://img.shields.io/badge/x64-default?style=flat&logo=fedora&label=RPM"> </a>
-          
+
           <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash_arm64.deb"><img src="https://img.shields.io/badge/arm64-default?style=flat&logo=debian&label=DEB"> </a><br>
           <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash.aarch64.rpm"><img src="https://img.shields.io/badge/aarch64-default?style=flat&logo=fedora&label=RPM"> </a>
-          
+
           <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash_armhf.deb"><img src="https://img.shields.io/badge/armhf-default?style=flat&logo=debian&label=DEB"> </a><br>
           <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash.armhfp.rpm"><img src="https://img.shields.io/badge/armhfp-default?style=flat&logo=fedora&label=RPM"> </a>
-          
+
           ### Windows (Win7 is no longer supported)
           #### Normal version (recommended)
           <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash_x64-setup.exe"><img src="https://badgen.net/badge/icon/x64?icon=windows&label=exe"></a><br>
@@ -217,11 +217,11 @@ jobs:
         shell: bash
         run: |
           TARGET_DIR="src-tauri/target/${{ matrix.target }}/release/bundle"
-          
+
           if [ ! -d "$TARGET_DIR" ]; then
               exit 1
           fi
-          
+
           find "$TARGET_DIR" -type f \( -name "*.dmg" -o -name "*.deb" -o -name "*.rpm" \) -print0 | while IFS= read -r -d '' old_path; do
               dir_path=$(dirname "$old_path")
               old_filename=$(basename "$old_path")
@@ -365,11 +365,11 @@ jobs:
         shell: bash
         run: |
           TARGET_DIR="src-tauri/target/${{ matrix.target }}/release/bundle"
-          
+
           if [ ! -d "$TARGET_DIR" ]; then
               exit 1
           fi
-          
+
           find "$TARGET_DIR" -type f \( -name "*.dmg" -o -name "*.deb" -o -name "*.rpm" \) -print0 | while IFS= read -r -d '' old_path; do
               dir_path=$(dirname "$old_path")
               old_filename=$(basename "$old_path")
@@ -578,14 +578,14 @@ jobs:
             echo "Using found update logs"
             UPDATE_LOGS=$(echo "$UPDATE_LOGS" | sed 's/^## \(v.*\)/\*\1\*/')
           fi
-          
+
           cat > release.txt << EOF
           Вышло обновление!
-          
+
           $UPDATE_LOGS
-          
+
           [Ссылка на релиз](https://github.com/coolcoala/clash-verge-rev-lite/releases/latest)
-          
+
           EOF
 
       - name: notify to channel
@@ -603,4 +603,3 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           message_file: release.txt
           format: markdown
-

@@ -19,11 +19,11 @@ macro_rules! draft_define {
 
         impl Draft<Box<$id>> {
             #[allow(unused)]
-            pub fn data(&self) -> MappedMutexGuard<Box<$id>> {
+            pub fn data(&self) -> MappedMutexGuard<'_, Box<$id>> {
                 MutexGuard::map(self.inner.lock(), |guard| &mut guard.0)
             }
 
-            pub fn latest(&self) -> MappedMutexGuard<Box<$id>> {
+            pub fn latest(&self) -> MappedMutexGuard<'_, Box<$id>> {
                 MutexGuard::map(self.inner.lock(), |inner| {
                     if inner.1.is_none() {
                         &mut inner.0
@@ -33,7 +33,7 @@ macro_rules! draft_define {
                 })
             }
 
-            pub fn draft(&self) -> MappedMutexGuard<Box<$id>> {
+            pub fn draft(&self) -> MappedMutexGuard<'_, Box<$id>> {
                 MutexGuard::map(self.inner.lock(), |inner| {
                     if inner.1.is_none() {
                         inner.1 = Some(inner.0.clone());

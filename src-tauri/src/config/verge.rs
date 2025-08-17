@@ -340,10 +340,12 @@ impl IVerge {
     }
 
     pub fn new() -> Self {
-        dirs::verge_path().and_then(|path| help::read_yaml::<IVerge>(&path)).unwrap_or_else(|err| {
-            log::error!(target: "app", "{err}");
-            Self::template()
-        })
+        dirs::verge_path()
+            .and_then(|path| help::read_yaml::<IVerge>(&path))
+            .unwrap_or_else(|err| {
+                log::error!(target: "app", "{err}");
+                Self::template()
+            })
     }
 
     pub fn template() -> Self {

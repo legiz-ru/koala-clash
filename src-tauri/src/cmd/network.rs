@@ -7,7 +7,7 @@ use serde_yaml::Mapping;
 /// get the system proxy
 #[tauri::command]
 pub async fn get_sys_proxy() -> CmdResult<Mapping> {
-    log::debug!(target: "app", "异步获取系统代理配置");
+    log::debug!(target: "app", "Asynchronously getting system proxy configuration");
 
     let current = AsyncProxyQuery::get_system_proxy().await;
 
@@ -19,14 +19,14 @@ pub async fn get_sys_proxy() -> CmdResult<Mapping> {
     );
     map.insert("bypass".into(), current.bypass.into());
 
-    log::debug!(target: "app", "返回系统代理配置: enable={}, {}:{}", current.enable, current.host, current.port);
+    log::debug!(target: "app", "Return system proxy configuration: enable={}, {}:{}", current.enable, current.host, current.port);
     Ok(map)
 }
 
 /// 获取自动代理配置
 #[tauri::command]
 pub async fn get_auto_proxy() -> CmdResult<Mapping> {
-    log::debug!(target: "app", "开始获取自动代理配置（事件驱动）");
+    log::debug!(target: "app", "Start retrieving auto proxy configuration (event-driven)");
 
     let proxy_manager = EventDrivenProxyManager::global();
 
@@ -40,7 +40,7 @@ pub async fn get_auto_proxy() -> CmdResult<Mapping> {
     map.insert("enable".into(), current.enable.into());
     map.insert("url".into(), current.url.clone().into());
 
-    log::debug!(target: "app", "返回自动代理配置（缓存）: enable={}, url={}", current.enable, current.url);
+    log::debug!(target: "app", "Return auto proxy configuration (cached): enable={}, url={}", current.enable, current.url);
     Ok(map)
 }
 

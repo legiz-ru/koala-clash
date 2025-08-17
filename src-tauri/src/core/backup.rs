@@ -112,7 +112,7 @@ impl WebDavClient {
                     .redirect(reqwest::redirect::Policy::custom(|attempt| {
                         // 允许所有请求类型的重定向，包括PUT
                         if attempt.previous().len() >= 5 {
-                            attempt.error("重定向次数过多")
+                            attempt.error("Too many redirects")
                         } else {
                             attempt.follow()
                         }

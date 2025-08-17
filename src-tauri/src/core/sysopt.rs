@@ -63,7 +63,7 @@ impl Sysopt {
         let proxy_manager = EventDrivenProxyManager::global();
         proxy_manager.notify_app_started();
 
-        log::info!(target: "app", "已启用事件驱动代理守卫");
+        log::info!(target: "app", "Event-driven proxy guard enabled");
         Ok(())
     }
 
@@ -193,7 +193,7 @@ impl Sysopt {
             let mut autoproxy = match Autoproxy::get_auto_proxy() {
                 Ok(ap) => ap,
                 Err(e) => {
-                    log::warn!(target: "app", "重置代理时获取自动代理配置失败: {e}, 使用默认配置");
+                    log::warn!(target: "app", "Failed to get auto proxy config while resetting: {e}, using default config");
                     Autoproxy {
                         enable: false,
                         url: "".to_string(),
@@ -248,14 +248,14 @@ impl Sysopt {
         {
             if is_enable {
                 if let Err(e) = startup_shortcut::create_shortcut() {
-                    log::error!(target: "app", "创建启动快捷方式失败: {}", e);
+                    log::error!(target: "app", "Failed to create startup shortcut: {}", e);
                     // 如果快捷方式创建失败，回退到原来的方法
                     self.try_original_autostart_method(is_enable);
                 } else {
                     return Ok(());
                 }
             } else if let Err(e) = startup_shortcut::remove_shortcut() {
-                log::error!(target: "app", "删除启动快捷方式失败: {}", e);
+                log::error!(target: "app", "Failed to remove startup shortcut: {}", e);
                 self.try_original_autostart_method(is_enable);
             } else {
                 return Ok(());
@@ -290,11 +290,11 @@ impl Sysopt {
         {
             match startup_shortcut::is_shortcut_enabled() {
                 Ok(enabled) => {
-                    log::info!(target: "app", "快捷方式自启动状态: {}", enabled);
+                    log::info!(target: "app", "Shortcut auto-launch state: {}", enabled);
                     return Ok(enabled);
                 }
                 Err(e) => {
-                    log::error!(target: "app", "检查快捷方式失败，尝试原来的方法: {}", e);
+                    log::error!(target: "app", "Failed to check shortcut, falling back to original method: {}", e);
                 }
             }
         }

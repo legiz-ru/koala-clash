@@ -3,9 +3,9 @@ import Layout from "./pages/_layout";
 
 function App() {
   return (
-  <AppDataProvider>
-    <Layout />
-  </AppDataProvider>
+    <AppDataProvider>
+      <Layout />
+    </AppDataProvider>
   );
 }
 export default App;

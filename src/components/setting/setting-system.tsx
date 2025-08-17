@@ -1,4 +1,4 @@
-import {useMemo, useRef, useState} from "react";
+import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLockFn } from "ahooks";
 import { mutate } from "swr";
@@ -43,7 +43,7 @@ import {
   Power,
   BellOff,
   Repeat,
-  Fingerprint
+  Fingerprint,
 } from "lucide-react";
 
 // Модальные окна
@@ -56,7 +56,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {useProfiles} from "@/hooks/use-profiles";
+import { useProfiles } from "@/hooks/use-profiles";
 
 const isWIN = getSystem() === "windows";
 interface Props {
@@ -110,7 +110,7 @@ const SettingSystem = ({ onError }: Props) => {
   const { profiles } = useProfiles();
   const hasProfiles = useMemo(() => {
     const items = profiles?.items ?? [];
-    return items.some(p => p.type === 'local' || p.type === 'remote');
+    return items.some((p) => p.type === "local" || p.type === "remote");
   }, [profiles]);
 
   const {
@@ -261,7 +261,10 @@ const SettingSystem = ({ onError }: Props) => {
                 );
               }
               if (e) {
-                return patchVerge({ enable_tun_mode: true, enable_system_proxy: false });
+                return patchVerge({
+                  enable_tun_mode: true,
+                  enable_system_proxy: false,
+                });
               } else {
                 return patchVerge({ enable_tun_mode: false });
               }

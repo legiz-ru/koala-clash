@@ -10,6 +10,9 @@ on:
 jobs:
   rustfmt:
     runs-on: ubuntu-latest
+    env:
+      CARGO_NET_RETRY: "5"
+      CARGO_HTTP_CHECK_REVOKE: "false"
 
     steps:
       - uses: actions/checkout@v4

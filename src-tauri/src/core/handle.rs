@@ -416,7 +416,7 @@ impl Handle {
                 info,
                 Type::Frontend,
                 true,
-                "启动过程中发现错误，加入消息队列: {} - {}",
+                "Error found during startup; queued: {} - {}",
                 status_str,
                 msg_str
             );
@@ -466,7 +466,7 @@ impl Handle {
             info,
             Type::Frontend,
             true,
-            "发送{}条启动时累积的错误消息",
+            "Sending {} accumulated startup error messages",
             errors.len()
         );
 
