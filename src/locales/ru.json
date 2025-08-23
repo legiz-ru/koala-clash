@@ -392,6 +392,8 @@
   "Profile Imported Successfully": "Профиль успешно импортирован",
   "Profile Switched": "Профиль изменен",
   "Profile Reactivated": "Профиль перезапущен",
+  "Profile Created Successfully": "Профиль успешно создан",
+  "Profile Updated Successfully": "Профиль успешно обновлён",
   "Profile switch interrupted by new selection": "Переключение профилей прервано новым выбором",
   "Only YAML Files Supported": "Поддерживаются только файлы YAML",
   "Settings Applied": "Настройки применены",

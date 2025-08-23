@@ -164,7 +164,16 @@ pub async fn import_profile(url: String, option: Option<PrfOption>) -> CmdResult
             url
         );
         let item = wrap_err!(PrfItem::from_url(&url, None, None, option).await)?;
-        wrap_err!(Config::profiles().data().append_item(item))
+        let new_uid = item.uid.clone().unwrap_or_default();
+        wrap_err!(Config::profiles().data().append_item(item))?;
+        if !new_uid.is_empty() {
+            let _ = patch_profiles_config(IProfiles {
+                current: Some(new_uid),
+                items: None,
+            })
+            .await?;
+        }
+        Ok(())
     }
 }
 
@@ -178,7 +187,17 @@ pub async fn reorder_profile(active_id: String, over_id: String) -> CmdResult {
 #[tauri::command]
 pub async fn create_profile(item: PrfItem, file_data: Option<String>) -> CmdResult {
     let item = wrap_err!(PrfItem::from(item, file_data).await)?;
-    wrap_err!(Config::profiles().data().append_item(item))
+    let new_uid = item.uid.clone().unwrap_or_default();
+    wrap_err!(Config::profiles().data().append_item(item))?;
+
+    if !new_uid.is_empty() {
+        let _ = patch_profiles_config(IProfiles {
+            current: Some(new_uid),
+            items: None,
+        })
+        .await?;
+    }
+    Ok(())
 }
 
 /// 更新配置文件

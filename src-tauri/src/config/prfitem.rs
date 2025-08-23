@@ -504,13 +504,23 @@ impl PrfItem {
             selected: None,
             extra,
             option: Some(PrfOption {
+                user_agent: user_agent.clone(),
+                with_proxy: if with_proxy { Some(true) } else { None },
+                self_proxy: if self_proxy { Some(true) } else { None },
                 update_interval,
                 update_always,
+                timeout_seconds: Some(timeout),
+                danger_accept_invalid_certs: if accept_invalid_certs {
+                    Some(true)
+                } else {
+                    None
+                },
                 merge,
                 script,
                 rules,
                 proxies,
                 groups,
+                use_hwid: Some(use_hwid),
                 ..PrfOption::default()
             }),
             home,

@@ -14,6 +14,7 @@ import {
   importProfile,
   enhanceProfiles,
   createProfileFromShareLink,
+  getProfiles,
 } from "@/services/cmds";
 import { useProfiles } from "@/hooks/use-profiles";
 import { showNotice } from "@/services/noticeService";
@@ -65,7 +66,7 @@ export const ProfileViewer = forwardRef<ProfileViewerRef, Props>(
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const [openType, setOpenType] = useState<"new" | "edit">("new");
-    const { profiles } = useProfiles();
+    const { profiles, patchProfiles } = useProfiles();
     const fileDataRef = useRef<string | null>(null);
 
     const [showAdvanced, setShowAdvanced] = useState(false);
@@ -210,33 +211,81 @@ export const ProfileViewer = forwardRef<ProfileViewerRef, Props>(
 
     const handleSaveAdvanced = useLockFn(
       handleSubmit(async (formData) => {
-        const form = { ...formData, url: formData.url || importUrl };
+        const form = { ...formData, url: formData.url || importUrl } as Partial<IProfileItem>;
 
         setLoading(true);
         try {
           if (!form.type) throw new Error("`Type` should not be null");
           if (form.type === "remote" && !form.url)
             throw new Error("The URL should not be null");
-          if (form.option?.update_interval)
-            form.option.update_interval = +form.option.update_interval;
-          else delete form.option?.update_interval;
-          if (form.option?.user_agent === "") delete form.option.user_agent;
 
-          const name = form.name || `${form.type} file`;
-          const item = { ...form, name };
+          // Clean option fields: only send what user actually set
+          let option = form.option ? { ...form.option } : undefined;
+          if (option) {
+            if ((option as any).update_interval != null && (option as any).update_interval !== "") {
+              // ensure number
+              (option as any).update_interval = +((option as any).update_interval as any);
+            } else {
+              delete (option as any).update_interval;
+            }
+            if (typeof option.user_agent === "string" && option.user_agent.trim() === "") {
+              delete (option as any).user_agent;
+            }
+          }
+
+          const providedName = (form as any).name && String((form as any).name).trim();
+          const providedDesc = (form as any).desc && String((form as any).desc).trim();
+
+          const item: Partial<IProfileItem> = {
+            ...form,
+            // Only include name/desc when user explicitly entered them
+            name: providedName ? (providedName as string) : undefined,
+            desc: providedDesc ? (providedDesc as string) : undefined,
+            option,
+          };
+
           const isUpdate = openType === "edit";
-          const isActivating =
-            isUpdate && form.uid === (profiles?.current ?? "");
+          const wasCurrent = isUpdate && form.uid === (profiles?.current ?? "");
 
           if (openType === "new") {
+            // Detect newly created profile and activate it explicitly
+            const before = await getProfiles().catch(() => null);
+            const beforeUids = new Set(
+              (before?.items || []).map((i: any) => i?.uid).filter(Boolean),
+            );
+
             await createProfile(item, fileDataRef.current);
+
+            const after = await getProfiles().catch(() => null);
+            const newRemoteLocal = (after?.items || []).find(
+              (i: any) =>
+                i &&
+                (i.type === "remote" || i.type === "local") &&
+                i.uid &&
+                !beforeUids.has(i.uid),
+            );
+            const newUid = (newRemoteLocal && newRemoteLocal.uid) as
+              | string
+              | undefined;
+
+            if (newUid) {
+              try {
+                await patchProfiles({ current: newUid });
+              } catch {}
+            }
+
+            showNotice("success", t("Profile Created Successfully"));
+            setOpen(false);
+            props.onChange(true);
+            return;
           } else {
             if (!form.uid) throw new Error("UID not found");
-            await patchProfile(form.uid, item);
+            await patchProfile(form.uid as string, item);
+            showNotice("success", t("Profile Updated Successfully"));
           }
 
           setOpen(false);
-          props.onChange(isActivating);
+          props.onChange(wasCurrent);
         } catch (err: any) {
           showNotice("error", err.message || err.toString());
         } finally {

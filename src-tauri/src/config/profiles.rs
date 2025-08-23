@@ -136,10 +136,9 @@ impl IProfiles {
                 .with_context(|| format!("failed to write to file \"{file}\""))?;
         }
 
-        if self.current.is_none()
-            && (item.itype == Some("remote".to_string()) || item.itype == Some("local".to_string()))
-        {
-            self.current = uid;
+        if item.itype == Some("remote".to_string()) || item.itype == Some("local".to_string()) {
+            // Always switch current to the newly created remote/local profile
+            self.current = uid.clone();
         }
 
         if self.items.is_none() {
