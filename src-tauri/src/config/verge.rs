@@ -257,7 +257,7 @@ impl IVerge {
                     warn,
                     Type::Config,
                     true,
-                    "启动时发现无效的clash_core配置: '{}', 将自动修正为 'koala-mihomo'",
+                    "Invalid clash_core config detected at startup: '{}', auto-fixing to 'koala-mihomo'",
                     core
                 );
                 config.clash_core = Some("koala-mihomo".to_string());
@@ -268,7 +268,7 @@ impl IVerge {
                 info,
                 Type::Config,
                 true,
-                "启动时发现未配置clash_core, 将设置为默认值 'koala-mihomo'"
+                "clash_core not configured at startup; setting default to 'koala-mihomo'"
             );
             config.clash_core = Some("koala-mihomo".to_string());
             needs_fix = true;
@@ -276,13 +276,13 @@ impl IVerge {
 
         // 修正后保存配置
         if needs_fix {
-            logging!(info, Type::Config, true, "正在保存修正后的配置文件...");
+            logging!(info, Type::Config, true, "Saving fixed configuration file...");
             help::save_yaml(&config_path, &config, Some("# Koala Clash Config"))?;
             logging!(
                 info,
                 Type::Config,
                 true,
-                "配置文件修正完成，需要重新加载配置"
+                "Configuration file fixed; reloading config required"
             );
 
             Self::reload_config_after_fix(config)?;
@@ -291,7 +291,7 @@ impl IVerge {
                 info,
                 Type::Config,
                 true,
-                "clash_core配置验证通过: {:?}",
+                "clash_core config validation passed: {:?}",
                 config.clash_core
             );
         }

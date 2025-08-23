@@ -66,9 +66,9 @@ root.render(
 
 // 错误处理
 window.addEventListener("error", (event) => {
-  console.error("[main.tsx] 全局错误:", event.error);
+  console.error("[main.tsx] Global error:", event.error);
 });
 
 window.addEventListener("unhandledrejection", (event) => {
-  console.error("[main.tsx] 未处理的Promise拒绝:", event.reason);
+  console.error("[main.tsx] Unhandled promise rejection:", event.reason);
 });

@@ -611,7 +611,7 @@ impl CoreManager {
                 info,
                 Type::Core,
                 true,
-                "清理完成，共终止了 {} 个多余的 mihomo 进程",
+                "Cleanup complete, a total of {} redundant mihomo processes terminated",
                 killed_count
             );
         }
@@ -720,7 +720,7 @@ impl CoreManager {
             info,
             Type::Core,
             true,
-            "尝试终止进程: {} (PID: {})",
+            "Attempt to terminate process: {} (PID: {})",
             process_name,
             pid
         );
@@ -767,7 +767,7 @@ impl CoreManager {
                     warn,
                     Type::Core,
                     true,
-                    "进程 {} (PID: {}) 终止命令成功但进程仍在运行",
+                    "Process {} (PID: {}) Termination command successful, but process still running",
                     process_name,
                     pid
                 );
@@ -777,7 +777,7 @@ impl CoreManager {
                     info,
                     Type::Core,
                     true,
-                    "成功终止进程: {} (PID: {})",
+                    "Successfully terminated process: {} (PID: {})",
                     process_name,
                     pid
                 );
@@ -788,7 +788,7 @@ impl CoreManager {
                 warn,
                 Type::Core,
                 true,
-                "无法终止进程: {} (PID: {})",
+                "Unable to terminate process: {} (PID: {})",
                 process_name,
                 pid
             );
@@ -953,7 +953,7 @@ impl CoreManager {
                     warn,
                     Type::Core,
                     true,
-                    "服务重装失败 during attempt_service_init: {}",
+                    "Service reinstallation failed during attempt_service_init: {}",
                     e
                 );
                 return Err(e);
@@ -985,7 +985,7 @@ impl CoreManager {
                         error,
                         Type::Core,
                         true,
-                        "保存ServiceState失败 (in attempt_service_init/start_core_by_service): {}",
+                        "Failed to save ServiceState (in attempt_service_init/start_core_by_service): {}",
                         save_err
                     );
                 }
@@ -1004,7 +1004,7 @@ impl CoreManager {
                 warn,
                 Type::Core,
                 true,
-                "应用初始化时清理多余 mihomo 进程失败: {}",
+                "Failed to clean up unnecessary mihomo processes during application initialization: {}",
                 e
             );
         }
@@ -1158,7 +1158,7 @@ impl CoreManager {
                         info,
                         Type::Core,
                         true,
-                        "有服务安装记录但服务不可用/未启动，强制切换到Sidecar模式"
+                        "There is a service installation record, but the service is unavailable/not started. Force switch to Sidecar mode"
                     );
                     let mut final_state = service::ServiceState::get();
                     if !final_state.prefer_sidecar {
@@ -1166,7 +1166,7 @@ impl CoreManager {
                             warn,
                             Type::Core,
                             true,
-                            "prefer_sidecar 为 false，因服务启动失败或不可用而强制设置为 true"
+                            "prefer_sidecar is false, but is forced to true due to service startup failure or unavailability"
                         );
                         final_state.prefer_sidecar = true;
                         final_state.last_error =

@@ -56,7 +56,7 @@ export const useProfiles = () => {
   // 根据selected的节点选择
   const activateSelected = async () => {
     try {
-      console.log("[ActivateSelected] 开始处理代理选择");
+      console.log("[ActivateSelected] Start processing proxy selection");
 
       const [proxiesData, profileData] = await Promise.all([
         getProxies(),
@@ -64,7 +64,9 @@ export const useProfiles = () => {
       ]);
 
       if (!profileData || !proxiesData) {
-        console.log("[ActivateSelected] 代理或配置数据不可用，跳过处理");
+        console.log(
+          "[ActivateSelected] Proxy or configuration data unavailable, skipping processing",
+        );
         return;
       }
 
@@ -73,19 +75,23 @@ export const useProfiles = () => {
       );
 
       if (!current) {
-        console.log("[ActivateSelected] 未找到当前profile配置");
+        console.log(
+          "[ActivateSelected] Current profile configuration not found",
+        );
         return;
       }
 
       // 检查是否有saved的代理选择
       const { selected = [] } = current;
       if (selected.length === 0) {
-        console.log("[ActivateSelected] 当前profile无保存的代理选择，跳过");
+        console.log(
+          "[ActivateSelected] The current profile has no saved proxy selection, so it will be skipped",
+        );
         return;
       }
 
       console.log(
-        `[ActivateSelected] 当前profile有 ${selected.length} 个代理选择配置`,
+        `[ActivateSelected] The current profile has ${selected.length} proxy selection configurations`,
       );
 
       const selectedMap = Object.fromEntries(
@@ -108,7 +114,7 @@ export const useProfiles = () => {
         const targetProxy = selectedMap[name];
         if (targetProxy != null && targetProxy !== now) {
           console.log(
-            `[ActivateSelected] 需要切换代理组 ${name}: ${now} -> ${targetProxy}`,
+            `[ActivateSelected] Need to switch proxy groups ${name}: ${now} -> ${targetProxy}`,
           );
           hasChange = true;
           updateProxy(name, targetProxy);
@@ -118,27 +124,36 @@ export const useProfiles = () => {
       });
 
       if (!hasChange) {
-        console.log("[ActivateSelected] 所有代理选择已经是目标状态，无需更新");
+        console.log(
+          "[ActivateSelected] All agent selections are already in the target state and do not need to be updated",
+        );
         return;
       }
 
-      console.log(`[ActivateSelected] 完成代理切换，保存新的选择配置`);
+      console.log(
+        `[ActivateSelected] Complete the proxy switch and save the new selection configuration`,
+      );
 
       try {
         await patchProfile(profileData.current!, { selected: newSelected });
-        console.log("[ActivateSelected] 代理选择配置保存成功");
+        console.log(
+          "[ActivateSelected] Proxy selection configuration saved successfully",
+        );
 
         setTimeout(() => {
           mutate("getProxies", getProxies());
         }, 100);
       } catch (error: any) {
         console.error(
-          "[ActivateSelected] 保存代理选择配置失败:",
+          "[ActivateSelected] Failed to save proxy selection configuration:",
           error.message,
         );
       }
     } catch (error: any) {
-      console.error("[ActivateSelected] 处理代理选择失败:", error.message);
+      console.error(
+        "[ActivateSelected] Handling proxy selection failure:",
+        error.message,
+      );
     }
   };
 

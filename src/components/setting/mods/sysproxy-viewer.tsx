@@ -429,11 +429,11 @@ export const SysproxyViewer = forwardRef<DialogRef>((props, ref) => {
               }
             }
           } catch (err) {
-            console.warn("代理状态更新失败:", err);
+            console.warn("Proxy status update failed:", err);
           }
         }, 50);
       } catch (err: any) {
-        console.error("配置保存失败:", err);
+        console.error("Configuration save failed:", err);
         mutateVerge();
         showNotice("error", err.toString());
         // setOpen(true);

@@ -112,15 +112,15 @@ export async function getSystemProxy() {
 
 export async function getAutotemProxy() {
   try {
-    console.log("[API] 开始调用 get_auto_proxy");
+    console.log("[API] Start calling get_auto_proxy");
     const result = await invoke<{
       enable: boolean;
       url: string;
     }>("get_auto_proxy");
-    console.log("[API] get_auto_proxy 调用成功:", result);
+    console.log("[API] get_auto_proxy success:", result);
     return result;
   } catch (error) {
-    console.error("[API] get_auto_proxy 调用失败:", error);
+    console.error("[API] get_auto_proxy failed:", error);
     return {
       enable: false,
       url: "",
@@ -132,7 +132,7 @@ export async function getAutoLaunchStatus() {
   try {
     return await invoke<boolean>("get_auto_launch_status");
   } catch (error) {
-    console.error("获取自启动状态失败:", error);
+    console.error("Failed to get auto-launch state:", error);
     return false;
   }
 }
@@ -195,7 +195,7 @@ export async function cmdGetProxyDelay(
   // 确保URL不为空
   const testUrl = url || "https://cp.cloudflare.com/generate_204";
   console.log(
-    `[API] 调用延迟测试API，代理: ${name}, 超时: ${timeout}ms, URL: ${testUrl}`,
+    `[API] Calling delay test API, proxy: ${name}, timeout: ${timeout}ms, URL: ${testUrl}`,
   );
 
   try {
@@ -212,19 +212,19 @@ export async function cmdGetProxyDelay(
     // 验证返回结果中是否有delay字段，并且值是一个有效的数字
     if (result && typeof result.delay === "number") {
       console.log(
-        `[API] 延迟测试API调用成功，代理: ${name}, 延迟: ${result.delay}ms`,
+        `[API] Delay test API success, proxy: ${name}, delay: ${result.delay}ms`,
       );
       return result;
     } else {
       console.error(
-        `[API] 延迟测试API返回无效结果，代理: ${name}, 结果:`,
+        `[API] Delay test API returned invalid result, proxy: ${name}, result:`,
         result,
       );
       // 返回一个有效的结果对象，但标记为超时
       return { delay: 1e6 };
     }
   } catch (error) {
-    console.error(`[API] 延迟测试API调用失败，代理: ${name}`, error);
+    console.error(`[API] Delay test API failed, proxy: ${name}`, error);
     // 返回一个有效的结果对象，但标记为错误
     return { delay: 1e6 };
   }
@@ -232,7 +232,7 @@ export async function cmdGetProxyDelay(
 
 /// 用于profile切换等场景
 export async function forceRefreshProxies() {
-  console.log("[API] 强制刷新代理缓存");
+  console.log("[API] Force refresh proxy cache");
   return invoke<any>("force_refresh_proxies");
 }
 
@@ -392,7 +392,7 @@ export const isAdmin = async () => {
   try {
     return await invoke<boolean>("is_admin");
   } catch (error) {
-    console.error("检查管理员权限失败:", error);
+    console.error("Failed to check admin privileges:", error);
     return false;
   }
 };

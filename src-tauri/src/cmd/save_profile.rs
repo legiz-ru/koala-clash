@@ -84,7 +84,7 @@ pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdR
                 wrap_err!(fs::write(&file_path, original_content))?;
                 // 发送合并文件专用错误通知
                 let result = (false, error_msg.clone());
-                crate::cmd::validate::handle_yaml_validation_notice(&result, "合并配置文件");
+                crate::cmd::validate::handle_yaml_validation_notice(&result, "Merge config file");
                 return Ok(());
             }
             Err(e) => {
@@ -135,7 +135,7 @@ pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdR
                 // 普通YAML错误使用YAML通知处理
                 log::info!(target: "app", "[cmd config save] YAML config file validation failed, sending notification");
                 let result = (false, error_msg.clone());
-                crate::cmd::validate::handle_yaml_validation_notice(&result, "YAML配置文件");
+                crate::cmd::validate::handle_yaml_validation_notice(&result, "YAML config file");
             } else if is_script_error {
                 // 脚本错误使用专门的通知处理
                 log::info!(target: "app", "[cmd config save] Script file validation failed, sending notification");

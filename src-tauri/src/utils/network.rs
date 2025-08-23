@@ -65,7 +65,7 @@ impl NetworkManager {
     pub fn init(&self) {
         self.init.call_once(|| {
             self.runtime.spawn(async {
-                logging!(info, Type::Network, true, "初始化网络管理器");
+                logging!(info, Type::Network, true, "Initializing network manager");
 
                 // 创建无代理客户端
                 let no_proxy_client = ClientBuilder::new()
@@ -81,7 +81,7 @@ impl NetworkManager {
                 let mut no_proxy_guard = NETWORK_MANAGER.no_proxy_client.lock().unwrap();
                 *no_proxy_guard = Some(no_proxy_client);
 
-                logging!(info, Type::Network, true, "网络管理器初始化完成");
+                logging!(info, Type::Network, true, "Network manager initialization completed");
             });
         });
     }
@@ -112,7 +112,7 @@ impl NetworkManager {
     }
 
     pub fn reset_clients(&self) {
-        logging!(info, Type::Network, true, "正在重置所有HTTP客户端");
+        logging!(info, Type::Network, true, "Resetting all HTTP clients");
         {
             let mut client = self.self_proxy_client.lock().unwrap();
             *client = None;
@@ -409,7 +409,7 @@ impl NetworkManager {
         let watchdog = tokio::spawn(async move {
             tokio::time::sleep(Duration::from_secs(timeout_duration)).await;
             let _ = cancel_tx.send(());
-            logging!(warn, Type::Network, true, "请求超时取消: {}", url_clone);
+            logging!(warn, Type::Network, true, "Request canceled due to timeout: {}", url_clone);
         });
 
         let result = tokio::select! {

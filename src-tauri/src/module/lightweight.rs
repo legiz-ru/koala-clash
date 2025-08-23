@@ -46,7 +46,7 @@ pub fn run_once_auto_lightweight() {
                 info,
                 Type::Lightweight,
                 true,
-                "在静默启动的情况下，创建窗口再添加自动进入轻量模式窗口监听器"
+                "Silent start detected: create window, then attach auto lightweight-mode listener"
             );
             set_lightweight_mode(false);
             enable_auto_light_weight_mode();
@@ -70,7 +70,7 @@ pub fn auto_lightweight_mode_init() {
                 info,
                 Type::Lightweight,
                 true,
-                "非静默启动直接挂载自动进入轻量模式监听器！"
+                "Non-silent start: directly attach auto lightweight-mode listener"
             );
             set_lightweight_mode(true);
             enable_auto_light_weight_mode();
@@ -102,13 +102,13 @@ pub fn set_lightweight_mode(value: bool) {
 
 pub fn enable_auto_light_weight_mode() {
     Timer::global().init().unwrap();
-    logging!(info, Type::Lightweight, true, "开启自动轻量模式");
+    logging!(info, Type::Lightweight, true, "Enable auto lightweight mode");
     setup_window_close_listener();
     setup_webview_focus_listener();
 }
 
 pub fn disable_auto_light_weight_mode() {
-    logging!(info, Type::Lightweight, true, "关闭自动轻量模式");
+    logging!(info, Type::Lightweight, true, "Disable auto lightweight mode");
     let _ = cancel_light_weight_timer();
     cancel_window_close_listener();
 }
@@ -121,7 +121,7 @@ pub fn entry_lightweight_mode() {
         info,
         Type::Lightweight,
         true,
-        "轻量模式隐藏窗口结果: {:?}",
+        "Lightweight mode window hide result: {:?}",
         result
     );
 
@@ -150,7 +150,7 @@ pub fn exit_lightweight_mode() {
             info,
             Type::Lightweight,
             true,
-            "轻量模式退出操作已在进行中，跳过重复调用"
+            "Lightweight mode exit already in progress; skipping duplicate call"
         );
         return;
     }
@@ -162,7 +162,7 @@ pub fn exit_lightweight_mode() {
 
     // 确保当前确实处于轻量模式才执行退出操作
     if !is_in_lightweight_mode() {
-        logging!(info, Type::Lightweight, true, "当前不在轻量模式，无需退出");
+        logging!(info, Type::Lightweight, true, "Not in lightweight mode; skip exit");
         return;
     }
 
@@ -192,7 +192,7 @@ fn setup_window_close_listener() -> u32 {
                 info,
                 Type::Lightweight,
                 true,
-                "监听到关闭请求，开始轻量模式计时"
+                "Close requested; starting lightweight-mode timer"
             );
         });
         return handler;
@@ -207,7 +207,7 @@ fn setup_webview_focus_listener() -> u32 {
             logging!(
                 info,
                 Type::Lightweight,
-                "监听到窗口获得焦点，取消轻量模式计时"
+                "Window focused; cancel lightweight-mode timer"
             );
         });
         return handler;
@@ -218,7 +218,7 @@ fn setup_webview_focus_listener() -> u32 {
 fn cancel_window_close_listener() {
     if let Some(window) = handle::Handle::global().get_window() {
         window.unlisten(setup_window_close_listener());
-        logging!(info, Type::Lightweight, true, "取消了窗口关闭监听");
+        logging!(info, Type::Lightweight, true, "Removed window close listener");
     }
 }
 
@@ -243,7 +243,7 @@ fn setup_light_weight_timer() -> Result<()> {
         .set_maximum_parallel_runnable_num(1)
         .set_frequency_once_by_minutes(once_by_minutes)
         .spawn_async_routine(move || async move {
-            logging!(info, Type::Timer, true, "计时器到期，开始进入轻量模式");
+            logging!(info, Type::Timer, true, "Timer expired; entering lightweight mode");
             entry_lightweight_mode();
         })
         .context("failed to create timer task")?;
@@ -271,7 +271,7 @@ fn setup_light_weight_timer() -> Result<()> {
         info,
         Type::Timer,
         true,
-        "计时器已设置，{} 分钟后将自动进入轻量模式",
+        "Timer set; will auto-enter lightweight mode after {} minute(s)",
         once_by_minutes
     );
 
@@ -286,7 +286,7 @@ fn cancel_light_weight_timer() -> Result<()> {
         delay_timer
             .remove_task(task.task_id)
             .context("failed to remove timer task")?;
-        logging!(info, Type::Timer, true, "计时器已取消");
+        logging!(info, Type::Timer, true, "Timer canceled");
     }
 
     Ok(())

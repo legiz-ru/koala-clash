@@ -69,9 +69,9 @@ impl Config {
         }
         // 生成运行时配置
         if let Err(err) = Self::generate().await {
-            logging!(error, Type::Config, true, "生成运行时配置失败: {}", err);
+            logging!(error, Type::Config, true, "Failed to generate runtime config: {}", err);
         } else {
-            logging!(info, Type::Config, true, "生成运行时配置成功");
+            logging!(info, Type::Config, true, "Runtime config generated successfully");
         }
 
         // 生成运行时配置文件并验证
@@ -79,7 +79,7 @@ impl Config {
 
         let validation_result = if config_result.is_ok() {
             // 验证配置文件
-            logging!(info, Type::Config, true, "开始验证配置");
+            logging!(info, Type::Config, true, "Starting config validation");
 
             match CoreManager::global().validate_config().await {
                 Ok((is_valid, error_msg)) => {
@@ -88,7 +88,7 @@ impl Config {
                             warn,
                             Type::Config,
                             true,
-                            "[首次启动] 配置验证失败，使用默认最小配置启动: {}",
+                            "[First launch] Config validation failed, starting with minimal default config: {}",
                             error_msg
                         );
                         CoreManager::global()
@@ -96,12 +96,12 @@ impl Config {
                             .await?;
                         Some(("config_validate::boot_error", error_msg))
                     } else {
-                        logging!(info, Type::Config, true, "配置验证成功");
+                        logging!(info, Type::Config, true, "Config validation succeeded");
                         Some(("config_validate::success", String::new()))
                     }
                 }
                 Err(err) => {
-                    logging!(warn, Type::Config, true, "验证进程执行失败: {}", err);
+                    logging!(warn, Type::Config, true, "Validation process execution failed: {}", err);
                     CoreManager::global()
                         .use_default_config("config_validate::process_terminated", "")
                         .await?;
@@ -109,7 +109,7 @@ impl Config {
                 }
             }
         } else {
-            logging!(warn, Type::Config, true, "生成配置文件失败，使用默认配置");
+            logging!(warn, Type::Config, true, "Failed to generate config file; using default config");
             CoreManager::global()
                 .use_default_config("config_validate::error", "")
                 .await?;

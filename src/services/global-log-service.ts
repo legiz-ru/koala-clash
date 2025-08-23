@@ -83,10 +83,10 @@ export const initGlobalLogService = (
 
   // 创建新的WebSocket连接，使用新的认证方法
   const wsUrl = buildWSUrl(server, logLevel);
-  console.log(`[GlobalLog] 正在连接日志服务: ${wsUrl}`);
+  console.log(`[GlobalLog] Connecting to log service: ${wsUrl}`);
 
   if (!server) {
-    console.warn("[GlobalLog] 服务器地址为空，无法建立连接");
+    console.warn("[GlobalLog] Server URL is empty, cannot establish connection");
     return;
   }
 
@@ -98,11 +98,11 @@ export const initGlobalLogService = (
         const time = dayjs().format("MM-DD HH:mm:ss");
         appendLog({ ...data, time });
       } catch (error) {
-        console.error("[GlobalLog] 解析日志数据失败:", error);
+        console.error("[GlobalLog] Failed to parse log data:", error);
       }
     },
     onerror(event) {
-      console.error("[GlobalLog] WebSocket连接错误", event);
+      console.error("[GlobalLog] WebSocket connection error", event);
 
       // 记录错误状态但不关闭连接，让重连机制起作用
       useGlobalLogStore.setState({ isConnected: false });
@@ -114,16 +114,16 @@ export const initGlobalLogService = (
         "type" in event &&
         event.type === "error"
       ) {
-        console.error("[GlobalLog] 连接已彻底失败，关闭连接");
+        console.error("[GlobalLog] Connection exhausted retries, closing");
         closeGlobalLogConnection();
       }
     },
     onclose(event) {
-      console.log("[GlobalLog] WebSocket连接关闭", event);
+      console.log("[GlobalLog] WebSocket connection closed", event);
       useGlobalLogStore.setState({ isConnected: false });
     },
     onopen(event) {
-      console.log("[GlobalLog] WebSocket连接已建立", event);
+      console.log("[GlobalLog] WebSocket connection established", event);
       useGlobalLogStore.setState({ isConnected: true });
     },
   });

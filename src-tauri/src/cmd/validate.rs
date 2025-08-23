@@ -32,7 +32,7 @@ pub fn handle_script_validation_notice(result: &(bool, String), file_type: &str)
             warn,
             Type::Config,
             true,
-            "{} 验证失败: {}",
+            "{} validation failed: {}",
             file_type,
             error_msg
         );
@@ -43,14 +43,14 @@ pub fn handle_script_validation_notice(result: &(bool, String), file_type: &str)
 /// 验证指定脚本文件
 #[tauri::command]
 pub async fn validate_script_file(file_path: String) -> CmdResult<bool> {
-    logging!(info, Type::Config, true, "验证脚本文件: {}", file_path);
+    logging!(info, Type::Config, true, "Validating script file: {}", file_path);
 
     match CoreManager::global()
         .validate_config_file(&file_path, None)
         .await
     {
         Ok(result) => {
-            handle_script_validation_notice(&result, "脚本文件");
+            handle_script_validation_notice(&result, "Script file");
             Ok(result.0) // 返回验证结果布尔值
         }
         Err(e) => {
@@ -129,7 +129,7 @@ pub fn handle_yaml_validation_notice(result: &(bool, String), file_type: &str) {
             info,
             Type::Config,
             true,
-            "[通知] 发送通知: status={}, msg={}",
+            "[Notice] Sending notice: status={}, msg={}",
             status,
             error_msg
         );

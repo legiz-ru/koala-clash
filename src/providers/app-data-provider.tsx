@@ -88,13 +88,13 @@ export const AppDataProvider = ({
           const newProfileId = event.payload;
           const now = Date.now();
 
-          console.log(`[AppDataProvider] Profile切换事件: ${newProfileId}`);
+          console.log(`[AppDataProvider] Profile switched: ${newProfileId}`);
 
           if (
             lastProfileId === newProfileId &&
             now - lastUpdateTime < refreshThrottle
           ) {
-            console.log("[AppDataProvider] 重复事件被防抖，跳过");
+            console.log("[AppDataProvider] Duplicate event debounced, skip");
             return;
           }
 
@@ -103,7 +103,7 @@ export const AppDataProvider = ({
 
           setTimeout(async () => {
             try {
-              console.log("[AppDataProvider] 强制刷新代理缓存");
+              console.log("[AppDataProvider] Force refresh proxy cache");
 
               const refreshPromise = Promise.race([
                 forceRefreshProxies(),
@@ -117,15 +117,15 @@ export const AppDataProvider = ({
 
               await refreshPromise;
 
-              console.log("[AppDataProvider] 刷新前端代理数据");
+              console.log("[AppDataProvider] Refresh frontend proxy data");
               await refreshProxy();
 
-              console.log("[AppDataProvider] Profile切换的代理数据刷新完成");
+              console.log("[AppDataProvider] Proxy data refreshed for profile switch");
             } catch (error) {
-              console.error("[AppDataProvider] 强制刷新代理缓存失败:", error);
+              console.error("[AppDataProvider] Force refresh proxy cache failed:", error);
 
               refreshProxy().catch((e) =>
-                console.warn("[AppDataProvider] 普通刷新也失败:", e),
+                console.warn("[AppDataProvider] Normal refresh also failed:", e),
               );
             }
           }, 0);
@@ -134,14 +134,14 @@ export const AppDataProvider = ({
         // 监听Clash配置刷新事件(enhance操作等)
         const handleRefreshClash = () => {
           const now = Date.now();
-          console.log("[AppDataProvider] Clash配置刷新事件");
+          console.log("[AppDataProvider] Clash config refresh event");
 
           if (now - lastUpdateTime > refreshThrottle) {
             lastUpdateTime = now;
 
             setTimeout(async () => {
               try {
-                console.log("[AppDataProvider] Clash刷新 - 强制刷新代理缓存");
+                console.log("[AppDataProvider] Clash refresh - force refresh proxy cache");
 
                 // 添加超时保护
                 const refreshPromise = Promise.race([
@@ -158,11 +158,11 @@ export const AppDataProvider = ({
                 await refreshProxy();
               } catch (error) {
                 console.error(
-                  "[AppDataProvider] Clash刷新时强制刷新代理缓存失败:",
+                  "[AppDataProvider] Clash refresh forcing proxy cache refresh failed:",
                   error,
                 );
                 refreshProxy().catch((e) =>
-                  console.warn("[AppDataProvider] Clash刷新普通刷新也失败:", e),
+                  console.warn("[AppDataProvider] Clash refresh normal refresh also failed:", e),
                 );
               }
             }, 0);
@@ -181,7 +181,7 @@ export const AppDataProvider = ({
           );
         };
       } catch (error) {
-        console.error("[AppDataProvider] 事件监听器设置失败:", error);
+        console.error("[AppDataProvider] Failed to set up event listeners:", error);
         return () => {};
       }
     };
@@ -279,7 +279,7 @@ export const AppDataProvider = ({
       if (!server) return () => {};
 
       console.log(
-        `[Connections][${AppDataProvider.name}] 正在连接: ${server}/connections`,
+        `[Connections][${AppDataProvider.name}] Connecting: ${server}/connections`,
       );
       const socket = createAuthSockette(`${server}/connections`, secret, {
         timeout: 5000,
@@ -322,7 +322,7 @@ export const AppDataProvider = ({
             );
           } catch (err) {
             console.error(
-              `[Connections][${AppDataProvider.name}] 解析数据错误:`,
+              `[Connections][${AppDataProvider.name}] Failed to parse data:`,
               err,
               event.data,
             );
@@ -330,26 +330,26 @@ export const AppDataProvider = ({
         },
         onopen: (event) => {
           console.log(
-            `[Connections][${AppDataProvider.name}] WebSocket 连接已建立`,
+            `[Connections][${AppDataProvider.name}] WebSocket connected`,
             event,
           );
         },
         onerror(event) {
           console.error(
-            `[Connections][${AppDataProvider.name}] WebSocket 连接错误或达到最大重试次数`,
+            `[Connections][${AppDataProvider.name}] WebSocket error or max retries reached`,
             event,
           );
           next(null, { connections: [], uploadTotal: 0, downloadTotal: 0 });
         },
         onclose: (event) => {
           console.log(
-            `[Connections][${AppDataProvider.name}] WebSocket 连接关闭`,
+            `[Connections][${AppDataProvider.name}] WebSocket closed`,
             event.code,
             event.reason,
           );
           if (event.code !== 1000 && event.code !== 1001) {
             console.warn(
-              `[Connections][${AppDataProvider.name}] 连接非正常关闭，重置数据`,
+              `[Connections][${AppDataProvider.name}] Abnormal close, resetting data`,
             );
             next(null, { connections: [], uploadTotal: 0, downloadTotal: 0 });
           }
@@ -357,7 +357,7 @@ export const AppDataProvider = ({
       });
 
       return () => {
-        console.log(`[Connections][${AppDataProvider.name}] 清理WebSocket连接`);
+        console.log(`[Connections][${AppDataProvider.name}] Cleaning up WebSocket connection`);
         socket.close();
       };
     },
@@ -373,7 +373,7 @@ export const AppDataProvider = ({
       if (!server) return () => {};
 
       console.log(
-        `[Traffic][${AppDataProvider.name}] 正在连接: ${server}/traffic`,
+        `[Traffic][${AppDataProvider.name}] Connecting: ${server}/traffic`,
       );
       const socket = createAuthSockette(`${server}/traffic`, secret, {
         onmessage(event) {
@@ -387,13 +387,13 @@ export const AppDataProvider = ({
               next(null, data);
             } else {
               console.warn(
-                `[Traffic][${AppDataProvider.name}] 收到无效数据:`,
+                `[Traffic][${AppDataProvider.name}] Received invalid data:`,
                 data,
               );
             }
           } catch (err) {
             console.error(
-              `[Traffic][${AppDataProvider.name}] 解析数据错误:`,
+              `[Traffic][${AppDataProvider.name}] Failed to parse data:`,
               err,
               event.data,
             );
@@ -401,26 +401,26 @@ export const AppDataProvider = ({
         },
         onopen: (event) => {
           console.log(
-            `[Traffic][${AppDataProvider.name}] WebSocket 连接已建立`,
+            `[Traffic][${AppDataProvider.name}] WebSocket connected`,
             event,
           );
         },
         onerror(event) {
           console.error(
-            `[Traffic][${AppDataProvider.name}] WebSocket 连接错误或达到最大重试次数`,
+            `[Traffic][${AppDataProvider.name}] WebSocket error or max retries reached`,
             event,
           );
           next(null, { up: 0, down: 0 });
         },
         onclose: (event) => {
           console.log(
-            `[Traffic][${AppDataProvider.name}] WebSocket 连接关闭`,
+            `[Traffic][${AppDataProvider.name}] WebSocket closed`,
             event.code,
             event.reason,
           );
           if (event.code !== 1000 && event.code !== 1001) {
             console.warn(
-              `[Traffic][${AppDataProvider.name}] 连接非正常关闭，重置数据`,
+              `[Traffic][${AppDataProvider.name}] Abnormal close, resetting data`,
             );
             next(null, { up: 0, down: 0 });
           }
@@ -428,7 +428,7 @@ export const AppDataProvider = ({
       });
 
       return () => {
-        console.log(`[Traffic][${AppDataProvider.name}] 清理WebSocket连接`);
+        console.log(`[Traffic][${AppDataProvider.name}] Cleaning up WebSocket connection`);
         socket.close();
       };
     },
@@ -443,7 +443,7 @@ export const AppDataProvider = ({
       if (!server) return () => {};
 
       console.log(
-        `[Memory][${AppDataProvider.name}] 正在连接: ${server}/memory`,
+        `[Memory][${AppDataProvider.name}] Connecting: ${server}/memory`,
       );
       const socket = createAuthSockette(`${server}/memory`, secret, {
         onmessage(event) {
@@ -453,13 +453,13 @@ export const AppDataProvider = ({
               next(null, data);
             } else {
               console.warn(
-                `[Memory][${AppDataProvider.name}] 收到无效数据:`,
+                `[Memory][${AppDataProvider.name}] Received invalid data:`,
                 data,
               );
             }
           } catch (err) {
             console.error(
-              `[Memory][${AppDataProvider.name}] 解析数据错误:`,
+              `[Memory][${AppDataProvider.name}] Failed to parse data:`,
               err,
               event.data,
             );
@@ -467,26 +467,26 @@ export const AppDataProvider = ({
         },
         onopen: (event) => {
           console.log(
-            `[Memory][${AppDataProvider.name}] WebSocket 连接已建立`,
+            `[Memory][${AppDataProvider.name}] WebSocket connected`,
             event,
           );
         },
         onerror(event) {
           console.error(
-            `[Memory][${AppDataProvider.name}] WebSocket 连接错误或达到最大重试次数`,
+            `[Memory][${AppDataProvider.name}] WebSocket error or max retries reached`,
             event,
           );
           next(null, { inuse: 0 });
         },
         onclose: (event) => {
           console.log(
-            `[Memory][${AppDataProvider.name}] WebSocket 连接关闭`,
+            `[Memory][${AppDataProvider.name}] WebSocket closed`,
             event.code,
             event.reason,
           );
           if (event.code !== 1000 && event.code !== 1001) {
             console.warn(
-              `[Memory][${AppDataProvider.name}] 连接非正常关闭，重置数据`,
+              `[Memory][${AppDataProvider.name}] Abnormal close, resetting data`,
             );
             next(null, { inuse: 0 });
           }
@@ -494,7 +494,7 @@ export const AppDataProvider = ({
       });
 
       return () => {
-        console.log(`[Memory][${AppDataProvider.name}] 清理WebSocket连接`);
+        console.log(`[Memory][${AppDataProvider.name}] Cleaning up WebSocket connection`);
         socket.close();
       };
     },
@@ -521,13 +521,13 @@ export const AppDataProvider = ({
       const isPacMode = verge.proxy_auto_config ?? false;
 
       if (isPacMode) {
-        // PAC模式：显示我们期望设置的代理地址
+        // PAC mode: show expected proxy address
         const proxyHost = verge.proxy_host || "127.0.0.1";
         const proxyPort =
           verge.verge_mixed_port || clashConfig["mixed-port"] || 7897;
         return `${proxyHost}:${proxyPort}`;
       } else {
-        // HTTP代理模式：优先使用系统地址，但如果格式不正确则使用期望地址
+        // HTTP proxy mode: prefer system address, else fallback to expected address
         const systemServer = sysproxy?.server;
         if (
           systemServer &&
@@ -536,7 +536,7 @@ export const AppDataProvider = ({
         ) {
           return systemServer;
         } else {
-          // 系统地址无效，返回期望的代理地址
+          // Invalid system address; return expected proxy address
           const proxyHost = verge.proxy_host || "127.0.0.1";
           const proxyPort =
             verge.verge_mixed_port || clashConfig["mixed-port"] || 7897;
@@ -612,7 +612,7 @@ export const useAppData = () => {
   const context = useContext(AppDataContext);
 
   if (!context) {
-    throw new Error("useAppData必须在AppDataProvider内使用");
+    throw new Error("useAppData must be used within AppDataProvider");
   }
 
   return context;

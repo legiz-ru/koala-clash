@@ -30,7 +30,7 @@ async fn cleanup_processing_state(sequence: u64, reason: &str) {
         info,
         Type::Cmd,
         true,
-        "{}，清理状态，序列号: {}",
+        "{}，Cleanup status, serial number: {}",
         reason,
         sequence
     );
@@ -55,14 +55,14 @@ pub async fn get_profiles() -> CmdResult<IProfiles> {
 
     match latest_result {
         Ok(Ok(profiles)) => {
-            logging!(info, Type::Cmd, false, "快速获取配置列表成功");
+            logging!(info, Type::Cmd, false, "Quickly fetched profiles list successfully");
             return Ok(profiles);
         }
         Ok(Err(join_err)) => {
-            logging!(warn, Type::Cmd, true, "快速获取配置任务失败: {}", join_err);
+            logging!(warn, Type::Cmd, true, "Quick profile list fetch task failed: {}", join_err);
         }
         Err(_) => {
-            logging!(warn, Type::Cmd, true, "快速获取配置超时(500ms)");
+            logging!(warn, Type::Cmd, true, "Quick profile list fetch timeout (500ms)");
         }
     }
 
@@ -82,7 +82,7 @@ pub async fn get_profiles() -> CmdResult<IProfiles> {
 
     match data_result {
         Ok(Ok(profiles)) => {
-            logging!(info, Type::Cmd, false, "获取draft配置列表成功");
+            logging!(info, Type::Cmd, false, "Fetched draft profile list successfully");
             return Ok(profiles);
         }
         Ok(Err(join_err)) => {
@@ -90,12 +90,12 @@ pub async fn get_profiles() -> CmdResult<IProfiles> {
                 error,
                 Type::Cmd,
                 true,
-                "获取draft配置任务失败: {}",
+                "Failed to obtain draft configuration task: {}",
                 join_err
             );
         }
         Err(_) => {
-            logging!(error, Type::Cmd, true, "获取draft配置超时(2秒)");
+            logging!(error, Type::Cmd, true, "Draft profile list fetch timeout (2s)");
         }
     }
 
@@ -104,16 +104,16 @@ pub async fn get_profiles() -> CmdResult<IProfiles> {
         warn,
         Type::Cmd,
         true,
-        "所有获取配置策略都失败，尝试fallback"
+        "All attempts to obtain configuration policies failed. Trying fallback"
     );
 
     match tokio::task::spawn_blocking(IProfiles::new).await {
         Ok(profiles) => {
-            logging!(info, Type::Cmd, true, "使用fallback配置成功");
+            logging!(info, Type::Cmd, true, "Fallback profiles created successfully");
             Ok(profiles)
         }
         Err(err) => {
-            logging!(error, Type::Cmd, true, "fallback配置也失败: {}", err);
+            logging!(error, Type::Cmd, true, "Fallback profiles creation failed: {}", err);
             // 返回空配置避免崩溃
             Ok(IProfiles {
                 current: None,
@@ -268,7 +268,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
         info,
         Type::Cmd,
         true,
-        "开始修改配置文件，请求序列号: {}, 目标profile: {:?}",
+        "Starting to modify profiles, sequence: {}, target profile: {:?}",
         current_sequence,
         target_profile
     );
@@ -285,7 +285,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
                     info,
                     Type::Cmd,
                     true,
-                    "检测到更新的请求 (序列号: {} < {})，放弃当前请求",
+                    "Newer request detected (seq: {} < {}), abandoning current",
                     current_sequence,
                     latest_sequence
                 );
@@ -295,7 +295,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
                 info,
                 Type::Cmd,
                 true,
-                "强制获取锁以处理最新请求: {}",
+                "Force acquiring lock to process latest request: {}",
                 current_sequence
             );
             PROFILE_UPDATE_MUTEX.lock().await
@@ -308,7 +308,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
             info,
             Type::Cmd,
             true,
-            "获取锁后发现更新的请求 (序列号: {} < {})，放弃当前请求",
+            "After acquiring lock, found newer request (seq: {} < {}), abandoning current",
             current_sequence,
             latest_sequence
         );
@@ -317,12 +317,12 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
 
     // 保存当前配置，以便在验证失败时恢复
     let current_profile = Config::profiles().latest().current.clone();
-    logging!(info, Type::Cmd, true, "当前配置: {:?}", current_profile);
+    logging!(info, Type::Cmd, true, "Current profile: {:?}", current_profile);
 
     // 如果要切换配置，先检查目标配置文件是否有语法错误
     if let Some(new_profile) = profiles.current.as_ref() {
         if current_profile.as_ref() != Some(new_profile) {
-            logging!(info, Type::Cmd, true, "正在切换到新配置: {}", new_profile);
+            logging!(info, Type::Cmd, true, "Switching to new profile: {}", new_profile);
 
             // 获取目标配置文件路径
             let config_file_result = {
@@ -338,7 +338,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
                         }
                     }
                     Err(e) => {
-                        logging!(error, Type::Cmd, true, "获取目标配置信息失败: {}", e);
+                        logging!(error, Type::Cmd, true, "Failed to get target profile info: {}", e);
                         None
                     }
                 }
@@ -351,7 +351,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
                         error,
                         Type::Cmd,
                         true,
-                        "目标配置文件不存在: {}",
+                        "Target profile does not exist: {}",
                         file_path.display()
                     );
                     handle::Handle::notice_message(
@@ -377,7 +377,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
 
                         match yaml_parse_result {
                             Ok(Ok(_)) => {
-                                logging!(info, Type::Cmd, true, "目标配置文件语法正确");
+                                logging!(info, Type::Cmd, true, "Target profile file syntax is correct");
                             }
                             Ok(Err(err)) => {
                                 let error_msg = format!(" {err}");
@@ -385,7 +385,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
                                     error,
                                     Type::Cmd,
                                     true,
-                                    "目标配置文件存在YAML语法错误:{}",
+                                    "YAML syntax error in target profile file: {}",
                                     error_msg
                                 );
                                 handle::Handle::notice_message(
@@ -395,7 +395,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
                                 return Ok(false);
                             }
                             Err(join_err) => {
-                                let error_msg = format!("YAML解析任务失败: {join_err}");
+                                let error_msg = format!("YAML parse task failed: {join_err}");
                                 logging!(error, Type::Cmd, true, "{}", error_msg);
                                 handle::Handle::notice_message(
                                     "config_validate::yaml_parse_error",
@@ -406,7 +406,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
                         }
                     }
                     Ok(Err(err)) => {
-                        let error_msg = format!("无法读取目标配置文件: {err}");
+                        let error_msg = format!("Failed to read target profile file: {err}");
                         logging!(error, Type::Cmd, true, "{}", error_msg);
                         handle::Handle::notice_message(
                             "config_validate::file_read_error",
@@ -415,7 +415,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
                         return Ok(false);
                     }
                     Err(_) => {
-                        let error_msg = "读取配置文件超时(5秒)".to_string();
+                        let error_msg = "Reading config file timed out (5s)".to_string();
                         logging!(error, Type::Cmd, true, "{}", error_msg);
                         handle::Handle::notice_message(
                             "config_validate::file_read_timeout",
@@ -435,7 +435,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
             info,
             Type::Cmd,
             true,
-            "在核心操作前发现更新的请求 (序列号: {} < {})，放弃当前请求",
+            "Found newer request before core operation (seq: {} < {}), abandoning current",
             current_sequence,
             latest_sequence
         );
@@ -448,7 +448,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
             info,
             Type::Cmd,
             true,
-            "设置当前处理profile: {}, 序列号: {}",
+            "Set current processing profile: {}, serial number: {}",
             profile,
             current_sequence
         );
@@ -459,7 +459,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
         info,
         Type::Cmd,
         true,
-        "正在更新配置草稿，序列号: {}",
+        "Updating draft profiles, sequence: {}",
         current_sequence
     );
 
@@ -474,7 +474,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
             info,
             Type::Cmd,
             true,
-            "在内核交互前发现更新的请求 (序列号: {} < {})，放弃当前请求",
+            "Detect updated requests before kernel interaction (sequence number: {} < {}) and abandon the current request.",
             current_sequence,
             latest_sequence
         );
@@ -487,7 +487,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
         info,
         Type::Cmd,
         true,
-        "开始内核配置更新，序列号: {}",
+        "Starting kernel config update, sequence: {}",
         current_sequence
     );
     let update_result = tokio::time::timeout(
@@ -506,7 +506,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
                     info,
                     Type::Cmd,
                     true,
-                    "内核操作后发现更新的请求 (序列号: {} < {})，忽略当前结果",
+                    "After kernel operation, an updated request was found (sequence number: {} < {}), ignore the current result.",
                     current_sequence,
                     latest_sequence
                 );
@@ -518,7 +518,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
                 info,
                 Type::Cmd,
                 true,
-                "配置更新成功，序列号: {}",
+                "Configuration update successful, serial number: {}",
                 current_sequence
             );
             Config::profiles().apply();
@@ -527,22 +527,22 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
             // 强制刷新代理缓存，确保profile切换后立即获取最新节点数据
             crate::process::AsyncHandler::spawn(|| async move {
                 if let Err(e) = super::proxy::force_refresh_proxies().await {
-                    log::warn!(target: "app", "强制刷新代理缓存失败: {e}");
+                    log::warn!(target: "app", "Force refresh proxy cache failed: {e}");
                 }
             });
 
             crate::process::AsyncHandler::spawn(|| async move {
                 if let Err(e) = Tray::global().update_tooltip() {
-                    log::warn!(target: "app", "异步更新托盘提示失败: {e}");
+                    log::warn!(target: "app", "Async tray tooltip update failed: {e}");
                 }
 
                 if let Err(e) = Tray::global().update_menu() {
-                    log::warn!(target: "app", "异步更新托盘菜单失败: {e}");
+                    log::warn!(target: "app", "Async tray menu update failed: {e}");
                 }
 
                 // 保存配置文件
                 if let Err(e) = Config::profiles().data().save_file() {
-                    log::warn!(target: "app", "异步保存配置文件失败: {e}");
+                    log::warn!(target: "app", "Async save profiles file failed: {e}");
                 }
             });
 
@@ -552,19 +552,19 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
                     info,
                     Type::Cmd,
                     true,
-                    "向前端发送配置变更事件: {}, 序列号: {}",
+                    "Sending profile change event to frontend: {}, sequence: {}",
                     current,
                     current_sequence
                 );
                 handle::Handle::notify_profile_changed(current.clone());
             }
 
-            cleanup_processing_state(current_sequence, "配置切换完成").await;
+            cleanup_processing_state(current_sequence, "Profile switch completed").await;
 
             Ok(true)
         }
         Ok(Ok((false, error_msg))) => {
-            logging!(warn, Type::Cmd, true, "配置验证失败: {}", error_msg);
+            logging!(warn, Type::Cmd, true, "Profile validation failed: {}", error_msg);
             Config::profiles().discard();
             // 如果验证失败，恢复到之前的配置
             if let Some(prev_profile) = current_profile {
@@ -572,7 +572,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
                     info,
                     Type::Cmd,
                     true,
-                    "尝试恢复到之前的配置: {}",
+                    "Attempting to restore previous profile: {}",
                     prev_profile
                 );
                 let restore_profiles = IProfiles {
@@ -585,17 +585,17 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
 
                 crate::process::AsyncHandler::spawn(|| async move {
                     if let Err(e) = Config::profiles().data().save_file() {
-                        log::warn!(target: "app", "异步保存恢复配置文件失败: {e}");
+                        log::warn!(target: "app", "Failed to save and restore configuration file asynchronously: {e}");
                     }
                 });
 
-                logging!(info, Type::Cmd, true, "成功恢复到之前的配置");
+                logging!(info, Type::Cmd, true, "Successfully restored previous profile");
             }
 
             // 发送验证错误通知
             handle::Handle::notice_message("config_validate::error", &error_msg);
 
-            cleanup_processing_state(current_sequence, "配置验证失败").await;
+            cleanup_processing_state(current_sequence, "Profile validation failed").await;
 
             Ok(false)
         }
@@ -604,25 +604,25 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
                 warn,
                 Type::Cmd,
                 true,
-                "更新过程发生错误: {}, 序列号: {}",
+                "Error occurred during update: {}, sequence: {}",
                 e,
                 current_sequence
             );
             Config::profiles().discard();
             handle::Handle::notice_message("config_validate::boot_error", e.to_string());
 
-            cleanup_processing_state(current_sequence, "更新过程错误").await;
+            cleanup_processing_state(current_sequence, "Update process error").await;
 
             Ok(false)
         }
         Err(_) => {
             // 超时处理
-            let timeout_msg = "配置更新超时(30秒)，可能是配置验证或核心通信阻塞";
+            let timeout_msg = "Profile update timed out (30s), possibly due to validation or kernel communication";
             logging!(
                 error,
                 Type::Cmd,
                 true,
-                "{}, 序列号: {}",
+                "{}, sequence: {}",
                 timeout_msg,
                 current_sequence
             );
@@ -633,7 +633,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
                     info,
                     Type::Cmd,
                     true,
-                    "超时后尝试恢复到之前的配置: {}, 序列号: {}",
+                    "After timeout, attempting to restore previous profile: {}, sequence: {}",
                     prev_profile,
                     current_sequence
                 );
@@ -647,7 +647,7 @@ pub async fn patch_profiles_config(profiles: IProfiles) -> CmdResult<bool> {
 
             handle::Handle::notice_message("config_validate::timeout", timeout_msg);
 
-            cleanup_processing_state(current_sequence, "配置更新超时").await;
+            cleanup_processing_state(current_sequence, "Profile update timeout").await;
 
             Ok(false)
         }
@@ -660,7 +660,7 @@ pub async fn patch_profiles_config_by_profile_index(
     _app_handle: tauri::AppHandle,
     profile_index: String,
 ) -> CmdResult<bool> {
-    logging!(info, Type::Cmd, true, "切换配置到: {}", profile_index);
+    logging!(info, Type::Cmd, true, "Switching profile to: {}", profile_index);
 
     let profiles = IProfiles {
         current: Some(profile_index),
@@ -689,9 +689,9 @@ pub fn patch_profile(index: String, profile: PrfItem) -> CmdResult {
     if update_interval_changed {
         let index_clone = index.clone();
         crate::process::AsyncHandler::spawn(move || async move {
-            logging!(info, Type::Timer, "定时器更新间隔已变更，正在刷新定时器...");
+            logging!(info, Type::Timer, "Timer update interval changed; refreshing timers...");
             if let Err(e) = crate::core::Timer::global().refresh() {
-                logging!(error, Type::Timer, "刷新定时器失败: {}", e);
+                logging!(error, Type::Timer, "Failed to refresh timers: {}", e);
             } else {
                 // 刷新成功后发送自定义事件，不触发配置重载
                 crate::core::handle::Handle::notify_timer_updated(index_clone);

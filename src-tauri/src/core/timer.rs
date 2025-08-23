@@ -325,7 +325,7 @@ impl Timer {
             *self.timer_count.lock() = next_id;
         }
 
-        logging!(debug, Type::Timer, "定时任务变更数量: {}", diff_map.len());
+        logging!(debug, Type::Timer, "Number of scheduled task changes: {}", diff_map.len());
         logging!(
             debug,
             Type::Timer,

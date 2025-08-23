@@ -279,13 +279,13 @@ export const getGroupProxyDelays = async (
   };
 
   console.log(
-    `[API] 获取代理组延迟，组: ${groupName}, URL: ${params.url}, 超时: ${params.timeout}ms`,
+    `[API] Get proxy group delay, group: ${groupName}, URL: ${params.url}, timeout: ${params.timeout}ms`,
   );
 
   try {
     const instance = await getAxios();
     console.log(
-      `[API] 发送HTTP请求: GET /group/${encodeURIComponent(groupName)}/delay`,
+      `[API] Send HTTP request: GET /group/${encodeURIComponent(groupName)}/delay`,
     );
 
     const result = await instance.get(
@@ -294,12 +294,12 @@ export const getGroupProxyDelays = async (
     );
 
     console.log(
-      `[API] 获取代理组延迟成功，组: ${groupName}, 结果数量:`,
+      `[API] Get proxy group delay success, group: ${groupName}, result count:`,
       Object.keys(result || {}).length,
     );
     return result as any as Record<string, number>;
   } catch (error) {
-    console.error(`[API] 获取代理组延迟失败，组: ${groupName}`, error);
+    console.error(`[API] Get proxy group delay failed, group: ${groupName}`, error);
     throw error;
   }
 };
@@ -476,7 +476,7 @@ export const getIpInfo = async (): Promise<IpInfo> => {
   // 配置参数
   const maxRetries = 3;
   const serviceTimeout = 5000;
-  const overallTimeout = 20000; // 增加总超时时间以容纳延迟
+  const overallTimeout = 20000; // increase total timeout to accommodate delays
 
   const overallTimeoutController = new AbortController();
   const overallTimeoutId = setTimeout(() => {
@@ -488,7 +488,7 @@ export const getIpInfo = async (): Promise<IpInfo> => {
     let lastError: Error | null = null;
 
     for (const service of shuffledServices) {
-      console.log(`尝试IP检测服务: ${service.url}`);
+      console.log(`Trying IP detection service: ${service.url}`);
 
       for (let attempt = 0; attempt < maxRetries; attempt++) {
         let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -508,17 +508,17 @@ export const getIpInfo = async (): Promise<IpInfo> => {
           if (timeoutId) clearTimeout(timeoutId);
 
           if (response.data && response.data.ip) {
-            console.log(`IP检测成功，使用服务: ${service.url}`);
+            console.log(`IP detection succeeded, using service: ${service.url}`);
             return service.mapping(response.data);
           } else {
-            throw new Error(`无效的响应格式 from ${service.url}`);
+            throw new Error(`Invalid response format from ${service.url}`);
           }
         } catch (error: any) {
           if (timeoutId) clearTimeout(timeoutId);
 
           lastError = error;
           console.log(
-            `尝试 ${attempt + 1}/${maxRetries} 失败 (${service.url}):`,
+            `Attempt ${attempt + 1}/${maxRetries} failed (${service.url}):`,
             error.message,
           );
 
@@ -534,9 +534,9 @@ export const getIpInfo = async (): Promise<IpInfo> => {
     }
 
     if (lastError) {
-      throw new Error(`所有IP检测服务都失败: ${lastError.message}`);
+      throw new Error(`All IP detection services failed: ${lastError.message}`);
     } else {
-      throw new Error("没有可用的IP检测服务");
+      throw new Error("No available IP detection services");
     }
   } finally {
     clearTimeout(overallTimeoutId);

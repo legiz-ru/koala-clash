@@ -9,7 +9,7 @@ use std::{fs, os::windows::process::CommandExt, path::Path, path::PathBuf};
 /// Windows 下的开机启动文件夹路径
 #[cfg(target_os = "windows")]
 pub fn get_startup_dir() -> Result<PathBuf> {
-    let appdata = std::env::var("APPDATA").map_err(|_| anyhow!("无法获取 APPDATA 环境变量"))?;
+    let appdata = std::env::var("APPDATA").map_err(|_| anyhow!("Unable to obtain APPDATA environment variable"))?;
 
     let startup_dir = Path::new(&appdata)
         .join("Microsoft")
@@ -19,7 +19,7 @@ pub fn get_startup_dir() -> Result<PathBuf> {
         .join("Startup");
 
     if !startup_dir.exists() {
-        return Err(anyhow!("Startup 目录不存在: {:?}", startup_dir));
+        return Err(anyhow!("Startup directory does not exist: {:?}", startup_dir));
     }
 
     Ok(startup_dir)
@@ -29,7 +29,7 @@ pub fn get_startup_dir() -> Result<PathBuf> {
 #[cfg(target_os = "windows")]
 pub fn get_exe_path() -> Result<PathBuf> {
     let exe_path =
-        std::env::current_exe().map_err(|e| anyhow!("无法获取当前可执行文件路径: {}", e))?;
+        std::env::current_exe().map_err(|e| anyhow!("Unable to obtain the path of the current executable file: {}", e))?;
 
     Ok(exe_path)
 }

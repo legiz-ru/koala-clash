@@ -128,7 +128,7 @@ pub fn update_ui_ready_stage(stage: UiReadyStage) {
 pub fn mark_ui_ready() {
     let mut ready = get_ui_ready().write();
     *ready = true;
-    logging!(info, Type::Window, true, "UI已标记为完全就绪");
+    logging!(info, Type::Window, true, "UI marked as fully ready");
 
     // If any deep links were queued while UI was not ready, handle them now
     // No queued deep links list anymore; early and runtime deep links are deduped
@@ -145,7 +145,7 @@ pub fn reset_ui_ready() {
         let mut stage = state.stage.write();
         *stage = UiReadyStage::NotStarted;
     }
-    logging!(info, Type::Window, true, "UI就绪状态已重置");
+    logging!(info, Type::Window, true, "UI readiness state has been reset");
 }
 
 /// Schedule robust deep-link handling to avoid races with lightweight mode and window creation
@@ -244,12 +244,12 @@ pub async fn find_unused_port() -> Result<u16> {
 /// 异步方式处理启动后的额外任务
 pub async fn resolve_setup_async(app_handle: &AppHandle) {
     let start_time = std::time::Instant::now();
-    logging!(info, Type::Setup, true, "开始执行异步设置任务...");
+    logging!(info, Type::Setup, true, "Starting asynchronous setup tasks...");
 
     if VERSION.get().is_none() {
         let version = app_handle.package_info().version.to_string();
         VERSION.get_or_init(|| {
-            logging!(info, Type::Setup, true, "初始化版本信息: {}", version);
+            logging!(info, Type::Setup, true, "Initializing version information: {}", version);
             version.clone()
         });
     }
@@ -268,40 +268,40 @@ pub async fn resolve_setup_async(app_handle: &AppHandle) {
         );
     }
 
-    logging!(trace, Type::Config, true, "初始化配置...");
+    logging!(trace, Type::Config, true, "Initializing configuration...");
     logging_error!(Type::Config, true, Config::init_config().await);
 
     // 启动时清理冗余的 Profile 文件
-    logging!(info, Type::Setup, true, "清理冗余的Profile文件...");
+    logging!(info, Type::Setup, true, "Cleaning redundant profile files...");
     let profiles = Config::profiles();
     if let Err(e) = profiles.latest().auto_cleanup() {
-        logging!(warn, Type::Setup, true, "启动时清理Profile文件失败: {}", e);
+        logging!(warn, Type::Setup, true, "Failed to clean profile files at startup: {}", e);
     } else {
-        logging!(info, Type::Setup, true, "启动时Profile文件清理完成");
+        logging!(info, Type::Setup, true, "Startup profile files cleanup completed");
     }
 
-    logging!(trace, Type::Core, true, "启动核心管理器...");
+    logging!(trace, Type::Core, true, "Starting core manager...");
     logging_error!(Type::Core, true, CoreManager::global().init().await);
 
-    log::trace!(target: "app", "启动内嵌服务器...");
+    log::trace!(target: "app", "Starting embedded server...");
     server::embed_server();
 
     logging_error!(Type::Tray, true, tray::Tray::global().init());
 
     if let Some(app_handle) = handle::Handle::global().app_handle() {
-        logging!(info, Type::Tray, true, "创建系统托盘...");
+        logging!(info, Type::Tray, true, "Creating system tray...");
         let result = tray::Tray::global().create_tray_from_handle(&app_handle);
         if result.is_ok() {
-            logging!(info, Type::Tray, true, "系统托盘创建成功");
+            logging!(info, Type::Tray, true, "System tray created successfully");
         } else if let Err(e) = result {
-            logging!(error, Type::Tray, true, "系统托盘创建失败: {}", e);
+            logging!(error, Type::Tray, true, "Failed to create system tray: {}", e);
         }
     } else {
         logging!(
             error,
             Type::Tray,
             true,
-            "无法创建系统托盘: app_handle不存在"
+            "Unable to create system tray: app_handle missing"
         );
     }
 
@@ -337,7 +337,7 @@ pub async fn resolve_setup_async(app_handle: &AppHandle) {
 
     logging_error!(Type::Tray, true, tray::Tray::global().update_part());
 
-    logging!(trace, Type::System, true, "初始化热键...");
+    logging!(trace, Type::System, true, "Initializing hotkeys...");
     logging_error!(Type::System, true, hotkey::Hotkey::global().init());
 
     let elapsed = start_time.elapsed();
@@ -345,7 +345,7 @@ pub async fn resolve_setup_async(app_handle: &AppHandle) {
         info,
         Type::Setup,
         true,
-        "异步设置任务完成，耗时: {:?}",
+        "Asynchronous task completed, time taken: {:?}",
         elapsed
     );
 
@@ -355,7 +355,7 @@ pub async fn resolve_setup_async(app_handle: &AppHandle) {
             warn,
             Type::Setup,
             true,
-            "异步设置任务耗时较长({:?})",
+            "Asynchronous task setup takes a long time ({:?})",
             elapsed
         );
     }
@@ -387,12 +387,12 @@ pub fn create_window(is_show: bool) -> bool {
         info,
         Type::Window,
         true,
-        "开始创建/显示主窗口, is_show={}",
+        "Creating/showing main window, is_show={}",
         is_show
     );
 
     if !is_show {
-        logging!(info, Type::Window, true, "静默模式启动时不创建窗口");
+        logging!(info, Type::Window, true, "Silent start: do not create window");
         lightweight::set_lightweight_mode(true);
         handle::Handle::notify_startup_completed();
         return false;
@@ -400,10 +400,10 @@ pub fn create_window(is_show: bool) -> bool {
 
     if let Some(app_handle) = handle::Handle::global().app_handle() {
         if let Some(window) = app_handle.get_webview_window("main") {
-            logging!(info, Type::Window, true, "主窗口已存在，将尝试显示现有窗口");
+            logging!(info, Type::Window, true, "Main window already exists; will try to show it");
             if is_show {
                 if window.is_minimized().unwrap_or(false) {
-                    logging!(info, Type::Window, true, "窗口已最小化，正在取消最小化");
+                    logging!(info, Type::Window, true, "Window is minimized; unminimizing");
                     let _ = window.unminimize();
                 }
                 let show_result = window.show();
@@ -415,7 +415,7 @@ pub fn create_window(is_show: bool) -> bool {
                         warn,
                         Type::Window,
                         true,
-                        "现有窗口显示失败，尝试销毁并重新创建"
+                        "Failed to show existing window; will destroy and recreate"
                     );
                     let _ = window.destroy();
                 } else {
@@ -442,7 +442,7 @@ pub fn create_window(is_show: bool) -> bool {
             info,
             Type::Window,
             true,
-            "窗口创建请求被忽略，因为最近创建过 ({:?}ms)",
+            "Window creation request ignored because recently created ({:?}ms)",
             elapsed.as_millis()
         );
         return false;
@@ -453,7 +453,7 @@ pub fn create_window(is_show: bool) -> bool {
     // ScopeGuard 确保创建状态重置，防止 webview 卡死
     let _guard = scopeguard::guard(creating, |mut creating_guard| {
         *creating_guard = (false, Instant::now());
-        logging!(debug, Type::Window, true, "[ScopeGuard] 窗口创建状态已重置");
+        logging!(debug, Type::Window, true, "[ScopeGuard] Window creation state reset");
     });
 
     match tauri::WebviewWindowBuilder::new(
@@ -470,16 +470,16 @@ pub fn create_window(is_show: bool) -> bool {
     .visible(true) // 立即显示窗口，避免用户等待
     .initialization_script(
         r#"
-        console.log('[Tauri] 窗口初始化脚本开始执行');
+        console.log('[Tauri] Window init script started');
 
         function createLoadingOverlay() {
 
             if (document.getElementById('initial-loading-overlay')) {
-                console.log('[Tauri] 加载指示器已存在');
+                console.log('[Tauri] Loading indicator already exists');
                 return;
             }
 
-            console.log('[Tauri] 创建加载指示器');
+            console.log('[Tauri] Creating loading indicator');
             const loadingDiv = document.createElement('div');
             loadingDiv.id = 'initial-loading-overlay';
             loadingDiv.innerHTML = `
@@ -498,7 +498,7 @@ pub fn create_window(is_show: bool) -> bool {
                             animation: spin 1s linear infinite;
                         "></div>
                     </div>
-                    <div style="font-size: 14px; opacity: 0.7;">Loading Clash Verge...</div>
+                    <div style="font-size: 14px; opacity: 0.7;">Loading Koala Clash...</div>
                 </div>
                 <style>
                     @keyframes spin {
@@ -530,13 +530,13 @@ pub fn create_window(is_show: bool) -> bool {
             createLoadingOverlay();
         }
 
-        console.log('[Tauri] 窗口初始化脚本执行完成');
+        console.log('[Tauri] Window init script finished');
     "#,
     )
     .build()
     {
         Ok(newly_created_window) => {
-            logging!(debug, Type::Window, true, "主窗口实例创建成功");
+            logging!(debug, Type::Window, true, "Main window instance created successfully");
 
             update_ui_ready_stage(UiReadyStage::NotStarted);
 
@@ -546,7 +546,7 @@ pub fn create_window(is_show: bool) -> bool {
                     debug,
                     Type::Window,
                     true,
-                    "异步窗口任务开始 (启动已标记完成)"
+                    "Async window task started (startup marked completed)"
                 );
 
                 // 先运行轻量模式检测
@@ -557,7 +557,7 @@ pub fn create_window(is_show: bool) -> bool {
                     debug,
                     Type::Window,
                     true,
-                    "发送 verge://startup-completed 事件"
+                    "Sending verge://startup-completed event"
                 );
                 handle::Handle::notify_startup_completed();
 
@@ -567,7 +567,7 @@ pub fn create_window(is_show: bool) -> bool {
                     // 立即显示窗口
                     let _ = window_clone.show();
                     let _ = window_clone.set_focus();
-                    logging!(info, Type::Window, true, "窗口已立即显示");
+                    logging!(info, Type::Window, true, "Window shown immediately");
                     #[cfg(target_os = "macos")]
                     {
                         AppHandleManager::global().set_activation_policy_regular();
@@ -583,7 +583,7 @@ pub fn create_window(is_show: bool) -> bool {
                         info,
                         Type::Window,
                         true,
-                        "开始监控UI加载状态 (最多{}秒)...",
+                        "Start monitoring UI load status (up to {} seconds)...",
                         timeout_seconds
                     );
 
@@ -602,7 +602,7 @@ pub fn create_window(is_show: bool) -> bool {
                                             debug,
                                             Type::Window,
                                             true,
-                                            "UI加载状态检查... ({}秒)",
+                                            "UI loading status check... ({}s)",
                                             check_count / 10
                                         );
                                     }
@@ -612,7 +612,7 @@ pub fn create_window(is_show: bool) -> bool {
 
                         match wait_result {
                             Ok(_) => {
-                                logging!(info, Type::Window, true, "UI已完全加载就绪");
+                                logging!(info, Type::Window, true, "UI fully loaded and ready");
                                 // 移除初始加载指示器
                                 if let Some(window) = handle::Handle::global().get_window() {
                                     let _ = window.eval(r#"
@@ -629,7 +629,7 @@ pub fn create_window(is_show: bool) -> bool {
                                     warn,
                                     Type::Window,
                                     true,
-                                    "UI加载监控超时({}秒)，但窗口已正常显示",
+                                    "UI load monitoring timed out ({}s), but window is already visible",
                                     timeout_seconds
                                 );
                                 *get_ui_ready().write() = true;
@@ -637,20 +637,20 @@ pub fn create_window(is_show: bool) -> bool {
                         }
                     });
 
-                    logging!(info, Type::Window, true, "窗口显示流程完成");
+                    logging!(info, Type::Window, true, "Window display flow completed");
                 } else {
                     logging!(
                         debug,
                         Type::Window,
                         true,
-                        "is_show为false，窗口保持隐藏状态"
+                        "is_show is false; keeping window hidden"
                     );
                 }
             });
             true
         }
         Err(e) => {
-            logging!(error, Type::Window, true, "主窗口构建失败: {}", e);
+            logging!(error, Type::Window, true, "Failed to build main window: {}", e);
             false
         }
     }
