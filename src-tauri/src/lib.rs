@@ -7,11 +7,7 @@ mod module;
 mod process;
 mod state;
 mod utils;
-use crate::{
-    core::hotkey,
-    process::AsyncHandler,
-    utils::{resolve, resolve::resolve_scheme},
-};
+use crate::{core::hotkey, process::AsyncHandler, utils::resolve};
 use config::Config;
 use std::sync::{Mutex, Once};
 use tauri::AppHandle;
@@ -86,7 +82,10 @@ impl AppHandleManager {
 
 #[allow(clippy::panic)]
 pub fn run() {
-    utils::network::NetworkManager::global().init();
+	// Capture early deep link before any async setup (cold start on macOS)
+	utils::resolve::capture_early_deep_link_from_args();
+
+	utils::network::NetworkManager::global().init();
 
     let _ = utils::dirs::init_portable_flag();
 
@@ -96,52 +95,54 @@ pub fn run() {
     #[cfg(debug_assertions)]
     let devtools = tauri_plugin_devtools::init();
 
-    #[allow(unused_mut)]
-    let mut builder = tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.show();
-                let _ = window.unminimize();
-                let _ = window.set_focus();
-            }
-        }))
-        .plugin(tauri_plugin_notification::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
-        .plugin(tauri_plugin_clipboard_manager::init())
-        .plugin(tauri_plugin_process::init())
-        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
-        .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_shell::init())
-        .plugin(tauri_plugin_deep_link::init())
-        .setup(|app| {
-            logging!(info, Type::Setup, true, "Starting app initialization...");
-            let mut auto_start_plugin_builder = tauri_plugin_autostart::Builder::new();
-            #[cfg(target_os = "macos")]
-            {
-                auto_start_plugin_builder = auto_start_plugin_builder
-                    .macos_launcher(MacosLauncher::LaunchAgent)
-                    .app_name(app.config().identifier.clone());
-            }
-            let _ = app.handle().plugin(auto_start_plugin_builder.build());
+	#[allow(unused_mut)]
+	let mut builder = tauri::Builder::default()
+		.plugin(tauri_plugin_single_instance::init(|_app, argv, _cwd| {
+			// Handle deep link when a second instance is invoked: forward URL to the running instance
+			if let Some(url) = argv
+				.iter()
+				.find(|a| a.starts_with("clash://") || a.starts_with("koala-clash://"))
+				.cloned()
+			{
+				// Robust scheduling avoids races with lightweight/window
+				resolve::schedule_handle_deep_link(url);
+			}
+		}))
+		.plugin(tauri_plugin_notification::init())
+		.plugin(tauri_plugin_updater::Builder::new().build())
+		.plugin(tauri_plugin_clipboard_manager::init())
+		.plugin(tauri_plugin_process::init())
+		.plugin(tauri_plugin_global_shortcut::Builder::new().build())
+		.plugin(tauri_plugin_fs::init())
+		.plugin(tauri_plugin_dialog::init())
+		.plugin(tauri_plugin_shell::init())
+		.plugin(tauri_plugin_deep_link::init())
+		.setup(|app| {
+			logging!(info, Type::Setup, true, "Starting app initialization...");
 
-            #[cfg(any(target_os = "linux", all(debug_assertions, windows)))]
-            {
-                use tauri_plugin_deep_link::DeepLinkExt;
-                logging!(info, Type::Setup, true, "Registering deep links...");
-                logging_error!(Type::System, true, app.deep_link().register_all());
-            }
+			// Register deep link handler as early as possible to not miss cold-start events (macOS)
+			app.deep_link().on_open_url(|event| {
+				let urls: Vec<String> = event.urls().iter().map(|u| u.to_string()).collect();
+				logging!(info, Type::Setup, true, "on_open_url received: {:?}", urls);
+				if let Some(url) = urls.first().cloned() {
+					resolve::schedule_handle_deep_link(url);
+				}
+			});
 
-            app.deep_link().on_open_url(|event| {
-                AsyncHandler::spawn(move || {
-                    let url = event.urls().first().map(|u| u.to_string());
-                    async move {
-                        if let Some(url) = url {
-                            logging_error!(Type::Setup, true, resolve_scheme(url).await);
-                        }
-                    }
-                });
-            });
+			let mut auto_start_plugin_builder = tauri_plugin_autostart::Builder::new();
+			#[cfg(target_os = "macos")]
+			{
+				auto_start_plugin_builder = auto_start_plugin_builder
+					.macos_launcher(MacosLauncher::LaunchAgent)
+					.app_name(app.config().identifier.clone());
+			}
+			let _ = app.handle().plugin(auto_start_plugin_builder.build());
+
+			// Ensure URL schemes are registered with the OS (all platforms)
+			logging!(info, Type::Setup, true, "Registering deep links with OS...");
+			logging_error!(Type::System, true, app.deep_link().register_all());
+
+			// Deep link handler will be registered AFTER core handle init to ensure window creation works
 
             // 窗口管理
             logging!(
@@ -223,18 +224,23 @@ pub fn run() {
             app.manage(Mutex::new(state::proxy::CmdProxyState::default()));
             app.manage(Mutex::new(state::lightweight::LightWeightState::default()));
 
-            tauri::async_runtime::spawn(async {
-                tokio::time::sleep(Duration::from_secs(5)).await;
-                logging!(
-                    info,
-                    Type::Cmd,
-                    true,
-                    "Running profile updates at startup..."
-                );
-                if let Err(e) = crate::cmd::update_profiles_on_startup().await {
-                    log::error!("Failed to update profiles on startup: {e}");
-                }
-            });
+			// If an early deep link was captured from argv, schedule it now (after core and window can be created)
+			utils::resolve::replay_early_deep_link();
+
+			// (deep link handler already registered above)
+
+			tauri::async_runtime::spawn(async {
+				tokio::time::sleep(Duration::from_secs(5)).await;
+				logging!(
+					info,
+					Type::Cmd,
+					true,
+					"Running profile updates at startup..."
+				);
+				if let Err(e) = crate::cmd::update_profiles_on_startup().await {
+					log::error!("Failed to update profiles on startup: {e}");
+				}
+			});
 
             logging!(
                 info,

@@ -115,7 +115,7 @@ pub fn disable_auto_light_weight_mode() {
 
 pub fn entry_lightweight_mode() {
     use crate::utils::window_manager::WindowManager;
-
+    crate::utils::resolve::reset_ui_ready();
     let result = WindowManager::hide_main_window();
     logging!(
         info,

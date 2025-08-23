@@ -3,10 +3,11 @@ use crate::AppHandleManager;
 use crate::{
     config::{Config, IVerge, PrfItem},
     core::*,
+    core::handle::Handle,
     logging, logging_error,
     module::lightweight::{self, auto_lightweight_mode_init},
     process::AsyncHandler,
-    utils::{init, logging::Type, server},
+    utils::{init, logging::Type, server, window_manager::WindowManager},
     wrap_err,
 };
 use anyhow::{bail, Result};
@@ -65,12 +66,46 @@ impl Default for UiReadyState {
 // 获取UI就绪状态细节
 static UI_READY_STATE: OnceCell<Arc<UiReadyState>> = OnceCell::new();
 
+// Early deep link capture on cold start
+static EARLY_DEEP_LINK: OnceCell<Mutex<Option<String>>> = OnceCell::new();
+// Deduplication for deep links to avoid processing same URL twice in short time
+static LAST_DEEP_LINK: OnceCell<Mutex<Option<(String, Instant)>>> = OnceCell::new();
+
+fn get_early_deep_link() -> &'static Mutex<Option<String>> {
+    EARLY_DEEP_LINK.get_or_init(|| Mutex::new(None))
+}
+
+/// Capture deep link from process arguments as early as possible (cold start on macOS)
+pub fn capture_early_deep_link_from_args() {
+    let args: Vec<String> = std::env::args().collect();
+    if let Some(url) = args.iter().find(|a| a.starts_with("clash://") || a.starts_with("koala-clash://")).cloned() {
+        println!("[DeepLink][argv] {}", url);
+        logging!(info, Type::Setup, true, "argv captured deep link: {}", url);
+        *get_early_deep_link().lock() = Some(url);
+    } else {
+        println!("[DeepLink][argv] none: {:?}", args);
+        logging!(info, Type::Setup, true, "no deep link found in argv at startup: {:?}", args);
+    }
+}
+
+/// If an early deep link was captured before setup, schedule it now
+pub fn replay_early_deep_link() {
+    if let Some(url) = get_early_deep_link().lock().take() {
+        schedule_handle_deep_link(url);
+    }
+}
+
 fn get_window_creating_lock() -> &'static Mutex<(bool, Instant)> {
     WINDOW_CREATING.get_or_init(|| Mutex::new((false, Instant::now())))
 }
 
 fn get_ui_ready() -> &'static Arc<RwLock<bool>> {
     UI_READY.get_or_init(|| Arc::new(RwLock::new(false)))
+}
+
+/// Check whether the UI has finished initialization on the frontend side
+pub fn is_ui_ready() -> bool {
+    *get_ui_ready().read()
 }
 
 fn get_ui_ready_state() -> &'static Arc<UiReadyState> {
@@ -94,6 +129,9 @@ pub fn mark_ui_ready() {
     let mut ready = get_ui_ready().write();
     *ready = true;
     logging!(info, Type::Window, true, "UI已标记为完全就绪");
+
+    // If any deep links were queued while UI was not ready, handle them now
+    // No queued deep links list anymore; early and runtime deep links are deduped
 }
 
 // 重置UI就绪状态
@@ -108,6 +146,82 @@ pub fn reset_ui_ready() {
         *stage = UiReadyStage::NotStarted;
     }
     logging!(info, Type::Window, true, "UI就绪状态已重置");
+}
+
+/// Schedule robust deep-link handling to avoid races with lightweight mode and window creation
+pub fn schedule_handle_deep_link(url: String) {
+    AsyncHandler::spawn(move || async move {
+        // Normalize dedup key to the actual subscription URL inside the deep link
+        let dedup_key = (|| {
+            if let Ok(parsed) = Url::parse(&url) {
+                for (k, v) in parsed.query_pairs() {
+                    if k == "url" {
+                        return percent_decode_str(&v).decode_utf8_lossy().to_string();
+                    }
+                }
+            }
+            url.clone()
+        })();
+
+        // Deduplicate: if the same deep/subscription link was handled very recently, skip
+        {
+            let now = Instant::now();
+            let mut last = LAST_DEEP_LINK.get_or_init(|| Mutex::new(None)).lock();
+            if let Some((prev_url, prev_time)) = last.as_ref() {
+                if *prev_url == dedup_key && now.duration_since(*prev_time) < Duration::from_secs(5) {
+                    log::warn!(target: "app", "Skip duplicate deep link within 5s: {}", dedup_key);
+                    return;
+                }
+            }
+            *last = Some((dedup_key.clone(), now));
+        }
+        // Wait until app handle exists
+        for i in 0..100u8 {
+            if Handle::global().app_handle().is_some() {
+                break;
+            }
+            if i % 10 == 0 { logging!(info, Type::Setup, true, "waiting for app handle... ({}ms)", i as u64 * 20); }
+            tokio::time::sleep(Duration::from_millis(20)).await;
+        }
+
+        // Ensure we are not in lightweight mode (webview destroyed)
+        lightweight::exit_lightweight_mode();
+        for _ in 0..150u16 {
+            if !lightweight::is_in_lightweight_mode() {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(20)).await;
+        }
+
+        // Ensure a window exists ASAP so UI can mount
+        #[cfg(target_os = "macos")]
+        {
+            AppHandleManager::global().set_activation_policy_regular();
+        }
+        // If lightweight mode was active, give it a bit of time to unwind before recreating window
+        if lightweight::is_in_lightweight_mode() {
+            tokio::time::sleep(Duration::from_millis(200)).await;
+        }
+        let _ = WindowManager::show_main_window();
+
+        // Ensure profiles directory exists on cold start
+        if let Ok(dir) = crate::utils::dirs::app_profiles_dir() {
+            if !dir.exists() {
+                let _ = std::fs::create_dir_all(&dir);
+            }
+        }
+
+        // Process deep link (add profile regardless of UI state)
+        logging!(info, Type::Setup, true, "processing deep link: {}", dedup_key);
+        if let Err(e) = resolve_scheme(url.clone()).await {
+            log::error!(target: "app", "Deep link handling failed: {e}");
+        }
+
+        // If UI is ready, small delay to let listeners settle before finishing
+        if is_ui_ready() {
+            tokio::time::sleep(Duration::from_millis(120)).await;
+        }
+    });
 }
 
 pub async fn find_unused_port() -> Result<u16> {
@@ -286,21 +400,34 @@ pub fn create_window(is_show: bool) -> bool {
 
     if let Some(app_handle) = handle::Handle::global().app_handle() {
         if let Some(window) = app_handle.get_webview_window("main") {
-            logging!(info, Type::Window, true, "主窗口已存在，将显示现有窗口");
+            logging!(info, Type::Window, true, "主窗口已存在，将尝试显示现有窗口");
             if is_show {
                 if window.is_minimized().unwrap_or(false) {
                     logging!(info, Type::Window, true, "窗口已最小化，正在取消最小化");
                     let _ = window.unminimize();
                 }
-                let _ = window.show();
-                let _ = window.set_focus();
+                let show_result = window.show();
+                let focus_result = window.set_focus();
 
-                #[cfg(target_os = "macos")]
-                {
-                    AppHandleManager::global().set_activation_policy_regular();
+                // If showing or focusing fails (possibly destroyed webview after lightweight), fallback to recreate
+                if show_result.is_err() || focus_result.is_err() {
+                    logging!(
+                        warn,
+                        Type::Window,
+                        true,
+                        "现有窗口显示失败，尝试销毁并重新创建"
+                    );
+                    let _ = window.destroy();
+                } else {
+                    #[cfg(target_os = "macos")]
+                    {
+                        AppHandleManager::global().set_activation_policy_regular();
+                    }
+                    return true;
                 }
+            } else {
+                return true;
             }
-            return true;
         }
     }
 
@@ -566,11 +693,12 @@ pub async fn resolve_scheme(param: String) -> Result<()> {
             Some(url) => {
                 log::info!(target:"app", "decoded subscription url: {url}");
 
-                create_window(true);
+                // Deep link inside resolver is now executed via schedule_handle_deep_link
                 match PrfItem::from_url(url.as_ref(), name, None, None).await {
                     Ok(item) => {
                         let uid = item.uid.clone().unwrap();
                         let _ = wrap_err!(Config::profiles().data().append_item(item));
+                        // If UI not ready yet, message will be queued and flushed on ready
                         handle::Handle::notice_message("import_sub_url::ok", uid);
                     }
                     Err(e) => {

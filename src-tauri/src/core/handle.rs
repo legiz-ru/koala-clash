@@ -258,6 +258,8 @@ pub struct Handle {
     startup_errors: Arc<RwLock<Vec<ErrorMessage>>>,
     startup_completed: Arc<RwLock<bool>>,
     notification_system: Arc<RwLock<Option<NotificationSystem>>>,
+    /// Messages that should be emitted only after UI is really ready
+    ui_pending_messages: Arc<RwLock<Vec<ErrorMessage>>>,
 }
 
 impl Default for Handle {
@@ -268,6 +270,7 @@ impl Default for Handle {
             startup_errors: Arc::new(RwLock::new(Vec::new())),
             startup_completed: Arc::new(RwLock::new(false)),
             notification_system: Arc::new(RwLock::new(Some(NotificationSystem::new()))),
+            ui_pending_messages: Arc::new(RwLock::new(Vec::new())),
         }
     }
 }
@@ -295,6 +298,10 @@ impl Handle {
     }
 
     pub fn get_window(&self) -> Option<WebviewWindow> {
+        // If we are in lightweight mode, treat as no window (webview may be destroyed)
+        if crate::module::lightweight::is_in_lightweight_mode() {
+            return None;
+        }
         let app_handle = self.app_handle()?;
         let window: Option<WebviewWindow> = app_handle.get_webview_window("main");
         if window.is_none() {
@@ -411,6 +418,7 @@ impl Handle {
         let status_str = status.into();
         let msg_str = msg.into();
 
+        // If startup not completed, buffer messages (existing behavior)
         if !*handle.startup_completed.read() {
             logging!(
                 info,
@@ -429,6 +437,23 @@ impl Handle {
             return;
         }
 
+        // If UI is not yet ready (e.g., window re-created from tray or lightweight mode),
+        // buffer messages to emit after UI signals readiness.
+        if !crate::utils::resolve::is_ui_ready() {
+            log::debug!(
+                target: "app",
+                "UI not ready, queue notice message: {} - {}",
+                status_str,
+                msg_str
+            );
+            let mut pendings = handle.ui_pending_messages.write();
+            pendings.push(ErrorMessage {
+                status: status_str,
+                message: msg_str,
+            });
+            return;
+        }
+
         if handle.is_exiting() {
             return;
         }
@@ -439,6 +464,34 @@ impl Handle {
                 status: status_str,
                 message: msg_str,
             });
+        }
+    }
+
+    /// Flush messages buffered while UI was not ready
+    pub fn flush_ui_pending_messages(&self) {
+        let pending = {
+            let mut msgs = self.ui_pending_messages.write();
+            std::mem::take(&mut *msgs)
+        };
+
+        if pending.is_empty() {
+            return;
+        }
+
+        if self.is_exiting() {
+            return;
+        }
+
+        let system_opt = self.notification_system.read();
+        if let Some(system) = system_opt.as_ref() {
+            for msg in pending {
+                system.send_event(FrontendEvent::NoticeMessage {
+                    status: msg.status,
+                    message: msg.message,
+                });
+                // small pacing to avoid flooding immediately on resume
+                std::thread::sleep(std::time::Duration::from_millis(10));
+            }
         }
     }
 

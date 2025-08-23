@@ -19,7 +19,8 @@ export const useListen = () => {
   };
 
   const setupCloseListener = async function () {
-    await event.once("tauri://close-requested", async () => {
+    // Do not clear listeners on close-requested (we hide to tray). Clean up only when window is destroyed.
+    await event.once("tauri://destroyed", async () => {
       removeAllListeners();
     });
   };

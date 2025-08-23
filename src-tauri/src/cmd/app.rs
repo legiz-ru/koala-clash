@@ -211,6 +211,8 @@ pub fn copy_icon_file(path: String, icon_info: IconInfo) -> CmdResult<String> {
 pub fn notify_ui_ready() -> CmdResult<()> {
     log::info!(target: "app", "Frontend UI is ready");
     crate::utils::resolve::mark_ui_ready();
+    // Flush any pending messages queued while UI was not ready (e.g. minimized to tray)
+    crate::core::handle::Handle::global().flush_ui_pending_messages();
     Ok(())
 }
 
