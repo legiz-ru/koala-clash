@@ -205,10 +205,9 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $version = ${{steps.build.outputs.appVersion}}
           $files = Get-ChildItem ".\src-tauri\target\${{ matrix.target }}\release\bundle\nsis\*-setup.exe"
           foreach ($file in $files) {
-            $newName = $file.Name -replace "_${version}_", "_" 
+            $newName = $file.Name -replace "_${{steps.build.outputs.appVersion}}_", "_" 
             Rename-Item $file.FullName $newName
           }
 
