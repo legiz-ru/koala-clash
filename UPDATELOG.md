@@ -1,3 +1,19 @@
+## v0.2.6
+
+- fixed deep links
+- removed AliDNS, replaced with Cloudflare and Google DNS servers
+- improved proxy selector view
+- added some animations
+- fixed an issue with saving the profile when changing advanced settings
+- fixed DNS leak, strict routing now default
+- logs translated into English
+- table on the connections page corrected
+- fixed issue with deleting profiles with long names
+- glass effect added to components
+- icon background fixed
+- fixed tun settings override
+- added support for brotli, gzip, zstd
+
 ## v0.2.5
 
 - new main page
