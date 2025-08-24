@@ -3566,7 +3566,7 @@ dependencies = [
 
 [[package]]
 name = "koala-clash"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "ab_glyph",
  "aes-gcm",
