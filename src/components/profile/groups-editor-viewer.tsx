@@ -32,7 +32,6 @@ import { BaseSearchBox } from "../base/base-search-box";
 import { showNotice } from "@/services/noticeService";
 import { cn } from "@root/lib/utils";
 
-// --- Компоненты shadcn/ui и иконки ---
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -85,7 +84,6 @@ import {
   ArrowUpToLine,
 } from "lucide-react";
 
-// --- Вспомогательные функции, константы и валидаторы ---
 const portValidator = (value: string): boolean =>
   /^(?:[1-9]\d{0,3}|[1-5]\d{4}|6[0-4]\d{3}|65[0-4]\d{2}|655[0-2]\d|6553[0-5])$/.test(
     value,
@@ -109,7 +107,6 @@ interface Props {
   onSave?: (prev?: string, curr?: string) => void;
 }
 
-// --- Новый компонент Combobox (одиночный выбор) ---
 const Combobox = ({
   options,
   value,
@@ -123,7 +120,7 @@ const Combobox = ({
 }) => {
   const [open, setOpen] = useState(false);
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -168,7 +165,6 @@ const Combobox = ({
   );
 };
 
-// --- Новый компонент MultiSelectCombobox (множественный выбор) ---
 const MultiSelectCombobox = ({
   options,
   value,
@@ -194,7 +190,7 @@ const MultiSelectCombobox = ({
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -246,7 +242,6 @@ const MultiSelectCombobox = ({
   );
 };
 
-// --- Новый компонент для элемента списка групп ---
 const EditorGroupItem = ({
   type,
   group,
@@ -408,22 +403,6 @@ export const GroupsEditorViewer = (props: Props) => {
   };
 
   useEffect(() => {
-    if (currData === "" || !visualization) return;
-    try {
-      let obj = yaml.load(currData) as {
-        prepend: [];
-        append: [];
-        delete: [];
-      } | null;
-      setPrependSeq(obj?.prepend || []);
-      setAppendSeq(obj?.append || []);
-      setDeleteSeq(obj?.delete || []);
-    } catch (e) {
-      /* Ignore parsing errors while typing */
-    }
-  }, [visualization, currData]);
-
-  useEffect(() => {
     if (prependSeq && appendSeq && deleteSeq && visualization) {
       const serialize = () => {
         try {
@@ -580,9 +559,8 @@ export const GroupsEditorViewer = (props: Props) => {
           {visualization ? (
             <Form {...form}>
               <form className="h-full flex gap-4">
-                {/* Левая панель: Конструктор групп */}
                 <div className="w-1/2 flex flex-col border rounded-md p-4">
-                  <h3 className="text-lg font-medium mb-4">Constructor</h3>
+                  <h3 className="text-lg font-medium mb-4">{t("Constructor")}</h3>
                   <Separator className="mb-4" />
                   <div className="space-y-3 overflow-y-auto p-1 -mr-3 ">
                     <FormField
