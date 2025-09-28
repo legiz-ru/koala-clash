@@ -411,6 +411,7 @@ pub fn run() {
                 match event {
                     tauri::WindowEvent::CloseRequested { api, .. } => {
                         #[cfg(target_os = "macos")]
+                        AppHandleManager::global().set_activation_policy_accessory();
                         if core::handle::Handle::global().is_exiting() {
                             return;
                         }
