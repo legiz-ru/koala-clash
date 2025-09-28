@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@root/lib/utils";
 
-// Компоненты и иконки
 import {
   Select,
   SelectContent,
@@ -18,15 +17,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ChevronsUpDown, Timer, WholeWord } from "lucide-react";
+import {AlertTriangle, ChevronsUpDown, Timer, WholeWord} from "lucide-react";
 
-// Логика
 import { useVerge } from "@/hooks/use-verge";
 import { useAppData } from "@/providers/app-data-provider";
 import delayManager from "@/services/delay";
 import { updateProxy, deleteConnection } from "@/services/api";
 
-// --- Типы и константы ---
 const STORAGE_KEY_GROUP = "clash-verge-selected-proxy-group";
 const STORAGE_KEY_SORT_TYPE = "clash-verge-proxy-sort-type";
 const presetList = ["DIRECT", "REJECT", "REJECT-DROP", "PASS", "COMPATIBLE"];
@@ -40,7 +37,6 @@ interface IProxyGroup {
   icon?: string;
 }
 
-// --- Вспомогательная функция для цвета задержки ---
 function getDelayColorClasses(delayValue: number): string {
   if (delayValue < 0) {
     return "text-muted-foreground border-border";
@@ -51,7 +47,6 @@ function getDelayColorClasses(delayValue: number): string {
   return "text-green-600 border-green-500/40 dark:text-green-400 dark:border-green-400/30";
 }
 
-// --- Дочерний компонент для элемента списка с "живым" обновлением пинга ---
 const ProxySelectItem = ({
   proxyName,
   groupName,
@@ -268,7 +263,6 @@ export const ProxySelectors: React.FC = () => {
           }))
           .filter((p: { name: string }) => p.name);
 
-      // Удаляем дубли по имени прокси
       const uniqueNames = new Set<string>();
       options = rawOptions.filter((proxy: any) => {
         if (!uniqueNames.has(proxy.name)) {
@@ -306,11 +300,20 @@ export const ProxySelectors: React.FC = () => {
             disabled={isGlobalMode || isDirectMode}
           >
             <SelectTrigger className="w-100">
+              {isGlobalMode ? (
+                  <div className="flex items-center gap-2 text-destructive">
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                    <span className="font-medium text-sm">
+                      {t("Global Mode Active")}
+                    </span>
+                  </div>
+              ) : (
               <div className="flex items-center gap-2 truncate">
                 <span className="truncate">
                   <SelectValue placeholder={t("Select a group...")} />
                 </span>
               </div>
+              )}
             </SelectTrigger>
             <SelectContent>
               {selectorGroups.map((group: IProxyGroup) => (
