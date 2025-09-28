@@ -680,5 +680,10 @@
   "Template without RU Rules": "Without-ru template",
   "Stopping Core...": "Stopping Core...",
   "Uninstalling Service...": "Uninstalling Service...",
-  "Try running core as Sidecar...": "Try running core as Sidecar..."
+  "Try running core as Sidecar...": "Try running core as Sidecar...",
+  "Global Mode Active": "Global Mode Active",
+  "Update Interval (mins)": "Update Interval (mins)",
+  "Profile Name": "Profile Name",
+  "Profile Description": "Profile Description",
+  "Constructor": "Group constructor"
 }
