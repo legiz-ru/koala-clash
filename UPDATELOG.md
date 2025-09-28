@@ -1,3 +1,9 @@
+## v0.2.7
+- fixed bug in proxy groups menu
+- added message about global mode enabled on main screen
+- fixed minor bugs
+- updated Mihomo core to v1.19.14
+
 ## v0.2.6
 
 - fixed deep links
