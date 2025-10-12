@@ -102,6 +102,9 @@ jobs:
           <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash_armhf.deb"><img src="https://img.shields.io/badge/armhf-default?style=flat&logo=debian&label=DEB"> </a><br>
           <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash.armhfp.rpm"><img src="https://img.shields.io/badge/armhfp-default?style=flat&logo=fedora&label=RPM"> </a>
 
+          #### Package availability for many distributions
+          [![Packaging status](https://repology.org/badge/vertical-allrepos/koala-clash.svg)](https://repology.org/project/koala-clash/versions)
+
           ### Windows (Win7 is no longer supported)
           #### Normal version (recommended)
           <a href="https://github.com/coolcoala/clash-verge-rev-lite/releases/download/v${{ env.VERSION }}/Koala.Clash_x64-setup.exe"><img src="https://badgen.net/badge/icon/x64?icon=windows&label=exe"></a><br>
