@@ -57,7 +57,7 @@ const SIDECAR_HOST = target
 /* ======= clash meta alpha======= */
 const META_ALPHA_VERSION_URL =
   "https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/version.txt";
-const META_ALPHA_URL_PREFIX = `https://github.com/MetaCubeX/mihomo/releases/tag/Prerelease-Alpha`;
+const META_ALPHA_URL_PREFIX = `https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha`;
 let META_ALPHA_VERSION;
 
 const META_ALPHA_MAP = {
@@ -77,7 +77,7 @@ const META_ALPHA_MAP = {
 const META_ALPHA_SMART_VERSION_URL =
   "https://github.com/vernesong/mihomo/releases/download/Prerelease-Alpha/version.txt";
 const META_ALPHA_SMART_URL_PREFIX =
-  "https://github.com/vernesong/mihomo/releases/tag/Prerelease-Alpha";
+  "https://github.com/vernesong/mihomo/releases/download/Prerelease-Alpha";
 let META_ALPHA_SMART_VERSION;
 
 const META_ALPHA_SMART_MAP = Object.fromEntries(
